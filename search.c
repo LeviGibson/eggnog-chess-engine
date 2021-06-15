@@ -208,17 +208,7 @@ static inline int negamax(int depth, int alpha, int beta, Line *pline){
   }
   nodes++;
 
-  /**
-  U64 key = generate_zobrist_key();
-  int hash_result = hash_lookup(key, beta, depth, pline);
-  if(hash_result != no_entry){
-    return hash_result;
-  }
-  **/
-
   found_pv = 0;
-
-  int b_search_pv = 1;
 
   Line line;
   line.length = 0;
@@ -306,7 +296,6 @@ static inline int negamax(int depth, int alpha, int beta, Line *pline){
       if (eval > alpha){
 
         alpha = eval;
-        b_search_pv = 0;
 
         pline->moves[0] = move;
         memcpy(pline->moves + 1, line.moves, line.length * 4);
@@ -325,8 +314,6 @@ static inline int negamax(int depth, int alpha, int beta, Line *pline){
           history_moves[side][get_move_source(move)][get_move_target(move)] += depth*depth;
         }
 
-        //write_hash(key, beta, hash_flag_beta, depth, &line, move);
-
         return beta;
       }
     }
@@ -341,8 +328,6 @@ static inline int negamax(int depth, int alpha, int beta, Line *pline){
     }
   }
 
-  //write_hash(key, alpha, hash_flag_alpha, depth, &line, move);
-
   return alpha;
 
 }
@@ -350,9 +335,7 @@ static inline int negamax(int depth, int alpha, int beta, Line *pline){
 #define aspwindow 50
 
 void search_position(int depth){
-
   start_time();
-
   stop = 0;
   nodes = 0;
 
@@ -368,7 +351,6 @@ void search_position(int depth){
   int eval;
 
   for (int currentDepth = 1; currentDepth <= depth; currentDepth++){
-
     ply = 0;
 
     follow_pv = 1;
@@ -379,15 +361,15 @@ void search_position(int depth){
     if (stop)
       break;
 
-    eval = nmRes;
-
     //if the evaluation is outside of aspiration window bounds, reset alpha and beta and continue the search
-    if ((nmRes > beta) || (nmRes < alpha)){
+    if ((nmRes >= beta) || (nmRes <= alpha)){
         printf("Aspiration Research\n");
         alpha = -50000;
         beta = 50000;
-        continue;
+        nmRes = negamax(currentDepth, alpha, beta, &negamax_line);
     }
+
+    eval = nmRes;
 
     alpha = nmRes - aspwindow;
     beta = nmRes + aspwindow;
