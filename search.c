@@ -2,7 +2,6 @@
 #include "board.h"
 #include "evaluate.h"
 #include "timeman.h"
-#include "transposition.h"
 
 #include <stdio.h>
 
@@ -369,7 +368,6 @@ void search_position(int depth){
   int eval;
 
   for (int currentDepth = 1; currentDepth <= depth; currentDepth++){
-    reset_transposition_table();
 
     ply = 0;
 
@@ -382,6 +380,17 @@ void search_position(int depth){
       break;
 
     eval = nmRes;
+
+    //if the evaluation is outside of aspiration window bounds, reset alpha and beta and continue the search
+    if ((nmRes > beta) || (nmRes < alpha)){
+        printf("Aspiration Research\n");
+        alpha = -50000;
+        beta = 50000;
+        continue;
+    }
+
+    alpha = nmRes - aspwindow;
+    beta = nmRes + aspwindow;
 
     memcpy(&pv_line, &negamax_line, sizeof negamax_line);
     memset(&negamax_line, 0, sizeof negamax_line);

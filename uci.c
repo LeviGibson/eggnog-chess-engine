@@ -98,8 +98,6 @@ void parse_go(char *command){
     char *current_depth = NULL;
     char *current_timelimit = NULL;
 
-    print_board();
-
     current_depth = strstr(command, "depth");
     if (current_depth){
         depth = atoi(current_depth+6);
