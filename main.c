@@ -4,6 +4,7 @@
 #include "bitboard.h"
 #include "board.h"
 #include "uci.h"
+#include "transposition.h"
 
 int main() {
     init_bitboards();

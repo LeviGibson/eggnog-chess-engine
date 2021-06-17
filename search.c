@@ -2,6 +2,7 @@
 #include "board.h"
 #include "evaluate.h"
 #include "timeman.h"
+#include "transposition.h"
 
 #include <stdio.h>
 
@@ -213,6 +214,13 @@ static inline int negamax(int depth, int alpha, int beta, Line *pline){
   Line line;
   line.length = 0;
 
+  int hashf = hashfALPHA;
+
+  int hash_lookup = ProbeHash(depth, alpha, beta);
+  if ((hash_lookup) != valUNKNOWN) {
+      return hash_lookup;
+  }
+
   if (depth <= 0){
     pline->length = 0;
     return quiesce(alpha, beta);
@@ -297,6 +305,8 @@ static inline int negamax(int depth, int alpha, int beta, Line *pline){
 
         alpha = eval;
 
+        hashf = hashfEXACT;
+
         pline->moves[0] = move;
         memcpy(pline->moves + 1, line.moves, line.length * 4);
         pline->length = line.length + 1;
@@ -314,6 +324,8 @@ static inline int negamax(int depth, int alpha, int beta, Line *pline){
           history_moves[side][get_move_source(move)][get_move_target(move)] += depth*depth;
         }
 
+        RecordHash(depth, beta, hashfBETA);
+
         return beta;
       }
     }
@@ -328,6 +340,7 @@ static inline int negamax(int depth, int alpha, int beta, Line *pline){
     }
   }
 
+  RecordHash(depth, alpha, hashf);
   return alpha;
 
 }
@@ -363,7 +376,6 @@ void search_position(int depth){
 
     //if the evaluation is outside of aspiration window bounds, reset alpha and beta and continue the search
     if ((nmRes >= beta) || (nmRes <= alpha)){
-        printf("Aspiration Research\n");
         alpha = -50000;
         beta = 50000;
         nmRes = negamax(currentDepth, alpha, beta, &negamax_line);
