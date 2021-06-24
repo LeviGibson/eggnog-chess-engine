@@ -7,6 +7,10 @@
 
 HASHE hash_table[tt_size];
 
+void reset_hash_table(){
+    memset(hash_table, 0, sizeof hash_table);
+}
+
 int ProbeHash(int depth, int alpha, int beta){
     HASHE * phashe = &hash_table[generate_zobrist_key() % tt_size];
 

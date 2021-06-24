@@ -24,4 +24,6 @@ typedef struct tagHASHE {
 void RecordHash(int depth, int val, int hashf);
 int ProbeHash(int depth, int alpha, int beta);
 
+void reset_hash_table();
+
 #endif //EGGNOG_CHESS_ENGINE_TRANSPOSITION_H

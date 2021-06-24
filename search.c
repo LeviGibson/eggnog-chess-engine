@@ -369,6 +369,8 @@ void search_position(int depth){
     follow_pv = 1;
     found_pv = 0;
 
+    reset_hash_table();
+
     int nmRes = negamax(currentDepth, alpha, beta, &negamax_line);
 
     if (stop)
