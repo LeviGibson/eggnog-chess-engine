@@ -202,12 +202,14 @@ void find_pv(moveList *moves){
 
 static inline int negamax(int depth, int alpha, int beta, Line *pline){
   //general maintenence
+  nodes++;
+
   if (nodes % 2048 == 0)
     communicate();
+
   if (stop){
     return 0;
   }
-  nodes++;
 
   found_pv = 0;
 
@@ -373,14 +375,20 @@ void search_position(int depth){
 
     int nmRes = negamax(currentDepth, alpha, beta, &negamax_line);
 
-    if (stop)
-      break;
+    if (stop) {
+        break;
+    }
 
     //if the evaluation is outside of aspiration window bounds, reset alpha and beta and continue the search
     if ((nmRes >= beta) || (nmRes <= alpha)){
         alpha = -50000;
         beta = 50000;
         nmRes = negamax(currentDepth, alpha, beta, &negamax_line);
+    }
+
+    //if time ran out during aspiration research, break.
+    if (stop){
+        break;
     }
 
     eval = nmRes;
@@ -403,7 +411,6 @@ void search_position(int depth){
     if ((abs(eval) > 40000)){
       break;
     }
-
 
   }
 

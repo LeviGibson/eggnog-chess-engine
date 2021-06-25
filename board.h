@@ -36,7 +36,7 @@ typedef struct {
  **/
 
 #define encode_move(source, target, ptype, prom, enpessant, capture, doublePush, castle) \
-    source | (target << 6) | (ptype << 12) | (prom << 16) | (enpessant << 20) | (capture << 21) | (doublePush << 22) | (castle << 23)
+    source | ((target) << 6) | ((ptype) << 12) | ((prom) << 16) | ((enpessant) << 20) | ((capture) << 21) | ((doublePush) << 22) | ((castle) << 23)
 
 #define get_move_source(move) \
     (0x3f & move)
@@ -69,14 +69,14 @@ typedef struct {
     memcpy(bitboards_copy, bitboards, sizeof bitboards_copy);                   \
     memcpy(occupancies_copy, occupancies, sizeof occupancies_copy);             \
     side_copy = side, enpassant_copy = enpessant, castle_copy = castle;    \
-    zobrist_history_length_copy = zobrist_history_length;                   \
+    zobrist_history_length_copy = zobrist_history_length                  \
 
 #define take_back()                                                       \
     memcpy(bitboards, bitboards_copy, sizeof bitboards);              \
     memcpy(occupancies, occupancies_copy, sizeof occupancies);        \
     memcpy(zobrist_history, zobrist_history_copy, sizeof zobrist_history); \
     side = side_copy, enpessant = enpassant_copy, castle = castle_copy;   \
-    zobrist_history_length = zobrist_history_length_copy;                  \
+    zobrist_history_length = zobrist_history_length_copy                 \
 
 void print_move(int move);
 
