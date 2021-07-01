@@ -30,8 +30,6 @@ U64 castle_keys[16];
 U64 enpessent_keys[64];
 U64 side_keys[2];
 
-
-
 void init_zobrist_keys(){
   for (int piece = P; piece <= k; piece++){
     for (int square = 0; square < 64; square++){

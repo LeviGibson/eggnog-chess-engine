@@ -102,8 +102,10 @@ void parse_go(char *command){
     if (current_depth){
         depth = atoi(current_depth+6);
         moveTime = 100000;
-    } else
-        depth = 6;
+    } else {
+        moveTime = 2000;
+        depth = 20;
+    }
     current_timelimit = strstr(command, "movetime");
     if (current_timelimit){
         depth = max_ply;

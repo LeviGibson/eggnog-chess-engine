@@ -31,22 +31,9 @@ enum {
 
 
 //count bits in U64
-static inline int count_bits(U64 bitboard){
+#define count_bits(bitboard) __builtin_popcountll(bitboard)
 
-    int count = 0;
-    while (bitboard){
-        count++;
-        bitboard &= bitboard-1;
-    }
-    return count;
-
-}
-
-static inline int get_ls1b_index(U64 x){
-  assert (x != 0);
-   asm ("bsfq %0, %0" : "=r" (x) : "0" (x));
-   return (int) x;
-}
+#define get_ls1b_index(x) __builtin_ctzll(x)
 
 static inline U64 get_random_U64(){
   return (U64)rand() | ((U64)rand() << 32);
