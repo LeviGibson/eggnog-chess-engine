@@ -4,12 +4,13 @@
 #include "timeman.h"
 #include "transposition.h"
 
+#include <stdint.h>
 #include <stdio.h>
 
 int ply = 0;
 long nodes = 0;
 
-const int mvv_lva[12][12] = {
+const U16 mvv_lva[12][12] = {
         105, 205, 305, 405, 505, 605,  105, 205, 305, 405, 505, 605,
         104, 204, 304, 404, 504, 604,  104, 204, 304, 404, 504, 604,
         103, 203, 303, 403, 503, 603,  103, 203, 303, 403, 503, 603,
@@ -32,15 +33,10 @@ Line pv_line;
 
 int follow_pv, found_pv;
 
-static inline int score_move(int move){
+static inline U16 score_move(int move){
 
   if (found_pv){
     if (move == pv_line.moves[ply]){
-      /**
-      printf("%d: ", ply);
-      print_move(pv_line.moves[ply]);
-      printf("\n");**/
-      //pv sorting
       found_pv = 0;
       return 20000;
     }
@@ -74,24 +70,36 @@ static inline int score_move(int move){
     }
 }
 
+typedef struct SORTEDMOVE {
+    int move;
+    U16 score;
+} sortedmove;
+
+static inline int compare (const void *a, const void *b) {
+    U16 ascore = ((sortedmove*)a)->score;
+    U16 bscore = ((sortedmove*)b)->score;
+
+    if (ascore > bscore) {
+        return -1;
+    } if (ascore < bscore) {
+        return 1;
+    }
+    return 0;
+
+}
+
 static inline void sort_moves(moveList *move_list){
-    int scores[move_list->count];
+    sortedmove scores[move_list->count];
 
-    for (int i = 0; i < move_list->count; i++)
-        scores[i] = score_move(move_list->moves[i]);
+    for (int i = 0; i < move_list->count; i++) {
+        scores[i].move = move_list->moves[i];
+        scores[i].score = score_move(move_list->moves[i]);
+    }
 
-    for (int cur = 0; cur < move_list->count; cur++){
-        for (int next = cur+1; next < move_list->count; next++){
-            if (scores[cur] < scores[next]){
-                int tmpscore = scores[cur];
-                scores[cur] = scores[next];
-                scores[next] = tmpscore;
+    qsort(scores, move_list->count, sizeof (sortedmove), compare);
 
-                int tmpmove = move_list->moves[cur];
-                move_list->moves[cur] = move_list->moves[next];
-                move_list->moves[next] = tmpmove;
-            }
-        }
+    for (int i = 0; i < move_list->count; i++){
+        move_list->moves[i] = scores[i].move;
     }
 }
 

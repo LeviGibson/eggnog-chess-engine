@@ -550,7 +550,8 @@ int make_move(int move, int flag){
         }
 
         //UPDATE ZOBRIST HISTORY
-        zobrist_history[zobrist_history_length] = generate_zobrist_key();
+        current_zobrist_key = generate_zobrist_key();
+        zobrist_history[zobrist_history_length] = current_zobrist_key;
         zobrist_history_length++;
     } else {
 
@@ -745,5 +746,5 @@ void parse_fen(char *fen)
     occupancies[both] |= occupancies[white];
     occupancies[both] |= occupancies[black];
 
-
+    current_zobrist_key = generate_zobrist_key();
 }

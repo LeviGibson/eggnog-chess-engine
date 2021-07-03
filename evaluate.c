@@ -74,7 +74,7 @@ int evaluate(){
     }
   }
 
-  for(int piece = p; piece <= k; piece++){
+  for (int piece = p; piece <= k; piece++){
     U64 bitboard = bitboards[piece];
 
     eval += scores[piece] * count_bits(bitboards[piece]);

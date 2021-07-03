@@ -21,7 +21,7 @@ enum {all_moves, only_captures};
 
 typedef struct {
     int moves[256];
-    int count;
+    U32 count;
 } moveList;
 
 
@@ -90,6 +90,8 @@ int zobrist_history_length;
 
 U64 bitboards[12];
 U64 occupancies[3];
+
+U64 current_zobrist_key;
 
 int enpessant;
 int side;

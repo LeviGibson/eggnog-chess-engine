@@ -27,6 +27,271 @@ void print_bitboard(U64 bitboard){
 
 }
 
+const U64 knight_mask[64] = {
+        132096ULL,
+        329728ULL,
+        659712ULL,
+        1319424ULL,
+        2638848ULL,
+        5277696ULL,
+        10489856ULL,
+        4202496ULL,
+        33816580ULL,
+        84410376ULL,
+        168886289ULL,
+        337772578ULL,
+        675545156ULL,
+        1351090312ULL,
+        2685403152ULL,
+        1075839008ULL,
+        8657044482ULL,
+        21609056261ULL,
+        43234889994ULL,
+        86469779988ULL,
+        172939559976ULL,
+        345879119952ULL,
+        687463207072ULL,
+        275414786112ULL,
+        2216203387392ULL,
+        5531918402816ULL,
+        11068131838464ULL,
+        22136263676928ULL,
+        44272527353856ULL,
+        88545054707712ULL,
+        175990581010432ULL,
+        70506185244672ULL,
+        567348067172352ULL,
+        1416171111120896ULL,
+        2833441750646784ULL,
+        5666883501293568ULL,
+        11333767002587136ULL,
+        22667534005174272ULL,
+        45053588738670592ULL,
+        18049583422636032ULL,
+        145241105196122112ULL,
+        362539804446949376ULL,
+        725361088165576704ULL,
+        1450722176331153408ULL,
+        2901444352662306816ULL,
+        5802888705324613632ULL,
+        11533718717099671552ULL,
+        4620693356194824192ULL,
+        288234782788157440ULL,
+        576469569871282176ULL,
+        1224997833292120064ULL,
+        2449995666584240128ULL,
+        4899991333168480256ULL,
+        9799982666336960512ULL,
+        1152939783987658752ULL,
+        2305878468463689728ULL,
+        1128098930098176ULL,
+        2257297371824128ULL,
+        4796069720358912ULL,
+        9592139440717824ULL,
+        19184278881435648ULL,
+        38368557762871296ULL,
+        4679521487814656ULL,
+        9077567998918656ULL
+};
+
+const U64 king_mask[64] = {
+        770ULL,
+        1797ULL,
+        3594ULL,
+        7188ULL,
+        14376ULL,
+        28752ULL,
+        57504ULL,
+        49216ULL,
+        197123ULL,
+        460039ULL,
+        920078ULL,
+        1840156ULL,
+        3680312ULL,
+        7360624ULL,
+        14721248ULL,
+        12599488ULL,
+        50463488ULL,
+        117769984ULL,
+        235539968ULL,
+        471079936ULL,
+        942159872ULL,
+        1884319744ULL,
+        3768639488ULL,
+        3225468928ULL,
+        12918652928ULL,
+        30149115904ULL,
+        60298231808ULL,
+        120596463616ULL,
+        241192927232ULL,
+        482385854464ULL,
+        964771708928ULL,
+        825720045568ULL,
+        3307175149568ULL,
+        7718173671424ULL,
+        15436347342848ULL,
+        30872694685696ULL,
+        61745389371392ULL,
+        123490778742784ULL,
+        246981557485568ULL,
+        211384331665408ULL,
+        846636838289408ULL,
+        1975852459884544ULL,
+        3951704919769088ULL,
+        7903409839538176ULL,
+        15806819679076352ULL,
+        31613639358152704ULL,
+        63227278716305408ULL,
+        54114388906344448ULL,
+        216739030602088448ULL,
+        505818229730443264ULL,
+        1011636459460886528ULL,
+        2023272918921773056ULL,
+        4046545837843546112ULL,
+        8093091675687092224ULL,
+        16186183351374184448ULL,
+        13853283560024178688ULL,
+        144959613005987840ULL,
+        362258295026614272ULL,
+        724516590053228544ULL,
+        1449033180106457088ULL,
+        2898066360212914176ULL,
+        5796132720425828352ULL,
+        11592265440851656704ULL,
+        4665729213955833856ULL
+};
+
+const U64 pawn_mask[2][64] = {
+        {0ULL,
+                0ULL,
+                0ULL,
+                0ULL,
+                0ULL,
+                0ULL,
+                0ULL,
+                0ULL,
+                2ULL,
+                5ULL,
+                10ULL,
+                20ULL,
+                40ULL,
+                80ULL,
+                160ULL,
+                64ULL,
+                512ULL,
+                1280ULL,
+                2560ULL,
+                5120ULL,
+                10240ULL,
+                20480ULL,
+                40960ULL,
+                16384ULL,
+                131072ULL,
+                327680ULL,
+                655360ULL,
+                1310720ULL,
+                2621440ULL,
+                5242880ULL,
+                10485760ULL,
+                4194304ULL,
+                33554432ULL,
+                83886080ULL,
+                167772160ULL,
+                335544320ULL,
+                671088640ULL,
+                1342177280ULL,
+                2684354560ULL,
+                1073741824ULL,
+                8589934592ULL,
+                21474836480ULL,
+                42949672960ULL,
+                85899345920ULL,
+                171798691840ULL,
+                343597383680ULL,
+                687194767360ULL,
+                274877906944ULL,
+                2199023255552ULL,
+                5497558138880ULL,
+                10995116277760ULL,
+                21990232555520ULL,
+                43980465111040ULL,
+                87960930222080ULL,
+                175921860444160ULL,
+                70368744177664ULL,
+                562949953421312ULL,
+                1407374883553280ULL,
+                2814749767106560ULL,
+                5629499534213120ULL,
+                11258999068426240ULL,
+                22517998136852480ULL,
+                45035996273704960ULL,
+                18014398509481984ULL},
+        {512ULL,
+                1280ULL,
+                2560ULL,
+                5120ULL,
+                10240ULL,
+                20480ULL,
+                40960ULL,
+                16384ULL,
+                131072ULL,
+                327680ULL,
+                655360ULL,
+                1310720ULL,
+                2621440ULL,
+                5242880ULL,
+                10485760ULL,
+                4194304ULL,
+                33554432ULL,
+                83886080ULL,
+                167772160ULL,
+                335544320ULL,
+                671088640ULL,
+                1342177280ULL,
+                2684354560ULL,
+                1073741824ULL,
+                8589934592ULL,
+                21474836480ULL,
+                42949672960ULL,
+                85899345920ULL,
+                171798691840ULL,
+                343597383680ULL,
+                687194767360ULL,
+                274877906944ULL,
+                2199023255552ULL,
+                5497558138880ULL,
+                10995116277760ULL,
+                21990232555520ULL,
+                43980465111040ULL,
+                87960930222080ULL,
+                175921860444160ULL,
+                70368744177664ULL,
+                562949953421312ULL,
+                1407374883553280ULL,
+                2814749767106560ULL,
+                5629499534213120ULL,
+                11258999068426240ULL,
+                22517998136852480ULL,
+                45035996273704960ULL,
+                18014398509481984ULL,
+                144115188075855872ULL,
+                360287970189639680ULL,
+                720575940379279360ULL,
+                1441151880758558720ULL,
+                2882303761517117440ULL,
+                5764607523034234880ULL,
+                11529215046068469760ULL,
+                4611686018427387904ULL,
+                0ULL,
+                0ULL,
+                0ULL,
+                0ULL,
+                0ULL,
+                0ULL,
+                0ULL,
+                0ULL}
+};
+
 //rook magic numbers
 const U64 rook_magic_numbers[64] = {
         0x8a80104000800020ULL,
@@ -194,6 +459,7 @@ const U64 not_ab_file = 18229723555195321596ULL;
 U64 rook_attacks[64][4096];
 U64 bishop_attacks[64][512];
 
+/**
 void init_knight_mask(){
     for (int square = 0; square < 64; square++){
         U64 bitboard = 1ULL << square;
@@ -208,8 +474,8 @@ void init_knight_mask(){
         if (bitboard & not_a_file) knight_mask[square] |= bitboard << 15;
         if (bitboard & not_ab_file) knight_mask[square] |= bitboard << 6;
     }
-}
-
+}**/
+/**
 void init_pawn_mask(){
     for (int square = 0; square < 64; square++){
         U64 bitboard = 1ULL << square;
@@ -220,8 +486,8 @@ void init_pawn_mask(){
         if (bitboard & not_h_file) pawn_mask[black][square] |= bitboard << 9;
         if (bitboard & not_a_file) pawn_mask[black][square] |= bitboard << 7;
     }
-}
-
+}**/
+/**
 void init_king_mask(){
     for (int square = 0; square < 64; square++){
         U64 bitboard = 1ULL << square;
@@ -240,7 +506,7 @@ void init_king_mask(){
             king_mask[square] |= bitboard >> 7;
         }
     }
-}
+}**/
 
 void init_rook_relevant_occupancies(){
     for (int square = 0; square < 64; square++){
@@ -357,7 +623,7 @@ void init_rook_magics(){
         int indexLimit = 1 << count_bits(rook_relevant_occupancies[square]);
         for (int index = 0; index < indexLimit; index++){
             U64 occupancies = set_occupancy(index, rook_relevant_occupancies[square]);
-            int magic_index = ((rook_magic_numbers[square] * occupancies) >> (64-rook_relevent_occupancy_count[square]));
+            int magic_index = (int)((rook_magic_numbers[square] * occupancies) >> (64-rook_relevent_occupancy_count[square]));
             rook_attacks[square][magic_index] = rook_attacks_on_the_fly(square, occupancies);
         }
     }
@@ -368,28 +634,18 @@ void init_bishop_magics(){
         int indexLimit = 1 << count_bits(bishop_relevant_occupancies[square]);
         for (int index = 0; index < indexLimit; index++){
             U64 occupancies = set_occupancy(index, bishop_relevant_occupancies[square]);
-            int magic_index = ((bishop_magic_numbers[square] * occupancies) >> (64-bishop_relevent_occupancy_count[square]));
+            int magic_index = (int)((bishop_magic_numbers[square] * occupancies) >> (64-bishop_relevent_occupancy_count[square]));
             bishop_attacks[square][magic_index] = bishop_attacks_on_the_fly(square, occupancies);
         }
     }
 }
 
-U64 get_rook_attacks(int square, U64 occupancies){
-    occupancies &= rook_relevant_occupancies[square];
-    int magic_index = ((rook_magic_numbers[square] * occupancies) >> (64-rook_relevent_occupancy_count[square]));
-    return rook_attacks[square][magic_index];
-}
 
-U64 get_bishop_attacks(int square, U64 occupancies){
-    occupancies &= bishop_relevant_occupancies[square];
-    int magic_index = ((bishop_magic_numbers[square] * occupancies) >> (64-bishop_relevent_occupancy_count[square]));
-    return bishop_attacks[square][magic_index];
-}
 
 void init_bitboards(){
-    init_knight_mask();
-    init_pawn_mask();
-    init_king_mask();
+    //init_knight_mask();
+    //init_pawn_mask();
+    //init_king_mask();
 
     init_rook_relevant_occupancies();
     init_bishop_relevant_occupancies();

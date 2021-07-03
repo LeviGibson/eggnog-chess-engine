@@ -12,9 +12,9 @@ void reset_hash_table(){
 }
 
 int ProbeHash(int depth, int alpha, int beta){
-    HASHE * phashe = &hash_table[generate_zobrist_key() % tt_size];
+    HASHE * phashe = &hash_table[current_zobrist_key % tt_size];
 
-    if (phashe->key == generate_zobrist_key()) {
+    if (phashe->key == current_zobrist_key) {
         if (phashe->depth >= depth) {
             if (phashe->flags == hashfEXACT)
 

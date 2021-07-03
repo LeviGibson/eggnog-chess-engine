@@ -6,6 +6,7 @@
 #define MBBCHESS_BITBOARD_H
 
 #define U64 unsigned long long
+#define U32 unsigned int
 
 #include <assert.h>
 #include <stdlib.h>
@@ -27,7 +28,8 @@ enum {
 //BIT MACROS_____________
 #define get_bit(bitboard, square) ((bitboard) & (1ULL << (square))) ? 1 : 0
 #define set_bit(bitboard, square) ((bitboard) |= (1ULL << (square)))
-#define pop_bit(bitboard, square) if (get_bit((bitboard), (square))) {((bitboard) ^= (1ULL << (square)));}
+#define pop_bit(bitboard, square) (bitboard) ^= (1ULL << (square))
+//#define pop_bit(bitboard, square) if (get_bit((bitboard), (square))) {((bitboard) ^= (1ULL << (square)));}
 
 
 //count bits in U64
@@ -41,10 +43,6 @@ static inline U64 get_random_U64(){
 
 void print_bitboard(U64 bitboard);
 
-U64 knight_mask[64];
-U64 pawn_mask[2][64];
-U64 king_mask[64];
-
 U64 bishop_relevant_occupancies[64];
 U64 rook_relevant_occupancies[64];
 
@@ -56,6 +54,21 @@ U64 get_bishop_attacks(int square, U64 occupancies);
 
 void init_bitboards();
 
+const U64 knight_mask[64];
+const U64 pawn_mask[2][64];
+const U64 king_mask[64];
+
+const int rook_relevent_occupancy_count[64];
+const int bishop_relevent_occupancy_count[64];
+
+U64 rook_attacks[64][4096];
+U64 bishop_attacks[64][512];
+
+const U64 rook_magic_numbers[64];
+const U64 bishop_magic_numbers[64];
+
+#define get_rook_attacks(square, occupancies) rook_attacks[square][((rook_magic_numbers[square] * (occupancies & rook_relevant_occupancies[square])) >> (64-rook_relevent_occupancy_count[square]))]
+#define get_bishop_attacks(square, occupancies) bishop_attacks[square][((bishop_magic_numbers[square] * (occupancies & bishop_relevant_occupancies[square])) >> (64-bishop_relevent_occupancy_count[square]))]
 
 
 #endif //MBBCHESS_BITBOARD_H
