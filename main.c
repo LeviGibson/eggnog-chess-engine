@@ -16,10 +16,5 @@ int main() {
 
     uci_loop();
 
-    /**
-    int startingtime = get_time_ms();
-    parse_go("go depth 10");
-    printf("MS: %d\n", get_time_ms() - startingtime);**/
-
     return 0;
 }

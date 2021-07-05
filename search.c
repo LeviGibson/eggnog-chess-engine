@@ -33,16 +33,16 @@ Line pv_line;
 
 int follow_pv, found_pv;
 
-static inline U16 score_move(int move){
+static inline int score_move(int move){
 
-  if (found_pv){
-    if (move == pv_line.moves[ply]){
-      found_pv = 0;
-      return 20000;
+    if (found_pv){
+        if (move == pv_line.moves[ply]){
+            found_pv = 0;
+            return 20000;
+        }
     }
-  }
 
-  if (get_move_capture(move)){
+    if (get_move_capture(move)){
         int start_piece, end_piece;
         int target_piece = P;
 
@@ -59,20 +59,20 @@ static inline U16 score_move(int move){
 
         return mvv_lva[get_move_piece(move)][target_piece]+1000;
     } else {
-      if (move == killer_moves[ply][0]){
-        return(800);
-      }
-      if (move == killer_moves[ply][1]){
-        return(700);
-      }
+        if (move == killer_moves[ply][0]){
+            return(800);
+        }
+        if (move == killer_moves[ply][1]){
+            return(700);
+        }
 
-      return history_moves[side][get_move_source(move)][get_move_target(move)];
+        return history_moves[side][get_move_source(move)][get_move_target(move)];
     }
 }
 
 typedef struct SORTEDMOVE {
     int move;
-    U16 score;
+    int score;
 } sortedmove;
 
 static inline int compare (const void *a, const void *b) {
@@ -88,166 +88,203 @@ static inline int compare (const void *a, const void *b) {
 
 }
 
+static void swap(int* a, int* b)
+{
+    int t = *a;
+    *a = *b;
+    *b = t;
+}
+
+static int partition (int arr[], int low, int high, moveList *movearr)
+{
+    int pivot = arr[high]; // pivot
+    int i = (low - 1); // Index of smaller element and indicates the right position of pivot found so far
+
+    for (int j = low; j <= high - 1; j++)
+    {
+        // If current element is smaller than the pivot
+        if (arr[j] > pivot)
+        {
+            i++; // increment index of smaller element
+            swap(&arr[i], &arr[j]);
+            swap(&(movearr->moves[i]), &(movearr->moves[j]));
+        }
+    }
+    swap(&arr[i + 1], &arr[high]);
+    swap(&(movearr->moves[i+1]), &(movearr->moves[high]));
+    return (i + 1);
+}
+
+void quickSort(int arr[], int low, int high, moveList *movearr)
+{
+    if (low < high)
+    {
+        /* pi is partitioning index, arr[p] is now
+        at right place */
+        int pi = partition(arr, low, high, movearr);
+
+        // Separately sort elements before
+        // partition and after partition
+        quickSort(arr, low, pi - 1, movearr);
+        quickSort(arr, pi + 1, high, movearr);
+    }
+}
 static inline void sort_moves(moveList *move_list){
-    sortedmove scores[move_list->count];
+    int scores[move_list->count];
 
-    for (int i = 0; i < move_list->count; i++) {
-        scores[i].move = move_list->moves[i];
-        scores[i].score = score_move(move_list->moves[i]);
-    }
+    for (int i = 0; i < move_list->count; i++)
+        scores[i] = score_move(move_list->moves[i]);
 
-    qsort(scores, move_list->count, sizeof (sortedmove), compare);
+    quickSort(scores, 0, move_list->count-1, move_list);
 
-    for (int i = 0; i < move_list->count; i++){
-        move_list->moves[i] = scores[i].move;
-    }
 }
 
 static inline int quiesce(int alpha, int beta) {
 
-  if (nodes % 2048 == 0)
-    communicate();
+    if (nodes % 2048 == 0)
+        communicate();
 
-  if (stop){
-    return 0;
-  }
-
-  nodes++;
-
-  int stand_pat = evaluate();
-  if (stand_pat >= beta){
-    return beta;
-  }
-
-  if (alpha <= stand_pat){
-    alpha = stand_pat;
-  }
-
-  moveList legalMoves[1];
-  legalMoves->count = 0;
-
-  U64 old_occupancies = occupancies[white] | occupancies[black];
-
-  occupancies[both] = old_occupancies;
-
-  copy_board();
-
-  generate_moves(legalMoves);
-  sort_moves(legalMoves);
-
-  for (int moveId = 0; moveId < legalMoves->count; moveId++){
-    int move = legalMoves->moves[moveId];
-
-    if (!get_move_capture(move))
-      continue;
-
-    if (make_move(move, all_moves)){
-      int score = -quiesce(-beta, -alpha);
-
-      take_back();
-
-      if (score >= beta){
-        return beta;
-      }
-      if (score > alpha)
-        alpha = score;
+    if (stop){
+        return 0;
     }
-  }
 
-  return alpha;
+    nodes++;
+
+    int stand_pat = evaluate();
+    if (stand_pat >= beta){
+        return beta;
+    }
+
+    if (alpha <= stand_pat){
+        alpha = stand_pat;
+    }
+
+    moveList legalMoves;
+    legalMoves.count = 0;
+
+    U64 old_occupancies = occupancies[white] | occupancies[black];
+
+    occupancies[both] = old_occupancies;
+
+    copy_board();
+
+    generate_moves(&legalMoves);
+    sort_moves(&legalMoves);
+
+    for (int moveId = 0; moveId < legalMoves.count; moveId++){
+        int move = legalMoves.moves[moveId];
+
+        if (!get_move_capture(move))
+            continue;
+
+        if (make_move(move, all_moves)){
+            int score = -quiesce(-beta, -alpha);
+
+            take_back();
+
+            if (score >= beta){
+                return beta;
+            }
+
+            if (score > alpha)
+                alpha = score;
+        }
+    }
+
+    return alpha;
 
 }
 
 static inline int ZwSearch(int beta, int depth){
 
-  if (nodes % 2048 == 0)
-    communicate();
+    if (nodes % 2048 == 0)
+        communicate();
 
-  if (stop){
-    return 0;
-  }
-
-  nodes++;
-  if (depth == 0)
-    return quiesce(beta-1, beta);
-
-  moveList legalMoves;
-  legalMoves.count = 0;
-
-  generate_moves(&legalMoves);
-  sort_moves(&legalMoves);
-
-  copy_board();
-
-  for (int moveId = 0; moveId < legalMoves.count; moveId++){
-    int move  = legalMoves.moves[moveId];
-
-    int score;
-
-    if (make_move(move, all_moves)){
-
-      score = -ZwSearch(1-beta, depth-1);
-
-      take_back();
-
-      if (score >= beta){
-        return beta;
-      }
+    if (stop){
+        return 0;
     }
-  }
-  return beta-1;
+
+    nodes++;
+    if (depth == 0)
+        return quiesce(beta-1, beta);
+
+    moveList legalMoves;
+    memset(&legalMoves, 0, sizeof legalMoves);
+
+    generate_moves(&legalMoves);
+    sort_moves(&legalMoves);
+
+    copy_board();
+
+    for (int moveId = 0; moveId < legalMoves.count; moveId++){
+        int move  = legalMoves.moves[moveId];
+
+        int score;
+
+        if (make_move(move, all_moves)){
+
+            score = -ZwSearch(1-beta, depth-1);
+
+            take_back();
+
+            if (score >= beta){
+                return beta;
+            }
+        }
+    }
+    return beta-1;
 }
 
 void find_pv(moveList *moves){
-  follow_pv = 0;
-  for (int moveId = 0; moveId < moves->count; moveId++){
-    if (moves->moves[moveId] == pv_line.moves[ply]){
-      found_pv = 1;
-      follow_pv = 1;
+    follow_pv = 0;
+    for (int moveId = 0; moveId < moves->count; moveId++){
+        if (moves->moves[moveId] == pv_line.moves[ply]){
+            found_pv = 1;
+            follow_pv = 1;
+        }
     }
-  }
 }
 
 static inline int negamax(int depth, int alpha, int beta, Line *pline){
-  //general maintenence
-  nodes++;
+    //general maintenence
+    nodes++;
 
-  if (nodes % 2048 == 0)
-    communicate();
+    if (nodes % 2048 == 0)
+        communicate();
 
-  if (stop){
-    return 0;
-  }
+    if (stop){
+        return 0;
+    }
 
-  found_pv = 0;
+    found_pv = 0;
 
-  Line line;
-  line.length = 0;
+    Line line;
+    line.length = 0;
 
-  int hashf = hashfALPHA;
+    int hashf = hashfALPHA;
 
-  int hash_lookup = ProbeHash(depth, alpha, beta);
-  if ((hash_lookup) != valUNKNOWN) {
-      return hash_lookup;
-  }
+    int hash_lookup = ProbeHash(depth, alpha, beta);
+    if ((hash_lookup) != valUNKNOWN) {
+        return hash_lookup;
+    }
 
-  if (depth <= 0){
-    pline->length = 0;
-    return quiesce(alpha, beta);
-  }
+    if (depth <= 0){
+        pline->length = 0;
+        return quiesce(alpha, beta);
+    }
 
-  if (is_threefold_repetition()){
-    return 0;
-  }
+    if (is_threefold_repetition()){
+        return 0;
+    }
 
-  int in_check = is_square_attacked(get_ls1b_index((side == white) ? bitboards[K] : bitboards[k]), (side ^ 1));
+    int in_check = is_square_attacked(get_ls1b_index((side == white) ? bitboards[K] : bitboards[k]), (side ^ 1));
 
-  if (in_check)
-    depth++;
+    if (in_check)
+        depth++;
 
-  int eval;
+    int eval;
 
-  if (depth >= 3 && in_check == 0 && ply){
+    if (depth >= 3 && in_check == 0 && ply){
         copy_board();
 
         side ^= 1;
@@ -261,169 +298,204 @@ static inline int negamax(int depth, int alpha, int beta, Line *pline){
         }
     }
 
+    moveList legalMoves;
+    memset(&legalMoves, 0, sizeof legalMoves);
 
+    generate_moves(&legalMoves);
 
-  moveList legalMoves;
-  legalMoves.count = 0;
-
-  generate_moves(&legalMoves);
-
-  if (follow_pv){
-    find_pv(&legalMoves);
-  }
-
-  sort_moves(&legalMoves);
-
-  copy_board();
-
-  int legalMoveCount = 0;
-  int move;
-  for (int moveId = 0; moveId < legalMoves.count; moveId++){
-    move = legalMoves.moves[moveId];
-    if (make_move(move, all_moves)){
-
-      legalMoveCount++;
-
-      ply++;
-
-      if (legalMoveCount == 0){
-        eval = -negamax(depth-1, -beta, -alpha, &line);
-      } else {
-
-        //LMR
-
-        if ((depth >= 3) && (legalMoveCount > 5) && (in_check == 0) && (get_move_capture(move) == 0) && (get_move_promoted(move) == 0)){
-          eval = -negamax(depth-2, -alpha-1, -alpha, &line);
-          //eval = alpha + 1;
-        }
-        else {
-          eval = alpha + 1;
-        }
-
-        if (eval > alpha){
-          eval = -negamax(depth-1, -alpha-1, -alpha, &line);
-          if ((eval > alpha) && (eval < beta)){
-            eval = -negamax(depth-1, -beta, -alpha, &line);
-          }
-        }
-      }
-
-
-      ply--;
-
-      if (eval > alpha){
-
-        alpha = eval;
-
-        hashf = hashfEXACT;
-
-        pline->moves[0] = move;
-        memcpy(pline->moves + 1, line.moves, line.length * 4);
-        pline->length = line.length + 1;
-
-      }
-
-      take_back();
-
-      if (eval >= beta){
-
-        if (!get_move_capture(move)){
-          killer_moves[ply][1] = killer_moves[ply][0];
-          killer_moves[ply][0] = move;
-
-          history_moves[side][get_move_source(move)][get_move_target(move)] += depth*depth;
-        }
-
-        RecordHash(depth, beta, hashfBETA);
-
-        return beta;
-      }
+    if (follow_pv){
+        find_pv(&legalMoves);
     }
 
-  }
+    sort_moves(&legalMoves);
 
-  if (legalMoveCount == 0){
-    if (in_check){
-      return (-49000) + ply;
-    } else {
-      return 0;
+    copy_board();
+
+    int legalMoveCount = 0;
+    int move;
+    for (int moveId = 0; moveId < legalMoves.count; moveId++){
+        move = legalMoves.moves[moveId];
+        if (make_move(move, all_moves)){
+
+            legalMoveCount++;
+
+            ply++;
+
+            if (legalMoveCount == 0){
+                eval = -negamax(depth-1, -beta, -alpha, &line);
+            } else {
+
+                //LMR
+
+                if ((depth >= 3) && (legalMoveCount > 5) && (in_check == 0) && (get_move_capture(move) == 0) && (get_move_promoted(move) == 0)){
+                    eval = -negamax(depth-2, -alpha-1, -alpha, &line);
+                    //eval = alpha + 1;
+                }
+                else {
+                    eval = alpha + 1;
+                }
+
+                if (eval > alpha){
+                    eval = -negamax(depth-1, -alpha-1, -alpha, &line);
+                    if ((eval > alpha) && (eval < beta)){
+                        eval = -negamax(depth-1, -beta, -alpha, &line);
+                    }
+                }
+            }
+
+            ply--;
+
+            take_back();
+
+            if (eval > alpha){
+
+                alpha = eval;
+
+                hashf = hashfEXACT;
+
+                pline->moves[0] = move;
+                memcpy(pline->moves + 1, line.moves, line.length * 4);
+                pline->length = line.length + 1;
+
+            }
+
+            if (eval >= beta){
+
+                if (!get_move_capture(move)){
+                    killer_moves[ply][1] = killer_moves[ply][0];
+                    killer_moves[ply][0] = move;
+
+                    history_moves[side][get_move_source(move)][get_move_target(move)] += depth*depth;
+                }
+
+                RecordHash(depth, beta, hashfBETA);
+
+                return beta;
+            }
+        }
+
     }
-  }
 
-  RecordHash(depth, alpha, hashf);
-  return alpha;
+    if (legalMoveCount == 0){
+        if (in_check){
+            return (-49000) + ply;
+
+        } else {
+            return 0;
+        }
+    }
+
+    RecordHash(depth, alpha, hashf);
+    return alpha;
 
 }
 
 #define aspwindow 50
 
 void search_position(int depth){
-  start_time();
-  stop = 0;
-  nodes = 0;
+    /**
+    moveList legalMoves;
+    memset(&legalMoves, 0, sizeof legalMoves);
+    generate_moves(&legalMoves);
+    sort_moves(&legalMoves);
 
-  memset(killer_moves, 0, sizeof(killer_moves));
-  memset(history_moves, 0, sizeof(history_moves));
+    moveList legalMoves2;
+    memset(&legalMoves2, 0, sizeof legalMoves2);
+    generate_moves(&legalMoves2);
+    sort_moves_old(&legalMoves2);
 
-  Line negamax_line;
-  negamax_line.length = 0;
+    printf("CMP: %d\n\n", memcmp(&legalMoves, &legalMoves2, sizeof legalMoves));
 
-  int alpha = -50000;
-  int beta = 50000;
-
-  int eval;
-
-  for (int currentDepth = 1; currentDepth <= depth; currentDepth++){
-    ply = 0;
-
-    follow_pv = 1;
-    found_pv = 0;
-
-    reset_hash_table();
-
-    int nmRes = negamax(currentDepth, alpha, beta, &negamax_line);
-
-    if (stop) {
-        break;
+    printf("%d : %d\n", legalMoves2.count, legalMoves.count);
+    for(int i = 0; i < 256; i++){
+        print_move(legalMoves.moves[i]);
+        printf(" : ");
+        print_move(legalMoves2.moves[i]);
+        printf("\n");
     }
 
-    //if the evaluation is outside of aspiration window bounds, reset alpha and beta and continue the search
-    if ((nmRes >= beta) || (nmRes <= alpha)){
-        alpha = -50000;
-        beta = 50000;
-        nmRes = negamax(currentDepth, alpha, beta, &negamax_line);
+    return;**/
+
+    start_time();
+    stop = 0;
+    nodes = 0;
+
+    memset(killer_moves, 0, sizeof(killer_moves));
+    memset(history_moves, 0, sizeof(history_moves));
+
+    Line negamax_line;
+    negamax_line.length = 0;
+
+    int alpha = -50000;
+    int beta = 50000;
+
+    int eval;
+
+    for (int currentDepth = 1; currentDepth <= depth; currentDepth++){
+        ply = 0;
+
+        follow_pv = 1;
+        found_pv = 0;
+
+        reset_hash_table();
+
+        int nmRes = negamax(currentDepth, alpha, beta, &negamax_line);
+
+        if (stop) {
+            break;
+        }
+
+        //if the evaluation is outside of aspiration window bounds, reset alpha and beta and continue the search
+        if ((nmRes >= beta) || (nmRes <= alpha)){
+
+            ply = 0;
+
+            follow_pv = 1;
+            found_pv = 0;
+
+            printf("ASPIRATION RESEARCH %d\n", nmRes);
+
+            alpha = -50000;
+            beta = 50000;
+
+            reset_hash_table();
+            memset(&negamax_line, 0, sizeof negamax_line);
+
+            nmRes = negamax(currentDepth, alpha, beta, &negamax_line);
+
+        }
+
+        //if time ran out during aspiration research, break.
+        if (stop){
+            break;
+        }
+
+        eval = nmRes;
+
+        alpha = nmRes - aspwindow;
+        beta = nmRes + aspwindow;
+
+        memcpy(&pv_line, &negamax_line, sizeof negamax_line);
+        memset(&negamax_line, 0, sizeof negamax_line);
+
+        printf("%d\n", eval);
+        printf("info score %s %d depth %d nodes %ld pv ",(abs(eval) > 40000) ? "mate" : "cp" , (abs(eval) > 40000) ? (49000 - abs(eval)) * (eval / abs(eval)) : eval, currentDepth, nodes);
+
+        for (int i = 0; i < currentDepth; i++){
+            print_move(pv_line.moves[i]);
+            printf(" ");
+        }
+
+        printf("\n");
+
+        if ((abs(eval) > 40000)){
+            break;
+        }
+
     }
 
-    //if time ran out during aspiration research, break.
-    if (stop){
-        break;
-    }
-
-    eval = nmRes;
-
-    alpha = nmRes - aspwindow;
-    beta = nmRes + aspwindow;
-
-    memcpy(&pv_line, &negamax_line, sizeof negamax_line);
-    memset(&negamax_line, 0, sizeof negamax_line);
-
-    printf("info score %s %d depth %d nodes %ld pv ",(abs(eval) > 40000) ? "mate" : "cp" , (abs(eval) > 40000) ? (49000 - abs(eval)) * (eval / abs(eval)) : eval, currentDepth, nodes);
-
-    for (int i = 0; i < currentDepth; i++){
-      print_move(pv_line.moves[i]);
-      printf(" ");
-    }
-
+    printf("bestmove ");
+    print_move(pv_line.moves[0]);
     printf("\n");
-
-    if ((abs(eval) > 40000)){
-      break;
-    }
-
-  }
-
-  printf("bestmove ");
-  print_move(pv_line.moves[0]);
-  printf("\n");
 
 }
