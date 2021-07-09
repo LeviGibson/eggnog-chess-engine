@@ -57,7 +57,26 @@ const int pst[6][64] = {
 
 const int scores[] = {100, 300, 325, 500, 900, 0, -100, -300, -325, -500, -900, 0};
 
+int monte_carlo_game(){
+
+    return 0;
+}
+
+int monte_carlo_evaluation(int samples){
+
+    int score = 0;
+
+    for (int i = 0; i < samples; i++){
+        score += monte_carlo_game();
+    }
+
+    return 0;
+}
+
 int evaluate(){
+
+    return monte_carlo_evaluation(4000);
+
   int eval = 0;
 
   for(int piece = P; piece <= K; piece++){
