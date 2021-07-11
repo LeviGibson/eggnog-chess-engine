@@ -70,32 +70,15 @@ static inline int score_move(int move){
     }
 }
 
-typedef struct SORTEDMOVE {
-    int move;
-    int score;
-} sortedmove;
 
-static inline int compare (const void *a, const void *b) {
-    U16 ascore = ((sortedmove*)a)->score;
-    U16 bscore = ((sortedmove*)b)->score;
-
-    if (ascore > bscore) {
-        return -1;
-    } if (ascore < bscore) {
-        return 1;
-    }
-    return 0;
-
-}
-
-static void swap(int* a, int* b)
+static inline void swap(int* a, int* b)
 {
     int t = *a;
     *a = *b;
     *b = t;
 }
 
-static int partition (int arr[], int low, int high, moveList *movearr)
+static inline int partition (int arr[], int low, int high, moveList *movearr)
 {
     int pivot = arr[high]; // pivot
     int i = (low - 1); // Index of smaller element and indicates the right position of pivot found so far
@@ -110,8 +93,10 @@ static int partition (int arr[], int low, int high, moveList *movearr)
             swap(&(movearr->moves[i]), &(movearr->moves[j]));
         }
     }
+
     swap(&arr[i + 1], &arr[high]);
     swap(&(movearr->moves[i+1]), &(movearr->moves[high]));
+
     return (i + 1);
 }
 
@@ -119,23 +104,41 @@ void quickSort(int arr[], int low, int high, moveList *movearr)
 {
     if (low < high)
     {
-        /* pi is partitioning index, arr[p] is now
-        at right place */
         int pi = partition(arr, low, high, movearr);
-
-        // Separately sort elements before
-        // partition and after partition
         quickSort(arr, low, pi - 1, movearr);
         quickSort(arr, pi + 1, high, movearr);
     }
 }
+
+int partition_zero_scores(moveList *movearr, int scorearr[]){
+    int zerosFound = 0;
+    for (int moveId = 0; moveId < (movearr->count - zerosFound); moveId++) {
+        if (scorearr[moveId] == 0){
+
+            int swappingToIndex = movearr->count - 1 - zerosFound;
+
+            swap(&movearr->moves[moveId], &movearr->moves[swappingToIndex]);
+            swap(&scorearr[moveId], &scorearr[swappingToIndex]);
+
+            zerosFound++;
+            moveId--;
+
+        }
+    }
+    return zerosFound;
+}
+
 static inline void sort_moves(moveList *move_list){
+
     int scores[move_list->count];
 
     for (int i = 0; i < move_list->count; i++)
         scores[i] = score_move(move_list->moves[i]);
 
-    quickSort(scores, 0, move_list->count-1, move_list);
+    int zerosFound = 0;
+    zerosFound = partition_zero_scores(move_list, scores);
+
+    quickSort(scores, 0, move_list->count-1-zerosFound, move_list);
 
 }
 
@@ -478,7 +481,6 @@ void search_position(int depth){
         memcpy(&pv_line, &negamax_line, sizeof negamax_line);
         memset(&negamax_line, 0, sizeof negamax_line);
 
-        printf("%d\n", eval);
         printf("info score %s %d depth %d nodes %ld pv ",(abs(eval) > 40000) ? "mate" : "cp" , (abs(eval) > 40000) ? (49000 - abs(eval)) * (eval / abs(eval)) : eval, currentDepth, nodes);
 
         for (int i = 0; i < currentDepth; i++){

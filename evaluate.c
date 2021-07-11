@@ -4,7 +4,7 @@
 #include <stdio.h>
 
 const int pst[6][64] = {
-                {0,  0,  0,  0,  0,  0,  0,  0,
+        {0,  0,  0,  0,  0,  0,  0,  0,
                 50, 50, 50, 50, 50, 50, 50, 50,
                 10, 10, 20, 30, 30, 20, 10, 10,
                 5,  5, 10, 25, 25, 10,  5,  5,
@@ -57,55 +57,37 @@ const int pst[6][64] = {
 
 const int scores[] = {100, 300, 325, 500, 900, 0, -100, -300, -325, -500, -900, 0};
 
-int monte_carlo_game(){
-
-    return 0;
-}
-
-int monte_carlo_evaluation(int samples){
-
-    int score = 0;
-
-    for (int i = 0; i < samples; i++){
-        score += monte_carlo_game();
-    }
-
-    return 0;
-}
-
 int evaluate(){
 
-    return monte_carlo_evaluation(4000);
+    int eval = 0;
 
-  int eval = 0;
+    for(int piece = P; piece <= K; piece++){
+        U64 bitboard = bitboards[piece];
 
-  for(int piece = P; piece <= K; piece++){
-    U64 bitboard = bitboards[piece];
+        eval += scores[piece] * count_bits(bitboards[piece]);
 
-    eval += scores[piece] * count_bits(bitboards[piece]);
+        while (bitboard){
+            int target = get_ls1b_index(bitboard);
 
-    while (bitboard){
-      int target = get_ls1b_index(bitboard);
+            eval += pst[piece][target];
 
-      eval += pst[piece][target];
-
-      bitboard -= (1ULL << target);
+            bitboard -= (1ULL << target);
+        }
     }
-  }
 
-  for (int piece = p; piece <= k; piece++){
-    U64 bitboard = bitboards[piece];
+    for (int piece = p; piece <= k; piece++){
+        U64 bitboard = bitboards[piece];
 
-    eval += scores[piece] * count_bits(bitboards[piece]);
+        eval += scores[piece] * count_bits(bitboards[piece]);
 
-    while (bitboard){
-      int target = get_ls1b_index(bitboard);
+        while (bitboard){
+            int target = get_ls1b_index(bitboard);
 
-      eval -= pst[piece-6][63 - target];
+            eval -= pst[piece-6][63 - target];
 
-      bitboard -= (1ULL << target);
+            bitboard -= (1ULL << target);
+        }
     }
-  }
 
-  return (side == white) ? eval : -eval;
+    return (side == white) ? eval : -eval;
 }
