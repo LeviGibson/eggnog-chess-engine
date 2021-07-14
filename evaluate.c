@@ -72,6 +72,12 @@ int evaluate(){
 
             eval += pst[piece][target];
 
+            if (piece == B){
+                eval += count_bits(get_bishop_attacks(target, occupancies[white] | bitboards[p])) * 10;
+            } else if (piece == R){
+                eval += count_bits(get_rook_attacks(target, occupancies[white] | bitboards[p])) * 10;
+            }
+
             pop_bit(bitboard, target);
         }
     }
@@ -87,6 +93,12 @@ int evaluate(){
             int target = bsf(bitboard);
 
             eval -= pst[piece-6][target ^ 56];
+
+            if (piece == b){
+                eval -= count_bits(get_bishop_attacks(target, occupancies[black] | bitboards[P])) * 10;
+            } else if (piece == r){
+                eval -= count_bits(get_rook_attacks(target, occupancies[black] | bitboards[P])) * 10;
+            }
 
             pop_bit(bitboard, target);
         }
