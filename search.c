@@ -66,7 +66,8 @@ static inline int score_move(int move){
             return(700);
         }
 
-        return history_moves[side][get_move_source(move)][get_move_target(move)];
+        //return history_moves[side][get_move_source(move)][get_move_target(move)];
+        return 0;
     }
 }
 
@@ -112,6 +113,7 @@ void quickSort(int arr[], int low, int high, moveList *movearr)
 
 int partition_zero_scores(moveList *movearr, int scorearr[]){
     int zerosFound = 0;
+
     for (int moveId = 0; moveId < (movearr->count - zerosFound); moveId++) {
         if (scorearr[moveId] == 0){
 
@@ -135,10 +137,9 @@ static inline void sort_moves(moveList *move_list){
     for (int i = 0; i < move_list->count; i++)
         scores[i] = score_move(move_list->moves[i]);
 
-    int zerosFound = 0;
-    zerosFound = partition_zero_scores(move_list, scores);
+    int zerosFound = partition_zero_scores(move_list, scores);
 
-    quickSort(scores, 0, move_list->count-1-zerosFound, move_list);
+    quickSort(scores, 0, move_list->count - 1 - zerosFound, move_list);
 
 }
 

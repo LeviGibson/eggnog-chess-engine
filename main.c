@@ -4,7 +4,7 @@
 #include "bitboard.h"
 #include "board.h"
 #include "uci.h"
-
+#include "perft.h"
 
 int main() {
     init_bitboards();
@@ -12,8 +12,10 @@ int main() {
 
     parse_fen(start_position);
 
-    parse_go("go depth 10");
-    //uci_loop();
+    //perft_test(4);
+    //parse_go("go depth 8");
+
+    uci_loop();
 
     return 0;
 }

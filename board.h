@@ -63,11 +63,15 @@ typedef struct {
     get_bit(move, 23)
 
 #define copy_board()                                                      \
-    U64 bitboards_copy[12], occupancies_copy[3], zobrist_history_copy[101], current_zobrist_key_copy;\
-    int side_copy, enpassant_copy, castle_copy, zobrist_history_length_copy;\
+    U64 bitboards_copy[12], occupancies_copy[3], zobrist_history_copy[101], current_zobrist_key_copy, zobrist_key_parts_copy[15], zobrist_key_bitboards_copy[12];\
+    int side_copy, enpassant_copy, castle_copy, zobrist_history_length_copy; \
+                                                                          \
     memcpy(zobrist_history_copy, zobrist_history, sizeof zobrist_history_copy);\
     memcpy(bitboards_copy, bitboards, sizeof bitboards_copy);                   \
-    memcpy(occupancies_copy, occupancies, sizeof occupancies_copy);             \
+    memcpy(occupancies_copy, occupancies, sizeof occupancies_copy);       \
+    memcpy(zobrist_key_parts_copy, zobrist_key_parts, sizeof zobrist_key_parts); \
+    memcpy(zobrist_key_bitboards_copy, zobrist_key_bitboards, sizeof zobrist_key_bitboards);  \
+                                                                          \
     side_copy = side, enpassant_copy = enpessant, castle_copy = castle;    \
     zobrist_history_length_copy = zobrist_history_length;                  \
     current_zobrist_key_copy = current_zobrist_key                          \
@@ -75,7 +79,11 @@ typedef struct {
 #define take_back()                                                       \
     memcpy(bitboards, bitboards_copy, sizeof bitboards);              \
     memcpy(occupancies, occupancies_copy, sizeof occupancies);        \
-    memcpy(zobrist_history, zobrist_history_copy, sizeof zobrist_history); \
+    memcpy(zobrist_history, zobrist_history_copy, sizeof zobrist_history);\
+                                                                          \
+    memcpy(zobrist_key_parts, zobrist_key_parts_copy, sizeof zobrist_key_parts); \
+    memcpy(zobrist_key_bitboards, zobrist_key_bitboards_copy, sizeof zobrist_key_bitboards); \
+                                                                          \
     side = side_copy, enpessant = enpassant_copy, castle = castle_copy;   \
     current_zobrist_key = current_zobrist_key_copy;             \
     zobrist_history_length = zobrist_history_length_copy                 \
@@ -83,12 +91,16 @@ typedef struct {
 void print_move(int move);
 
 U64 generate_zobrist_key();
+U64 update_zobrist_key();
 void init_zobrist_keys();
 
 int is_threefold_repetition();
 
 U64 zobrist_history[101];
 int zobrist_history_length;
+
+U64 zobrist_key_parts[15];
+U64 zobrist_key_bitboards[12];
 
 U64 bitboards[12];
 U64 occupancies[3];
