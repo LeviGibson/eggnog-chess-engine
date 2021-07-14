@@ -12,8 +12,8 @@ int main() {
 
     parse_fen(start_position);
 
-    //perft_test(4);
-    //parse_go("go depth 8");
+    //perft_test(5);
+    //parse_go("go depth 9");
 
     uci_loop();
 

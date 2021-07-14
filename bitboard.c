@@ -609,7 +609,7 @@ U64 set_occupancy(int index, U64 mask){
     U64 occupancies = 0ULL;
     int bits_in_mask = count_bits(mask);
     for (int bit = 0; bit < bits_in_mask; bit++){
-        int bitIndex = get_ls1b_index(mask);
+        int bitIndex = bsf(mask);
 
         if (index & (1<<bit))
             set_bit(occupancies, bitIndex);

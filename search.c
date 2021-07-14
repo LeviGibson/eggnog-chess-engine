@@ -281,7 +281,7 @@ static inline int negamax(int depth, int alpha, int beta, Line *pline){
         return 0;
     }
 
-    int in_check = is_square_attacked(get_ls1b_index((side == white) ? bitboards[K] : bitboards[k]), (side ^ 1));
+    int in_check = is_square_attacked(bsf((side == white) ? bitboards[K] : bitboards[k]), (side ^ 1));
 
     if (in_check)
         depth++;

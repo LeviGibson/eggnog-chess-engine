@@ -55,58 +55,6 @@ const int pst[6][64] = {
 
 };
 
-/**const int pst[6][64] = {
-        {
-                90,  90,  90,  90,  90,  90,  90,  90,
-                30,  30,  30,  40,  40,  30,  30,  30,
-                20,  20,  20,  30,  30,  30,  20,  20,
-                10,  10,  10,  20,  20,  10,  10,  10,
-                5,   5,  10,  20,  20,   5,   5,   5,
-                0,   0,   0,   5,   5,   0,   0,   0,
-                0,   0,   0, -10, -10,   0,   0,   0,
-                0,   0,   0,   0,   0,   0,   0,   0
-        },
-        {
-                -5,   0,   0,   0,   0,   0,   0,  -5,
-                -5,   0,   0,  10,  10,   0,   0,  -5,
-                -5,   5,  20,  20,  20,  20,   5,  -5,
-                -5,  10,  20,  30,  30,  20,  10,  -5,
-                -5,  10,  20,  30,  30,  20,  10,  -5,
-                -5,   5,  20,  10,  10,  20,   5,  -5,
-                -5,   0,   0,   0,   0,   0,   0,  -5,
-                -5, -10,   0,   0,   0,   0, -10,  -5
-        },
-        {
-                0,   0,   0,   0,   0,   0,   0,   0,
-                0,   0,   0,   0,   0,   0,   0,   0,
-                0,  20,   0,  10,  10,   0,  20,   0,
-                0,   0,  10,  20,  20,  10,   0,   0,
-                0,   0,  10,  20,  20,  10,   0,   0,
-                0,  10,   0,   0,   0,   0,  10,   0,
-                0,  30,   0,   0,   0,   0,  30,   0,
-                0,   0, -10,   0,   0, -10,   0,   0
-        },
-        {
-                50,  50,  50,  50,  50,  50,  50,  50,
-                50,  50,  50,  50,  50,  50,  50,  50,
-                0,   0,  10,  20,  20,  10,   0,   0,
-                0,   0,  10,  20,  20,  10,   0,   0,
-                0,   0,  10,  20,  20,  10,   0,   0,
-                0,   0,  10,  20,  20,  10,   0,   0,
-                0,   0,  10,  20,  20,  10,   0,   0,
-                0,   0,   0,  20,  20,   0,   0,   0
-
-        },
-        {-30,-40,-40,-50,-50,-40,-40,-30,
-                -30,-40,-40,-50,-50,-40,-40,-30,
-                -30,-40,-40,-50,-50,-40,-40,-30,
-                -30,-40,-40,-50,-50,-40,-40,-30,
-                -20,-30,-30,-40,-40,-30,-30,-20,
-                -10,-20,-20,-20,-20,-20,-20,-10,
-                20, 20,  0,  0,  0,  0, 20, 20,
-                20, 30, 10,  0,  0, 10, 30, 20}
-};**/
-
 const int scores[] = {100, 300, 325, 500, 900, 0, -100, -300, -325, -500, -900, 0};
 
 int evaluate(){
@@ -116,29 +64,31 @@ int evaluate(){
     for (int piece = P; piece <= K; piece++){
         U64 bitboard = bitboards[piece];
 
-        eval += scores[piece] * count_bits(bitboards[piece]);
+        int bb_count = count_bits(bitboard);
+        eval += (scores[piece] * bb_count);
 
-        while (bitboard){
-            int target = get_ls1b_index(bitboard);
+        for (int _ = 0; _ < bb_count; _++) {
+            int target = bsf(bitboard);
 
             eval += pst[piece][target];
 
-            bitboard -= (1ULL << target);
+            pop_bit(bitboard, target);
         }
     }
 
     for (int piece = p; piece <= k; piece++){
         U64 bitboard = bitboards[piece];
 
-        eval += scores[piece] * count_bits(bitboards[piece]);
+        int bb_count = count_bits(bitboard);
+        eval += (scores[piece] * bb_count);
 
-        while (bitboard){
+        for (int _ = 0; _ < bb_count; _++){
 
-            int target = get_ls1b_index(bitboard);
+            int target = bsf(bitboard);
 
             eval -= pst[piece-6][target ^ 56];
 
-            bitboard -= (1ULL << target);
+            pop_bit(bitboard, target);
         }
     }
 

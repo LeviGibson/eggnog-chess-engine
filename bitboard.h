@@ -31,11 +31,11 @@ enum {
 #define pop_bit(bitboard, square) (bitboard) ^= (1ULL << (square))
 //#define pop_bit(bitboard, square) if (get_bit((bitboard), (square))) {((bitboard) ^= (1ULL << (square)));}
 
-
 //count bits in U64
 #define count_bits(bitboard) __builtin_popcountll(bitboard)
 
-#define get_ls1b_index(x) __builtin_ctzll(x)
+//get least significant bit in U64
+#define bsf(x) __builtin_ctzll(x)
 
 static inline U64 get_random_U64(){
   return (U64)rand() | ((U64)rand() << 32);

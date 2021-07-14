@@ -60,8 +60,10 @@ U64 update_zobrist_key(){
             U64 bitboard = bitboards[piece];
             U64 bitboard_key = 0ULL;
 
-            while (bitboard){
-                int square = get_ls1b_index(bitboard);
+            int bb_count = count_bits(bitboard);
+
+            for (int _ = 0; _ < bb_count; _++){
+                int square = bsf(bitboard);
 
                 bitboard_key ^= piece_keys[piece][square];
 
@@ -81,7 +83,7 @@ U64 update_zobrist_key(){
     zobrist_key_parts[12] = side_keys[side];
     zobrist_key_parts[13] = castle_keys[castle];
 
-    memcpy(zobrist_key_bitboards, bitboards, sizeof bitboards);
+    memcpy(&zobrist_key_bitboards, &bitboards, sizeof bitboards);
 
     return key;
 }
@@ -95,7 +97,7 @@ U64 generate_zobrist_key(){
         U64 bitboard = bitboards[piece];
         U64 bitboard_key = 0ULL;
         while (bitboard){
-            int square = get_ls1b_index(bitboard);
+            int square = bsf(bitboard);
 
             bitboard_key ^= piece_keys[piece][square];
 
@@ -154,12 +156,12 @@ static inline void generate_knight_moves(moveList *legalMoves){
     U64 friendly_occupanices = occupancies[side];
 
     while (bitboard){
-        int square = get_ls1b_index(bitboard);
+        int square = bsf(bitboard);
 
         U64 bb_moves = knight_mask[square] & (~friendly_occupanices);
 
         while (bb_moves){
-            int target = get_ls1b_index(bb_moves);
+            int target = bsf(bb_moves);
 
             if ((1ULL << target) & occupancies[both]) {
                 legalMoves->moves[legalMoves->count] = encode_move(square, target, ptype, 0, 0, 1, 0, 0);
@@ -187,13 +189,13 @@ static inline void generate_pawn_moves(moveList *legalMoves){
         enemy_occupanices |= 1ULL << enpessant;
 
     while (bitboard){
-        int square = get_ls1b_index(bitboard);
+        int square = bsf(bitboard);
 
         //Pawn Captures
         U64 bb_moves = pawn_mask[side][square] & enemy_occupanices;
 
         while (bb_moves){
-            int target = get_ls1b_index(bb_moves);
+            int target = bsf(bb_moves);
 
             //Enpessant
             if (target == enpessant) {
@@ -297,12 +299,12 @@ static inline void generate_bishop_moves(moveList *legalMoves){
     U64 friendly_occupanices = occupancies[side];
 
     while (bitboard){
-        int square = get_ls1b_index(bitboard);
+        int square = bsf(bitboard);
 
         U64 bb_moves = get_bishop_attacks(square, occupancies[both]) & (~friendly_occupanices);
 
         while (bb_moves){
-            int target = get_ls1b_index(bb_moves);
+            int target = bsf(bb_moves);
 
             if ((1ULL << target) & occupancies[both]) {
                 legalMoves->moves[legalMoves->count] = encode_move(square, target, ptype, 0, 0, 1, 0, 0);
@@ -326,12 +328,12 @@ static inline void generate_rook_moves(moveList *legalMoves){
     U64 friendly_occupanices = occupancies[side];
 
     while (bitboard){
-        int square = get_ls1b_index(bitboard);
+        int square = bsf(bitboard);
 
         U64 bb_moves = get_rook_attacks(square, occupancies[both]) & (~friendly_occupanices);
 
         while (bb_moves){
-            int target = get_ls1b_index(bb_moves);
+            int target = bsf(bb_moves);
 
             if ((1ULL << target) & occupancies[both]) {
                 legalMoves->moves[legalMoves->count] = encode_move(square, target, ptype, 0, 0, 1, 0, 0);
@@ -356,12 +358,12 @@ static inline void generate_queen_moves(moveList *legalMoves){
     U64 friendly_occupanices = occupancies[side];
 
     while (bitboard){
-        int square = get_ls1b_index(bitboard);
+        int square = bsf(bitboard);
 
         U64 bb_moves = (get_bishop_attacks(square, occupancies[both]) | get_rook_attacks(square, occupancies[both])) & (~friendly_occupanices);
 
         while (bb_moves){
-            int target = get_ls1b_index(bb_moves);
+            int target = bsf(bb_moves);
 
             if ((1ULL << target) & occupancies[both]) {
                 legalMoves->moves[legalMoves->count] = encode_move(square, target, ptype, 0, 0, 1, 0, 0);
@@ -388,12 +390,12 @@ static inline void generate_king_moves(moveList *legalMoves){
         print_board();
     }
 
-    int square = get_ls1b_index(bitboard);
+    int square = bsf(bitboard);
 
     U64 bb_moves = king_mask[square] & (~friendly_occupanices);
 
     while (bb_moves){
-        int target = get_ls1b_index(bb_moves);
+        int target = bsf(bb_moves);
 
         if ((1ULL << target) & occupancies[both]) {
             //source, target, ptype, prom, enpessant, capture
@@ -572,12 +574,12 @@ int make_move(int move, int flag){
         update_occupancies();
 
         if (side == white){
-            if (is_square_attacked(get_ls1b_index(bitboards[K]), black)){
+            if (is_square_attacked(bsf(bitboards[K]), black)){
                 take_back();
                 return 0;
             }
         } else {
-            if (is_square_attacked(get_ls1b_index(bitboards[k]), white)){
+            if (is_square_attacked(bsf(bitboards[k]), white)){
                 take_back();
                 return 0;
             }
@@ -623,10 +625,10 @@ int is_square_attacked(int square, int testingSide){
 
     if (knight_mask[square] & ((testingSide == white ? bitboards[N] : bitboards[n]))) return 1;
 
-    if (get_bishop_attacks(square, occupancies[both]) & ((testingSide == white ? bitboards[B] : bitboards[b]))) return 1;
-    if (get_rook_attacks(square, occupancies[both]) & ((testingSide == white ? bitboards[R] : bitboards[r]))) return 1;
+    if (get_bishop_attacks(square, occupancies[both]) & ((testingSide == white ? bitboards[B] : bitboards[b]) | (testingSide == white ? bitboards[Q] : bitboards[q]))) return 1;
+    if (get_rook_attacks(square, occupancies[both]) & ((testingSide == white ? bitboards[R] : bitboards[r]) | (testingSide == white ? bitboards[Q] : bitboards[q]))) return 1;
 
-    if (get_queen_attacks(square, occupancies[both]) & ((testingSide == white ? bitboards[Q] : bitboards[q]))) return 1;
+    //if (get_queen_attacks(square, occupancies[both]) & ((testingSide == white ? bitboards[Q] : bitboards[q]))) return 1;
 
     if (king_mask[square] & ((testingSide == white ? bitboards[K] : bitboards[k]))) return 1;
 
