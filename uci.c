@@ -53,6 +53,7 @@ int parse_move(char * move_string){
 //position startpos moves e2e4 e7e5 d2d4 d7d5 d4e5 c7c5 e5e6 b8c6 e6f7 e8d7 f7g8r
 
 void parse_position(char *command){
+    uci_move_sequence_length = 0;
     command += 9;
 
     char *current_char = command;
@@ -79,6 +80,7 @@ void parse_position(char *command){
         while (*current_char){
 
           int move = parse_move(current_char);
+          uci_move_sequence_length++;
 
           make_move(move, all_moves);
 
@@ -93,23 +95,45 @@ void parse_position(char *command){
     }
 }
 
+//go wtime 300000 btime 300000
+
 void parse_go(char *command){
     int depth = -1;
     char *current_depth = NULL;
     char *current_timelimit = NULL;
+    char *current_wtime = NULL;
+    char *current_btime = NULL;
+
+    int wtime = 0;
+    int btime = 0;
 
     current_depth = strstr(command, "depth");
     if (current_depth){
         depth = atoi(current_depth+6);
         moveTime = 100000;
     } else {
-        moveTime = 2000;
-        depth = 20;
+        moveTime = 1000;
+        depth = max_ply;
     }
+
     current_timelimit = strstr(command, "movetime");
     if (current_timelimit){
         depth = max_ply;
         moveTime = atoi(current_timelimit+9);
+    }
+
+    current_wtime = strstr(command, "wtime");
+    if (current_wtime){
+        depth = max_ply;
+
+        wtime = atoi(current_wtime + 6);
+
+        current_btime = strstr(command, "wtime");
+        btime = atoi(current_btime + 6);
+
+        //printf("wtime : %d\nbtime : %d\n\n", wtime, btime);
+        moveTime = choose_movetime(wtime, btime);
+        printf("MOVETIME %d\n", moveTime);
     }
 
     search_position(depth);

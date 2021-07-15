@@ -20,4 +20,6 @@ int moveTime;
 void start_time();
 void communicate();
 
+int choose_movetime(int wtime, int btime);
+
 #endif
