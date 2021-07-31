@@ -37,6 +37,20 @@ enum {
 //get least significant bit in U64
 #define bsf(x) __builtin_ctzll(x)
 
+static inline U32 reverse_u32(U32 x)
+{
+    x = ((x >> 1) & 0x55555555u) | ((x & 0x55555555u) << 1);
+    x = ((x >> 2) & 0x33333333u) | ((x & 0x33333333u) << 2);
+    x = ((x >> 4) & 0x0f0f0f0fu) | ((x & 0x0f0f0f0fu) << 4);
+    x = ((x >> 8) & 0x00ff00ffu) | ((x & 0x00ff00ffu) << 8);
+    x = ((x >> 16) & 0xffffu) | ((x & 0xffffu) << 16);
+    return x;
+}
+
+static inline U64 reverse_u64(U64 b){
+    return (((U64)reverse_u32((b << 32) >> 32)) << 32) | (U64)reverse_u32((U32)(b >> 32));
+}
+
 static inline U64 get_random_U64(){
   return (U64)rand() | ((U64)rand() << 32);
 }

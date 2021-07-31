@@ -3,12 +3,15 @@
 #include "evaluate.h"
 #include "timeman.h"
 #include "transposition.h"
+#include "Fathom/tbprobe.h"
+#include "syzygy.h"
 
 #include <stdint.h>
 #include <stdio.h>
 
 int ply = 0;
 long nodes = 0;
+long tbHits = 0;
 
 const U16 mvv_lva[12][12] = {
         105, 205, 305, 405, 505, 605,  105, 205, 305, 405, 505, 605,
@@ -260,6 +263,22 @@ static inline int negamax(int depth, int alpha, int beta, Line *pline){
         return 0;
     }
 
+    //TB PROBE
+    if (ply != 0) {
+        U32 tbres = get_wdl();
+
+        if (tbres != TB_RESULT_FAILED) {
+
+            tbHits++;
+            if (tbres == 4)
+                return 40000;
+            if (tbres == 2)
+                return 0;
+            if (tbres == 0)
+                return -40000;
+        }
+    }
+
     found_pv = 0;
 
     Line line;
@@ -287,8 +306,8 @@ static inline int negamax(int depth, int alpha, int beta, Line *pline){
         depth++;
 
     int eval;
-
-    if (depth >= 3 && in_check == 0 && ply){
+    if (depth >= 3 && in_check == 0 && ply
+    && !((occupancies[white] == (bitboards[K] | bitboards[P])) || (occupancies[black] == (bitboards[k] | bitboards[p])))){
         copy_board();
 
         side ^= 1;
@@ -394,35 +413,24 @@ static inline int negamax(int depth, int alpha, int beta, Line *pline){
 
 }
 
+
 #define aspwindow 50
 
 void search_position(int depth){
-    /**
-    moveList legalMoves;
-    memset(&legalMoves, 0, sizeof legalMoves);
-    generate_moves(&legalMoves);
-    sort_moves(&legalMoves);
-
-    moveList legalMoves2;
-    memset(&legalMoves2, 0, sizeof legalMoves2);
-    generate_moves(&legalMoves2);
-    sort_moves_old(&legalMoves2);
-
-    printf("CMP: %d\n\n", memcmp(&legalMoves, &legalMoves2, sizeof legalMoves));
-
-    printf("%d : %d\n", legalMoves2.count, legalMoves.count);
-    for(int i = 0; i < 256; i++){
-        print_move(legalMoves.moves[i]);
-        printf(" : ");
-        print_move(legalMoves2.moves[i]);
+    //Table bases
+    if (get_wdl() != TB_RESULT_FAILED) {
+        int move = get_root_move();
+        printf("bestmove ");
+        print_move(move);
         printf("\n");
+        return;
     }
 
-    return;**/
-
     start_time();
+
     stop = 0;
     nodes = 0;
+    tbHits = 0;
 
     memset(killer_moves, 0, sizeof(killer_moves));
     memset(history_moves, 0, sizeof(history_moves));
@@ -482,7 +490,7 @@ void search_position(int depth){
         memcpy(&pv_line, &negamax_line, sizeof negamax_line);
         memset(&negamax_line, 0, sizeof negamax_line);
 
-        printf("info score %s %d depth %d nodes %ld pv ",(abs(eval) > 40000) ? "mate" : "cp" , (abs(eval) > 40000) ? (49000 - abs(eval)) * (eval / abs(eval)) : eval, currentDepth, nodes);
+        printf("info score %s %d depth %d nodes %ld tbhits %ld pv ",(abs(eval) > 40000) ? "mate" : "cp" , (abs(eval) > 40000) ? (49000 - abs(eval)) * (eval / abs(eval)) : eval, currentDepth, nodes, tbHits);
 
         for (int i = 0; i < currentDepth; i++){
             print_move(pv_line.moves[i]);
@@ -491,7 +499,7 @@ void search_position(int depth){
 
         printf("\n");
 
-        if ((abs(eval) > 40000)){
+        if ((abs(eval) > 30000)){
             break;
         }
 

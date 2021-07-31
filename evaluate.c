@@ -1,7 +1,6 @@
 #include "evaluate.h"
 #include "board.h"
 #include "bitboard.h"
-#include <stdio.h>
 
 const int pst[6][64] = {
         {0,  0,  0,  0,  0,  0,  0,  0,
@@ -55,7 +54,7 @@ const int pst[6][64] = {
 
 };
 
-const int scores[] = {100, 300, 325, 500, 900, 0, -100, -300, -325, -500, -900, 0};
+const int scores[] = {100, 300, 300, 500, 900, 0, -100, -300, -300, -500, -900, 0};
 
 int evaluate(){
 
