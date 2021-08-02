@@ -3,6 +3,8 @@
 #include "bitboard.h"
 #include "search.h"
 #include "timeman.h"
+#include "Fathom/tbprobe.h"
+#include "syzygy.h"
 
 #include <string.h>
 #include <stdio.h>
@@ -147,9 +149,7 @@ void uci_loop(){
     setbuf(stdout, NULL);
 
     char input[5000];
-    printf("id name Eggnog Chess\n");
-    printf("id name Levi Gibson\n");
-    printf("uciok\n");
+    printf("Eggnog Chess Engine by Levi Gibson\n");
 
     while (1){
         memset(input, 0, sizeof(input));
@@ -183,9 +183,18 @@ void uci_loop(){
         if (strncmp(input, "uci", 3) == 0){
             printf("id name Eggnog Chess\n");
             printf("id name Levi Gibson\n");
+            printf("option name SyzygyPath type string default <empty>\n");
             printf("uciok\n");
         }
+        if (strncmp(input, "setoption name SyzygyPath value", 31) == 0){
+            tbInitilised = 1;
 
+            char path[strlen(input) - 32];
+            memset(path, 0, sizeof path);
+            strncpy(path, input+32, sizeof(path) - 1);
+
+            tb_init(path);
+        }
 
     }
 }

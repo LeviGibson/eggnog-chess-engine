@@ -22,6 +22,7 @@ SOFTWARE.
 */
 
 #include <glob.h>
+#include <assert.h>
 #include "tbprobe.h"
 
 #define TB_PAWN 1
@@ -236,6 +237,10 @@ static void knight_attacks_init(void)
 #define bishop_attacks(s, occ)  TB_BISHOP_ATTACKS(s, occ)
 #define bishop_attacks_init()   /* NOP */
 #else       /* TB_BISHOP_ATTACKS */
+
+#define poplsb(x) x ^= (1ULL << __builtin_ctzll(x))
+#define popcount(x) __builtin_popcountll(x)
+#define lsb(x) __builtin_ctzll(x)
 
 static uint64_t diag_attacks_table[64][64];
 static uint64_t anti_attacks_table[64][64];

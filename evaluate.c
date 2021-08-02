@@ -1,3 +1,4 @@
+#include <stdio.h>
 #include "evaluate.h"
 #include "board.h"
 #include "bitboard.h"
@@ -54,7 +55,56 @@ const int pst[6][64] = {
 
 };
 
-const int scores[] = {100, 300, 300, 500, 900, 0, -100, -300, -300, -500, -900, 0};
+const unsigned squareToFile[64] = {
+        0, 1, 2, 3, 4, 5, 6, 7,
+        0, 1, 2, 3, 4, 5, 6, 7,
+        0, 1, 2, 3, 4, 5, 6, 7,
+        0, 1, 2, 3, 4, 5, 6, 7,
+        0, 1, 2, 3, 4, 5, 6, 7,
+        0, 1, 2, 3, 4, 5, 6, 7,
+        0, 1, 2, 3, 4, 5, 6, 7,
+        0, 1, 2, 3, 4, 5, 6, 7
+};
+
+const U64 adjacentFiles[8] = {144680345676153346ULL,
+                             361700864190383365ULL,
+                             723401728380766730ULL,
+                             1446803456761533460ULL,
+                             2893606913523066920ULL,
+                             5787213827046133840ULL,
+                             11574427654092267680ULL,
+                             4629771061636907072ULL};
+
+const int scores[] = {100, 270, 300, 500, 900, 0, -100, -300, -300, -500, -900, 0};
+
+int evaluate_pawn_structure(){
+
+    int eval = 0;
+
+    U64 bitboard = bitboards[P];
+    int bb_count = count_bits(bitboard);
+    for (int i = 0; i < bb_count; i++){
+        int square = bsf(bitboard);
+
+        if (!(adjacentFiles[squareToFile[square]] & bitboards[P]))
+            eval -= 6;
+
+        pop_bit(bitboard, square);
+    }
+
+    bitboard = bitboards[p];
+    bb_count = count_bits(bitboard);
+    for (int i = 0; i < bb_count; i++){
+        int square = bsf(bitboard);
+
+        if (!(adjacentFiles[squareToFile[square]] & bitboards[p]))
+            eval += 6;
+
+        pop_bit(bitboard, square);
+    }
+
+    return eval;
+}
 
 int evaluate(){
 
@@ -101,6 +151,10 @@ int evaluate(){
 
             pop_bit(bitboard, target);
         }
+    }
+
+    if (abs(eval) < 300) {
+        eval += evaluate_pawn_structure() * 6;
     }
 
     return (side == white) ? eval : -eval;

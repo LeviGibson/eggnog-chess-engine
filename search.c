@@ -10,6 +10,8 @@
 #include <stdio.h>
 
 int ply = 0;
+int selDepth = 0;
+
 long nodes = 0;
 long tbHits = 0;
 
@@ -147,6 +149,9 @@ static inline void sort_moves(moveList *move_list){
 }
 
 static inline int quiesce(int alpha, int beta) {
+    if (ply > selDepth){
+        selDepth = ply;
+    }
 
     if (nodes % 2048 == 0)
         communicate();
@@ -185,7 +190,9 @@ static inline int quiesce(int alpha, int beta) {
             continue;
 
         if (make_move(move, all_moves)){
+            ply++;
             int score = -quiesce(-beta, -alpha);
+            ply--;
 
             take_back();
 
@@ -418,6 +425,7 @@ static inline int negamax(int depth, int alpha, int beta, Line *pline){
 
 void search_position(int depth){
     //Table bases
+
     if (get_wdl() != TB_RESULT_FAILED) {
         int move = get_root_move();
         printf("bestmove ");
@@ -444,12 +452,11 @@ void search_position(int depth){
     int eval;
 
     for (int currentDepth = 1; currentDepth <= depth; currentDepth++){
+        reset_hash_table();
         ply = 0;
 
         follow_pv = 1;
         found_pv = 0;
-
-        reset_hash_table();
 
         int nmRes = negamax(currentDepth, alpha, beta, &negamax_line);
 
@@ -461,11 +468,10 @@ void search_position(int depth){
         if ((nmRes >= beta) || (nmRes <= alpha)){
 
             ply = 0;
+            selDepth = 0;
 
             follow_pv = 1;
             found_pv = 0;
-
-            printf("ASPIRATION RESEARCH %d\n", nmRes);
 
             alpha = -50000;
             beta = 50000;
@@ -490,7 +496,7 @@ void search_position(int depth){
         memcpy(&pv_line, &negamax_line, sizeof negamax_line);
         memset(&negamax_line, 0, sizeof negamax_line);
 
-        printf("info score %s %d depth %d nodes %ld tbhits %ld pv ",(abs(eval) > 40000) ? "mate" : "cp" , (abs(eval) > 40000) ? (49000 - abs(eval)) * (eval / abs(eval)) : eval, currentDepth, nodes, tbHits);
+        printf("info score %s %d depth %d seldepth %d nodes %ld tbhits %ld pv ",(abs(eval) > 40000) ? "mate" : "cp" , (abs(eval) > 40000) ? (49000 - abs(eval)) * (eval / abs(eval)) : eval, currentDepth, selDepth, nodes, tbHits);
 
         for (int i = 0; i < currentDepth; i++){
             print_move(pv_line.moves[i]);

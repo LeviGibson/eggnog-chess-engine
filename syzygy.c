@@ -2,11 +2,12 @@
 // Created by levigibson on 7/30/21.
 //
 
-#include <stdio.h>
 #include "syzygy.h"
 #include "bitboard.h"
 #include "board.h"
 #include "Fathom/tbprobe.h"
+
+int tbInitilised = 0;
 
 int parse_tb_move(unsigned from, unsigned to){
 
@@ -24,6 +25,7 @@ int parse_tb_move(unsigned from, unsigned to){
 }
 
 unsigned get_wdl(){
+
     return tb_probe_wdl((occupancies[black]), (occupancies[white]), (bitboards[K] | bitboards[k]),
                         (bitboards[Q] | bitboards[q]), (bitboards[r] | bitboards[R]),
                         (bitboards[b] | bitboards[B]), (bitboards[N] | bitboards[n]),
