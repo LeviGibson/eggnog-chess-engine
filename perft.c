@@ -7,10 +7,6 @@
 #include "board.h"
 #include "timeman.h"
 
-
-
-
-
 long perft_nodes = 0;
 
 static inline void perft_driver(int depth){
@@ -28,7 +24,7 @@ static inline void perft_driver(int depth){
 
   copy_board();
   for (int moveId = 0; moveId < legalMoves.count; moveId++){
-    if (make_move(legalMoves.moves[moveId], all_moves)){
+    if (make_move(legalMoves.moves[moveId], all_moves, 0)){
 
       perft_driver(depth-1);
 
@@ -53,7 +49,7 @@ void perft_test(int depth){
   int allNodes = 0;
 
   for (int moveId = 0; moveId < legalMoves.count; moveId++) {
-    if (make_move(legalMoves.moves[moveId], all_moves)){
+    if (make_move(legalMoves.moves[moveId], all_moves, 0)){
       perft_nodes = 0;
       perft_driver(depth-1);
 

@@ -84,7 +84,7 @@ void parse_position(char *command){
           int move = parse_move(current_char);
           uci_move_sequence_length++;
 
-          make_move(move, all_moves);
+          make_move(move, all_moves, 1);
 
           while ((*current_char) && (*current_char != ' ')){
               current_char++;

@@ -5,8 +5,7 @@
 #include "transposition.h"
 #include "Fathom/tbprobe.h"
 #include "syzygy.h"
-
-#include <stdint.h>
+#include "moveOrder.h"
 #include <stdio.h>
 
 int ply = 0;
@@ -15,7 +14,7 @@ int selDepth = 0;
 long nodes = 0;
 long tbHits = 0;
 
-const U16 mvv_lva[12][12] = {
+const int mvv_lva[12][12] = {
         105, 205, 305, 405, 505, 605,  105, 205, 305, 405, 505, 605,
         104, 204, 304, 404, 504, 604,  104, 204, 304, 404, 504, 604,
         103, 203, 303, 403, 503, 603,  103, 203, 303, 403, 503, 603,
@@ -37,44 +36,6 @@ int history_moves[2][64][64];
 Line pv_line;
 
 int follow_pv, found_pv;
-
-static inline int score_move(int move){
-
-    if (found_pv){
-        if (move == pv_line.moves[ply]){
-            found_pv = 0;
-            return 20000;
-        }
-    }
-
-    if (get_move_capture(move)){
-        int start_piece, end_piece;
-        int target_piece = P;
-
-        int target_square = get_move_target(move);
-
-        if (side == white) {start_piece = p; end_piece = k;}
-        else{start_piece = P; end_piece = K;}
-        for (int bb_piece = start_piece; bb_piece < end_piece; bb_piece++){
-            if (get_bit(bitboards[bb_piece], target_square)){
-                target_piece = bb_piece;
-                break;
-            }
-        }
-
-        return mvv_lva[get_move_piece(move)][target_piece]+1000;
-    } else {
-        if (move == killer_moves[ply][0]){
-            return(800);
-        }
-        if (move == killer_moves[ply][1]){
-            return(700);
-        }
-
-        //return history_moves[side][get_move_source(move)][get_move_target(move)];
-        return 0;
-    }
-}
 
 
 static inline void swap(int* a, int* b)
@@ -122,7 +83,7 @@ int partition_zero_scores(moveList *movearr, int scorearr[]){
     for (int moveId = 0; moveId < (movearr->count - zerosFound); moveId++) {
         if (scorearr[moveId] == 0){
 
-            int swappingToIndex = movearr->count - 1 - zerosFound;
+            unsigned swappingToIndex = movearr->count - 1 - zerosFound;
 
             swap(&movearr->moves[moveId], &movearr->moves[swappingToIndex]);
             swap(&scorearr[moveId], &scorearr[swappingToIndex]);
@@ -135,16 +96,62 @@ int partition_zero_scores(moveList *movearr, int scorearr[]){
     return zerosFound;
 }
 
+static inline int score_move(int move){
+
+    if (found_pv){
+        if (move == pv_line.moves[ply]){
+            found_pv = 0;
+            return 20000;
+        }
+    }
+
+    if (get_move_capture(move)){
+        int start_piece, end_piece;
+        int target_piece = P;
+
+        int target_square = get_move_target(move);
+
+        if (side == white) {start_piece = p; end_piece = k;}
+        else{start_piece = P; end_piece = K;}
+        for (int bb_piece = start_piece; bb_piece < end_piece; bb_piece++){
+            if (get_bit(bitboards[bb_piece], target_square)){
+                target_piece = bb_piece;
+                break;
+            }
+        }
+
+        return mvv_lva[get_move_piece(move)][target_piece]+1000;
+    } else {
+        if (move == killer_moves[ply][0]){
+            return(800);
+        }
+        if (move == killer_moves[ply][1]){
+            return(700);
+        }
+
+        if (prevmove != 0) {
+            int score = get_move_score(prevmove, move);
+
+            //this seems stupid and it is
+            //but not really because of the function partition_zero_scores()
+            if (score > 100)
+                return score;
+
+        }
+        return 0;
+    }
+}
+
 static inline void sort_moves(moveList *move_list){
 
     int scores[move_list->count];
 
     for (int i = 0; i < move_list->count; i++)
-        scores[i] = score_move(move_list->moves[i]);
+            scores[i] = score_move(move_list->moves[i]);
 
     int zerosFound = partition_zero_scores(move_list, scores);
 
-    quickSort(scores, 0, move_list->count - 1 - zerosFound, move_list);
+    quickSort(scores, 0, (int )(move_list->count) - 1 - zerosFound, move_list);
 
 }
 
@@ -189,7 +196,7 @@ static inline int quiesce(int alpha, int beta) {
         if (!get_move_capture(move))
             continue;
 
-        if (make_move(move, all_moves)){
+        if (make_move(move, all_moves, 0)){
             ply++;
             int score = -quiesce(-beta, -alpha);
             ply--;
@@ -235,7 +242,7 @@ static inline int ZwSearch(int beta, int depth){
 
         int score;
 
-        if (make_move(move, all_moves)){
+        if (make_move(move, all_moves, 0)){
 
             score = -ZwSearch(1-beta, depth-1);
 
@@ -345,7 +352,7 @@ static inline int negamax(int depth, int alpha, int beta, Line *pline){
     int move;
     for (int moveId = 0; moveId < legalMoves.count; moveId++){
         move = legalMoves.moves[moveId];
-        if (make_move(move, all_moves)){
+        if (make_move(move, all_moves, 1)){
 
             legalMoveCount++;
 
@@ -364,6 +371,7 @@ static inline int negamax(int depth, int alpha, int beta, Line *pline){
                 else {
                     eval = alpha + 1;
                 }
+
 
                 if (eval > alpha){
                     eval = -negamax(depth-1, -alpha-1, -alpha, &line);
@@ -420,7 +428,6 @@ static inline int negamax(int depth, int alpha, int beta, Line *pline){
 
 }
 
-
 #define aspwindow 50
 
 void search_position(int depth){
@@ -466,7 +473,6 @@ void search_position(int depth){
 
         //if the evaluation is outside of aspiration window bounds, reset alpha and beta and continue the search
         if ((nmRes >= beta) || (nmRes <= alpha)){
-
             ply = 0;
             selDepth = 0;
 

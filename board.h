@@ -27,34 +27,45 @@ typedef struct {
 
 //MOVE ENCODING____________
 /**
+ Moves are encoded in integers like this
 
  1 2 4 8 16 32
 
  Src    dest   pt   prom en cap
  111111 000000 1111 0000 1  0
 
+ and can be accessed with macros below
+
+    get_move_source(move)
+    get_move_target(move)
+    get_move_piece(move)
+    get_move_promoted(move)
+    get_move_enpessant(move)
+    get_move_capture(move) Note : this acts like a boolean
+    get_move_double(move) double pawn pushes
+    get_move_castle(move)
  **/
 
 #define encode_move(source, target, ptype, prom, enpessant, capture, doublePush, castle) \
-    source | ((target) << 6) | ((ptype) << 12) | ((prom) << 16) | ((enpessant) << 20) | ((capture) << 21) | ((doublePush) << 22) | ((castle) << 23)
+    ((source) | ((target) << 6) | ((ptype) << 12) | ((prom) << 16) | ((enpessant) << 20) | ((capture) << 21) | ((doublePush) << 22) | ((castle) << 23))
 
 #define get_move_source(move) \
-    (0x3f & move)
+    (0x3f & (move))
 
 #define get_move_target(move) \
-    (0xfc0 & move) >> 6
+    (0xfc0 & (move)) >> 6
 
 #define get_move_piece(move) \
-    (0xf000 & move) >> 12
+    (0xf000 & (move)) >> 12
 
 #define get_move_promoted(move) \
-    (0xf0000 & move) >> 16
+    (0xf0000 & (move)) >> 16
 
 #define get_move_enpessant(move) \
     get_bit(move, 20)
 
 #define get_move_capture(move) \
-    get_bit(move, 21)
+    (2097152 & (move))
 
 #define get_move_double(move) \
     get_bit(move, 22)
@@ -64,7 +75,7 @@ typedef struct {
 
 #define copy_board()                                                      \
     U64 bitboards_copy[12], occupancies_copy[3], zobrist_history_copy[101], current_zobrist_key_copy, zobrist_key_parts_copy[15], zobrist_key_bitboards_copy[12];\
-    int side_copy, enpassant_copy, castle_copy, zobrist_history_length_copy; \
+    int side_copy, enpassant_copy, castle_copy, zobrist_history_length_copy, prevmove_copy; \
                                                                           \
     memcpy(zobrist_history_copy, zobrist_history, sizeof zobrist_history_copy);\
     memcpy(bitboards_copy, bitboards, sizeof bitboards_copy);                   \
@@ -73,7 +84,8 @@ typedef struct {
     memcpy(zobrist_key_bitboards_copy, zobrist_key_bitboards, sizeof zobrist_key_bitboards);  \
                                                                           \
     side_copy = side, enpassant_copy = enpessant, castle_copy = castle;    \
-    zobrist_history_length_copy = zobrist_history_length;                  \
+    zobrist_history_length_copy = zobrist_history_length;                 \
+    prevmove_copy = prevmove;\
     current_zobrist_key_copy = current_zobrist_key                          \
 
 #define take_back()                                                       \
@@ -85,7 +97,8 @@ typedef struct {
     memcpy(zobrist_key_bitboards, zobrist_key_bitboards_copy, sizeof zobrist_key_bitboards); \
                                                                           \
     side = side_copy, enpessant = enpassant_copy, castle = castle_copy;   \
-    current_zobrist_key = current_zobrist_key_copy;             \
+    current_zobrist_key = current_zobrist_key_copy;                       \
+    prevmove = prevmove_copy;\
     zobrist_history_length = zobrist_history_length_copy                 \
 
 void print_move(int move);
@@ -110,9 +123,10 @@ U64 current_zobrist_key;
 int enpessant;
 int side;
 int castle;
+int prevmove;
 
 void generate_moves(moveList *legalMoves);
-int make_move(int move, int flag);
+int make_move(int move, int flag, int zobristUpdate);
 
 int is_square_attacked(int square, int testingSide);
 

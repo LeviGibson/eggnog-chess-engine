@@ -72,6 +72,7 @@ U64 update_zobrist_key(){
 
             key ^= bitboard_key;
             zobrist_key_parts[piece] = bitboard_key;
+            zobrist_key_bitboards[piece] = bitboards[piece];
         }
     }
 
@@ -83,7 +84,7 @@ U64 update_zobrist_key(){
     zobrist_key_parts[12] = side_keys[side];
     zobrist_key_parts[13] = castle_keys[castle];
 
-    memcpy(&zobrist_key_bitboards, &bitboards, sizeof bitboards);
+    //memcpy(&zobrist_key_bitboards, &bitboards, sizeof bitboards);
 
     return key;
 }
@@ -474,7 +475,7 @@ static inline void update_occupancies(){
 
 void generate_moves(moveList *legalMoves){
 
-    update_occupancies();
+    //update_occupancies();
 
     generate_knight_moves(legalMoves);
     generate_pawn_moves(legalMoves);
@@ -483,8 +484,6 @@ void generate_moves(moveList *legalMoves){
     generate_queen_moves(legalMoves);
     generate_king_moves(legalMoves);
 }
-
-
 
 const int castling_right_table[64] = {
         7, 15, 15, 15,  3, 15, 15, 11,
@@ -497,7 +496,7 @@ const int castling_right_table[64] = {
         13, 15, 15, 15, 12, 15, 15, 14
 };
 
-int make_move(int move, int flag){
+int make_move(int move, int flag, int zobristUpdate){
     if (flag == all_moves){
         copy_board();
 
@@ -596,20 +595,25 @@ int make_move(int move, int flag){
         }
 
         //UPDATE ZOBRIST HISTORY
-        current_zobrist_key = update_zobrist_key();
-        zobrist_history[zobrist_history_length] = current_zobrist_key;
-        zobrist_history_length++;
+        if (zobristUpdate) {
+            current_zobrist_key = update_zobrist_key();
+            zobrist_history[zobrist_history_length] = current_zobrist_key;
+            zobrist_history_length++;
+        } else
+            current_zobrist_key = 0ULL;
     } else {
 
         if (get_move_capture(move)){
 
-            return make_move(move, all_moves);
+            return make_move(move, all_moves, zobristUpdate);
 
         } else {
             return 0;
         }
 
     }
+
+    prevmove = move;
 
     return 1;
 }
