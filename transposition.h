@@ -21,8 +21,8 @@ typedef struct tagHASHE {
     int best;
 }   HASHE;
 
-void RecordHash(int depth, int val, int hashf);
-int ProbeHash(int depth, int alpha, int beta);
+void RecordHash(int depth, int val, int best, int hashf);
+int ProbeHash(int depth, int alpha, int beta, int *move);
 
 void reset_hash_table();
 

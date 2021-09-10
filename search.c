@@ -8,6 +8,10 @@
 #include "moveOrder.h"
 #include <stdio.h>
 
+#define infinity 100000
+#define aspwindow 50
+#define no_move -15
+
 int ply = 0;
 int selDepth = 0;
 
@@ -96,7 +100,10 @@ int partition_zero_scores(moveList *movearr, int scorearr[]){
     return zerosFound;
 }
 
-static inline int score_move(int move){
+//info score cp -30 depth 10 seldepth 25 nodes 4039149 tbhits 0 pv b1c3 d7d5 d2d4 g8f6 g1f3 e7e6 c1g5 f8e7 f3e5 h7h6
+//info score cp -30 depth 10 seldepth 22 nodes 3537470 tbhits 0 pv g1f3 g8f6 d2d4 e7e6 b1c3 d7d5 c1g5 f8e7 f3e5 h7h6
+
+static inline int score_move(int move, int hashmove){
 
     if (found_pv){
         if (move == pv_line.moves[ply]){
@@ -138,16 +145,22 @@ static inline int score_move(int move){
                 return score;
 
         }
+
+        if (hashmove == move){
+            return 5000;
+        }
+
         return 0;
     }
 }
 
-static inline void sort_moves(moveList *move_list){
+static inline void sort_moves(moveList *move_list, int hashmove){
 
     int scores[move_list->count];
 
-    for (int i = 0; i < move_list->count; i++)
-            scores[i] = score_move(move_list->moves[i]);
+    for (int i = 0; i < move_list->count; i++) {
+        scores[i] = score_move(move_list->moves[i], hashmove);
+    }
 
     int zerosFound = partition_zero_scores(move_list, scores);
 
@@ -188,7 +201,7 @@ static inline int quiesce(int alpha, int beta) {
     copy_board();
 
     generate_moves(&legalMoves);
-    sort_moves(&legalMoves);
+    sort_moves(&legalMoves, no_move);
 
     for (int moveId = 0; moveId < legalMoves.count; moveId++){
         int move = legalMoves.moves[moveId];
@@ -217,6 +230,7 @@ static inline int quiesce(int alpha, int beta) {
 }
 
 static inline int ZwSearch(int beta, int depth){
+    nodes++;
 
     if (nodes % 2048 == 0)
         communicate();
@@ -225,15 +239,14 @@ static inline int ZwSearch(int beta, int depth){
         return 0;
     }
 
-    nodes++;
     if (depth == 0)
         return quiesce(beta-1, beta);
 
     moveList legalMoves;
-    memset(&legalMoves, 0, sizeof legalMoves);
+    legalMoves.count = 0;
 
     generate_moves(&legalMoves);
-    sort_moves(&legalMoves);
+    sort_moves(&legalMoves, no_move);
 
     copy_board();
 
@@ -244,7 +257,7 @@ static inline int ZwSearch(int beta, int depth){
 
         if (make_move(move, all_moves, 0)){
 
-            score = -ZwSearch(1-beta, depth-1);
+            score = -ZwSearch(-beta + 1, depth-1);
 
             take_back();
 
@@ -266,15 +279,22 @@ void find_pv(moveList *moves){
     }
 }
 
-static inline int negamax(int depth, int alpha, int beta, Line *pline){
+static inline int negamax(int depth, int alpha, int beta, Line *pline) {
     //general maintenence
     nodes++;
 
     if (nodes % 2048 == 0)
         communicate();
 
-    if (stop){
+    if (stop) {
         return 0;
+    }
+
+    //HASH TABLE PROBE
+    int hash_move = no_move;
+    int hash_lookup = ProbeHash(depth, alpha, beta, &hash_move);
+    if ((hash_lookup) != valUNKNOWN) {
+        return hash_lookup;
     }
 
     //TB PROBE
@@ -300,17 +320,12 @@ static inline int negamax(int depth, int alpha, int beta, Line *pline){
 
     int hashf = hashfALPHA;
 
-    int hash_lookup = ProbeHash(depth, alpha, beta);
-    if ((hash_lookup) != valUNKNOWN) {
-        return hash_lookup;
-    }
-
-    if (depth <= 0){
+    if (depth <= 0) {
         pline->length = 0;
         return quiesce(alpha, beta);
     }
 
-    if (is_threefold_repetition()){
+    if (is_threefold_repetition()) {
         return 0;
     }
 
@@ -321,16 +336,17 @@ static inline int negamax(int depth, int alpha, int beta, Line *pline){
 
     int eval;
     if (depth >= 3 && in_check == 0 && ply
-    && !((occupancies[white] == (bitboards[K] | bitboards[P])) || (occupancies[black] == (bitboards[k] | bitboards[p])))){
+        && !((occupancies[white] == (bitboards[K] | bitboards[P])) ||
+             (occupancies[black] == (bitboards[k] | bitboards[p])))) {
         copy_board();
 
         side ^= 1;
         enpessant = no_sq;
 
-        eval = -ZwSearch(1-beta, depth-3);
+        eval = -ZwSearch(1 - beta, depth - 3);
 
         take_back();
-        if (eval >= beta){
+        if (eval >= beta) {
             return beta;
         }
     }
@@ -340,43 +356,43 @@ static inline int negamax(int depth, int alpha, int beta, Line *pline){
 
     generate_moves(&legalMoves);
 
-    if (follow_pv){
+    if (follow_pv) {
         find_pv(&legalMoves);
     }
 
-    sort_moves(&legalMoves);
+    sort_moves(&legalMoves, hash_move);
 
     copy_board();
 
     int legalMoveCount = 0;
     int move;
-    for (int moveId = 0; moveId < legalMoves.count; moveId++){
+    int bestmove = no_move;
+
+    for (int moveId = 0; moveId < legalMoves.count; moveId++) {
         move = legalMoves.moves[moveId];
-        if (make_move(move, all_moves, 1)){
+        if (make_move(move, all_moves, 1)) {
 
             legalMoveCount++;
 
             ply++;
 
-            if (legalMoveCount == 0){
-                eval = -negamax(depth-1, -beta, -alpha, &line);
+            if (legalMoveCount == 0) {
+                eval = -negamax(depth - 1, -beta, -alpha, &line);
             } else {
-
                 //LMR
 
-                if ((depth >= 3) && (legalMoveCount > 5) && (in_check == 0) && (get_move_capture(move) == 0) && (get_move_promoted(move) == 0)){
-                    eval = -negamax(depth-2, -alpha-1, -alpha, &line);
-                    //eval = alpha + 1;
-                }
-                else {
+                if ((depth >= 3) && (legalMoveCount > 5) && (in_check == 0) && (get_move_capture(move) == 0) &&
+                    (get_move_promoted(move) == 0)) {
+                    eval = -negamax(depth - 2, -alpha - 1, -alpha, &line);
+                } else {
                     eval = alpha + 1;
                 }
 
-
-                if (eval > alpha){
-                    eval = -negamax(depth-1, -alpha-1, -alpha, &line);
-                    if ((eval > alpha) && (eval < beta)){
-                        eval = -negamax(depth-1, -beta, -alpha, &line);
+                //PV search
+                if (eval > alpha) {
+                    eval = -negamax(depth - 1, -alpha - 1, -alpha, &line);
+                    if ((eval > alpha) && (eval < beta)) {
+                        eval = -negamax(depth - 1, -beta, -alpha, &line);
                     }
                 }
             }
@@ -385,10 +401,11 @@ static inline int negamax(int depth, int alpha, int beta, Line *pline){
 
             take_back();
 
-            if (eval > alpha){
+            if (eval > alpha) {
 
                 alpha = eval;
 
+                bestmove = move;
                 hashf = hashfEXACT;
 
                 pline->moves[0] = move;
@@ -397,16 +414,16 @@ static inline int negamax(int depth, int alpha, int beta, Line *pline){
 
             }
 
-            if (eval >= beta){
+            if (eval >= beta) {
 
-                if (!get_move_capture(move)){
+                if (!get_move_capture(move)) {
                     killer_moves[ply][1] = killer_moves[ply][0];
                     killer_moves[ply][0] = move;
 
-                    history_moves[side][get_move_source(move)][get_move_target(move)] += depth*depth;
+                    history_moves[side][get_move_source(move)][get_move_target(move)] += depth * depth;
                 }
 
-                RecordHash(depth, beta, hashfBETA);
+                RecordHash(depth, beta, move, hashfBETA);
 
                 return beta;
             }
@@ -414,8 +431,8 @@ static inline int negamax(int depth, int alpha, int beta, Line *pline){
 
     }
 
-    if (legalMoveCount == 0){
-        if (in_check){
+    if (legalMoveCount == 0) {
+        if (in_check) {
             return (-49000) + ply;
 
         } else {
@@ -423,12 +440,10 @@ static inline int negamax(int depth, int alpha, int beta, Line *pline){
         }
     }
 
-    RecordHash(depth, alpha, hashf);
+    RecordHash(depth, alpha, bestmove, hashf);
     return alpha;
 
 }
-
-#define aspwindow 50
 
 void search_position(int depth){
     //Table bases
@@ -446,6 +461,7 @@ void search_position(int depth){
     stop = 0;
     nodes = 0;
     tbHits = 0;
+    selDepth = 0;
 
     memset(killer_moves, 0, sizeof(killer_moves));
     memset(history_moves, 0, sizeof(history_moves));
@@ -522,3 +538,8 @@ void search_position(int depth){
     printf("\n");
 
 }
+
+/**
+info score cp -30 depth 10 seldepth 25 nodes 4039149 tbhits 0 pv b1c3 d7d5 d2d4 g8f6 g1f3 e7e6 c1g5 f8e7 f3e5 h7h6
+info score cp -30 depth 10 seldepth 22 nodes 4432474 tbhits 0 pv d2d4 g8f6 b1c3 d7d5 g1f3 e7e6 c1g5 f8e7 f3e5 h7h6
+ **/
