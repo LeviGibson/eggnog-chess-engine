@@ -1,12 +1,13 @@
 FILES = main.c moveTable.h syzygy.c syzygy.h bitboard.c bitboard.h board.c board.h perft.c perft.h uci.c uci.h search.c search.h evaluate.c evaluate.h timeman.c timeman.h transposition.c transposition.h moveOrder.c moveOrder.h Fathom/*.c Fathom/*.h
+NNUEFILES = nnue/probe/load.c nnue/probe/load.h nnue/probe/propogate.c nnue/probe/propogate.h
 
 all:
-	gcc -O2 $(FILES) -o eggnog-chess-engine
+	gcc -O2 $(FILES) $(NNUEFILES) -o eggnog-chess-engine
 debug:
-	gcc $(FILES) -o eggnog-chess-engine
+	gcc $(FILES) $(NNUEFILES) -o eggnog-chess-engine
 prof:
-	gcc -pg -no-pie -fno-builtin $(FILES) -o eggnog-chess-engine
+	gcc -pg -no-pie -fno-builtin $(FILES) $(NNUEFILES) -o eggnog-chess-engine
 win:
-	x86_64-w64-mingw32-gcc -o eggnog-chess-engine.exe $(FILES) -Ofast
+	x86_64-w64-mingw32-gcc -o eggnog-chess-engine.exe $(FILES) $(NNUEFILES) -O2
 run:
 	./eggnog-chess-engine

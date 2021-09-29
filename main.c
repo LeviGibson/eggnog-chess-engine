@@ -1,7 +1,9 @@
-
 #include "bitboard.h"
 #include "board.h"
 #include "uci.h"
+
+#include "nnue/probe/load.h"
+#include "nnue/probe/propogate.h"
 
 int main() {
     init_bitboards();
@@ -9,7 +11,8 @@ int main() {
 
     parse_fen(start_position);
 
-    //parse_go("go depth 10");
+    load_model("nnue/probe/model");
+
     uci_loop();
 
     return 0;
