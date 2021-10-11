@@ -2,7 +2,7 @@
 #include "evaluate.h"
 #include "board.h"
 #include "bitboard.h"
-#include "nnue/probe/propogate.h"
+#include "halfkp-probe/propogate.h"
 
 const int pst[6][64] = {
         {0,  0,  0,  0,  0,  0,  0,  0,
@@ -60,7 +60,9 @@ const int scores[] = {100, 270, 300, 500, 900, 0, -100, -300, -300, -500, -900, 
 
 int evaluate(){
 
-    return (int)nnue_evaluate();
+    NnueData data;
+    int nnue_eval = nnue_evaluate(&data);
+    return (side == white) ? nnue_eval : -nnue_eval;
 
     int eval = 0;
 

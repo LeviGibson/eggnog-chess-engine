@@ -445,6 +445,9 @@ static inline int negamax(int depth, int alpha, int beta, Line *pline) {
 
 }
 
+#define DEF_ALPHA -500000
+#define DEF_BETA 500000
+
 void search_position(int depth){
     //Table bases
 
@@ -469,8 +472,8 @@ void search_position(int depth){
     Line negamax_line;
     negamax_line.length = 0;
 
-    int alpha = -50000;
-    int beta = 50000;
+    int alpha = DEF_ALPHA;
+    int beta = DEF_BETA;
 
     int eval;
 
@@ -495,8 +498,8 @@ void search_position(int depth){
             follow_pv = 1;
             found_pv = 0;
 
-            alpha = -50000;
-            beta = 50000;
+            alpha = DEF_ALPHA;
+            beta = DEF_BETA;
 
             reset_hash_table();
             memset(&negamax_line, 0, sizeof negamax_line);
@@ -518,7 +521,9 @@ void search_position(int depth){
         memcpy(&pv_line, &negamax_line, sizeof negamax_line);
         memset(&negamax_line, 0, sizeof negamax_line);
 
-        printf("info score %s %d depth %d seldepth %d nodes %ld tbhits %ld pv ",(abs(eval) > 40000) ? "mate" : "cp" , (abs(eval) > 40000) ? (49000 - abs(eval)) * (eval / abs(eval)) : eval, currentDepth, selDepth, nodes, tbHits);
+        printf("info score %s %d depth %d seldepth %d nodes %ld tbhits %ld pv ",
+               (abs(eval) > 400000) ? "mate" : "cp" , (abs(eval) > 400000) ? (490000 - abs(eval)) * (eval / abs(eval)) : eval/64,
+               currentDepth, selDepth, nodes, tbHits);
 
         for (int i = 0; i < currentDepth; i++){
             print_move(pv_line.moves[i]);

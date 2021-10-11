@@ -1,5 +1,5 @@
 FILES = main.c moveTable.h syzygy.c syzygy.h bitboard.c bitboard.h board.c board.h perft.c perft.h uci.c uci.h search.c search.h evaluate.c evaluate.h timeman.c timeman.h transposition.c transposition.h moveOrder.c moveOrder.h Fathom/*.c Fathom/*.h
-NNUEFILES = nnue/probe/load.c nnue/probe/load.h nnue/probe/propogate.c nnue/probe/propogate.h
+NNUEFILES = halfkp-probe/load.c halfkp-probe/load.h halfkp-probe/propogate.c halfkp-probe/propogate.h
 
 all:
 	gcc -O2 $(FILES) $(NNUEFILES) -o eggnog-chess-engine

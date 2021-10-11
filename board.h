@@ -15,7 +15,6 @@
 #define tricky_position "rnbq1k1r/pp1Pbppp/2p5/8/2B5/8/PPP1NnPP/RNBQK2R w KQ - 1 8  "
 #define killer_position "rnbqkb1r/pp1p1pPp/8/2p1pP2/1P1P4/3P3P/P1P1P3/RNBQKBNR w KQkq e6 0 1"
 
-enum {P, N, B, R, Q, K, p, n, b, r, q, k};
 enum{wk = 1, wq = 2, bk = 4, bq = 8};
 enum {all_moves, only_captures};
 

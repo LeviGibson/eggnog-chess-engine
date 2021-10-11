@@ -13,6 +13,7 @@
 
 //ENUMS
 enum {white, black, both};
+enum {P, N, B, R, Q, K, p, n, b, r, q, k};
 
 enum {
     a8, b8, c8, d8, e8, f8, g8, h8,
