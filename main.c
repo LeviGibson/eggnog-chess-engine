@@ -1,21 +1,19 @@
-#include <stdio.h>
 #include "bitboard.h"
 #include "board.h"
 #include "uci.h"
+#include "moveOrder.h"
 
-#include "halfkp-probe/load.h"
-#include "halfkp-probe/propogate.h"
+#include "nnue/load.h"
 
 int main() {
     init_bitboards();
     init_zobrist_keys();
+    init_move_table();
 
-    load_model("halfkp-probe/bbcnn.nnue");
+    load_model("nnue/defualt-nn.nnue");
 
     parse_fen(start_position);
-
-    parse_go("go movetime 5000");
-    //uci_loop();
+    uci_loop();
 
     return 0;
 }

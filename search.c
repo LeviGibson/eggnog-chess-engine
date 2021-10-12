@@ -1,6 +1,6 @@
 #include "search.h"
 #include "board.h"
-#include "evaluate.h"
+#include "nnue/propogate.h"
 #include "timeman.h"
 #include "transposition.h"
 #include "Fathom/tbprobe.h"
@@ -8,7 +8,6 @@
 #include "moveOrder.h"
 #include <stdio.h>
 
-#define infinity 100000
 #define aspwindow 50
 #define no_move -15
 
@@ -100,9 +99,6 @@ int partition_zero_scores(moveList *movearr, int scorearr[]){
     return zerosFound;
 }
 
-//info score cp -30 depth 10 seldepth 25 nodes 4039149 tbhits 0 pv b1c3 d7d5 d2d4 g8f6 g1f3 e7e6 c1g5 f8e7 f3e5 h7h6
-//info score cp -30 depth 10 seldepth 22 nodes 3537470 tbhits 0 pv g1f3 g8f6 d2d4 e7e6 b1c3 d7d5 c1g5 f8e7 f3e5 h7h6
-
 static inline int score_move(int move, int hashmove){
 
     if (found_pv){
@@ -182,7 +178,9 @@ static inline int quiesce(int alpha, int beta) {
 
     nodes++;
 
-    int stand_pat = evaluate();
+    NnueData data;
+    int stand_pat = nnue_evaluate(&data);
+
     if (stand_pat >= beta){
         return beta;
     }
@@ -305,11 +303,11 @@ static inline int negamax(int depth, int alpha, int beta, Line *pline) {
 
             tbHits++;
             if (tbres == 4)
-                return 40000;
+                return 400000;
             if (tbres == 2)
                 return 0;
             if (tbres == 0)
-                return -40000;
+                return -400000;
         }
     }
 
@@ -433,7 +431,7 @@ static inline int negamax(int depth, int alpha, int beta, Line *pline) {
 
     if (legalMoveCount == 0) {
         if (in_check) {
-            return (-49000) + ply;
+            return (-490000) + ply;
 
         } else {
             return 0;
@@ -532,7 +530,7 @@ void search_position(int depth){
 
         printf("\n");
 
-        if ((abs(eval) > 30000)){
+        if ((abs(eval) > 300000)){
             break;
         }
 
@@ -543,8 +541,3 @@ void search_position(int depth){
     printf("\n");
 
 }
-
-/**
-info score cp -30 depth 10 seldepth 25 nodes 4039149 tbhits 0 pv b1c3 d7d5 d2d4 g8f6 g1f3 e7e6 c1g5 f8e7 f3e5 h7h6
-info score cp -30 depth 10 seldepth 22 nodes 4432474 tbhits 0 pv d2d4 g8f6 b1c3 d7d5 g1f3 e7e6 c1g5 f8e7 f3e5 h7h6
- **/

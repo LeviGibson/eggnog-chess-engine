@@ -5,6 +5,7 @@
 #ifndef EGGNOG_CHESS_ENGINE_MOVEORDER_H
 #define EGGNOG_CHESS_ENGINE_MOVEORDER_H
 
+void init_move_table();
 int get_move_score(int prevmove, int move);
 
 #endif //EGGNOG_CHESS_ENGINE_MOVEORDER_H
