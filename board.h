@@ -73,7 +73,7 @@ typedef struct {
     get_bit(move, 23)
 
 #define copy_board()                                                      \
-    U64 bitboards_copy[12], occupancies_copy[3], zobrist_history_copy[101], current_zobrist_key_copy, zobrist_key_parts_copy[15], zobrist_key_bitboards_copy[12];\
+    U64 bitboards_copy[12], occupancies_copy[3], zobrist_history_copy[zobrist_history_length], current_zobrist_key_copy, zobrist_key_parts_copy[15], zobrist_key_bitboards_copy[12];\
     int side_copy, enpassant_copy, castle_copy, zobrist_history_length_copy, prevmove_copy; \
                                                                           \
     memcpy(zobrist_history_copy, zobrist_history, sizeof zobrist_history_copy);\

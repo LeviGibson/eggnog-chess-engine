@@ -21,7 +21,10 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
+#ifdef linux
 #include <glob.h>
+#endif
+
 #include <assert.h>
 #include "tbprobe.h"
 

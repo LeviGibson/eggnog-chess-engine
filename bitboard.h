@@ -26,8 +26,9 @@ enum {
     a1, b1, c1, d1, e1, f1, g1, h1, no_sq
 };
 
+
 //BIT MACROS_____________
-#define get_bit(bitboard, square) ((bitboard) & (1ULL << (square))) ? 1 : 0
+#define get_bit(bitboard, square) ((bitboard) & (1ULL << (square)))
 #define set_bit(bitboard, square) ((bitboard) |= (1ULL << (square)))
 #define pop_bit(bitboard, square) (bitboard) ^= (1ULL << (square))
 //#define pop_bit(bitboard, square) if (get_bit((bitboard), (square))) {((bitboard) ^= (1ULL << (square)));}
