@@ -6,8 +6,8 @@
 #define HALFKP_PROBE_PROPOGATE_H
 
 #include "load.h"
-#include "../board.h"
 
+#define CLIPPED_RELU(x) clamp(x, 0, 127)
 #define clamp(a, b, c) ((a) < (b) ? (b) : (a) > (c) ? (c) : (a))
 
 typedef struct NNUEDATA {
@@ -24,5 +24,10 @@ typedef struct NNUEDATA {
 } NnueData;
 
 int nnue_evaluate(NnueData *data);
+
+void nnue_pop_bit(int ptype, int bit);
+void nnue_set_bit(int ptype, int bit);
+
+void refresh_accumulator(NnueData *data);
 
 #endif //HALFKP_PROBE_PROPOGATE_H

@@ -13,7 +13,8 @@ int main() {
     load_model("nnue/defualt-nn.nnue");
 
     parse_fen(start_position);
-    uci_loop();
+    //uci_loop();
+    parse_go("go depth 7");
 
     return 0;
 }

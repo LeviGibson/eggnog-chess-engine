@@ -26,11 +26,11 @@ enum {
     a1, b1, c1, d1, e1, f1, g1, h1, no_sq
 };
 
-
+#include <assert.h>
 //BIT MACROS_____________
-#define get_bit(bitboard, square) ((bitboard) & (1ULL << (square)))
-#define set_bit(bitboard, square) ((bitboard) |= (1ULL << (square)))
-#define pop_bit(bitboard, square) (bitboard) ^= (1ULL << (square))
+#define get_bit(bitboard, square)((bitboard) & (1ULL << (square)))
+#define set_bit(bitboard, square)((bitboard) |= (1ULL << (square)))
+#define pop_bit(bitboard, square)(bitboard) ^= (1ULL << (square))
 //#define pop_bit(bitboard, square) if (get_bit((bitboard), (square))) {((bitboard) ^= (1ULL << (square)));}
 
 //count bits in U64
@@ -63,10 +63,6 @@ U64 bishop_relevant_occupancies[64];
 U64 rook_relevant_occupancies[64];
 
 U64 set_occupancy(int index, U64 mask);
-
-U64 get_rook_attacks(int square, U64 occupancies);
-
-U64 get_bishop_attacks(int square, U64 occupancies);
 
 void init_bitboards();
 

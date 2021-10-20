@@ -161,7 +161,6 @@ static inline void sort_moves(moveList *move_list, int hashmove){
     int zerosFound = partition_zero_scores(move_list, scores);
 
     quickSort(scores, 0, (int )(move_list->count) - 1 - zerosFound, move_list);
-
 }
 
 static inline int quiesce(int alpha, int beta) {
@@ -178,8 +177,7 @@ static inline int quiesce(int alpha, int beta) {
 
     nodes++;
 
-    NnueData data;
-    int stand_pat = nnue_evaluate(&data);
+    int stand_pat = nnue_evaluate(&currentNnue);
 
     if (stand_pat >= beta){
         return beta;
@@ -204,10 +202,9 @@ static inline int quiesce(int alpha, int beta) {
     for (int moveId = 0; moveId < legalMoves.count; moveId++){
         int move = legalMoves.moves[moveId];
 
-        if (!get_move_capture(move))
-            continue;
 
-        if (make_move(move, all_moves, 0)){
+
+        if (make_move(move, only_captures, 0)){
             ply++;
             int score = -quiesce(-beta, -alpha);
             ply--;
@@ -303,11 +300,11 @@ static inline int negamax(int depth, int alpha, int beta, Line *pline) {
 
             tbHits++;
             if (tbres == 4)
-                return 400000;
+                return 4000000;
             if (tbres == 2)
                 return 0;
             if (tbres == 0)
-                return -400000;
+                return -4000000;
         }
     }
 
@@ -368,6 +365,7 @@ static inline int negamax(int depth, int alpha, int beta, Line *pline) {
 
     for (int moveId = 0; moveId < legalMoves.count; moveId++) {
         move = legalMoves.moves[moveId];
+
         if (make_move(move, all_moves, 1)) {
 
             legalMoveCount++;
@@ -431,7 +429,7 @@ static inline int negamax(int depth, int alpha, int beta, Line *pline) {
 
     if (legalMoveCount == 0) {
         if (in_check) {
-            return (-490000) + ply;
+            return (-4900000) + ply;
 
         } else {
             return 0;
@@ -443,18 +441,23 @@ static inline int negamax(int depth, int alpha, int beta, Line *pline) {
 
 }
 
-#define DEF_ALPHA -500000
-#define DEF_BETA 500000
+#define DEF_ALPHA (-5000000)
+#define DEF_BETA (5000000)
+
 
 void search_position(int depth){
     //Table bases
 
     if (get_wdl() != TB_RESULT_FAILED) {
         int move = get_root_move();
-        printf("bestmove ");
-        print_move(move);
-        printf("\n");
-        return;
+
+        //this is shit code but thats okay its not my fault :)
+        if (move != 0) {
+            printf("bestmove ");
+            print_move(move);
+            printf("\n");
+            return;
+        }
     }
 
     start_time();
@@ -520,7 +523,7 @@ void search_position(int depth){
         memset(&negamax_line, 0, sizeof negamax_line);
 
         printf("info score %s %d depth %d seldepth %d nodes %ld tbhits %ld pv ",
-               (abs(eval) > 400000) ? "mate" : "cp" , (abs(eval) > 400000) ? (490000 - abs(eval)) * (eval / abs(eval)) : eval/64,
+               (abs(eval) > 4000000) ? "mate" : "cp" , (abs(eval) > 4000000) ? (4900000 - abs(eval)) * (eval / abs(eval)) : eval/64,
                currentDepth, selDepth, nodes, tbHits);
 
         for (int i = 0; i < currentDepth; i++){
@@ -530,7 +533,7 @@ void search_position(int depth){
 
         printf("\n");
 
-        if ((abs(eval) > 300000)){
+        if ((abs(eval) > 3000000)){
             break;
         }
 

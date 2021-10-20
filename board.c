@@ -3,6 +3,7 @@
 //
 
 #include "board.h"
+#include "nnue/propogate.h"
 
 #include <stdio.h>
 
@@ -83,7 +84,6 @@ U64 update_zobrist_key(){
 
     zobrist_key_parts[12] = side_keys[side];
     zobrist_key_parts[13] = castle_keys[castle];
-
     //memcpy(&zobrist_key_bitboards, &bitboards, sizeof bitboards);
 
     return key;
@@ -474,9 +474,6 @@ static inline void update_occupancies(){
 }
 
 void generate_moves(moveList *legalMoves){
-
-    //update_occupancies();
-
     generate_knight_moves(legalMoves);
     generate_pawn_moves(legalMoves);
     generate_bishop_moves(legalMoves);
@@ -497,6 +494,7 @@ const int castling_right_table[64] = {
 };
 
 int make_move(int move, int flag, int zobristUpdate){
+
     if (flag == all_moves){
         copy_board();
 
@@ -505,22 +503,29 @@ int make_move(int move, int flag, int zobristUpdate){
         int target = get_move_target(move);
         int capture = get_move_capture(move);
 
-        bitboards[ptype] ^= (1ULL << source);
-        bitboards[ptype] |= (1ULL << target);
+        //if move is a king move, refresh the accumulator;
+        if (ptype == K || ptype == k){
+            pop_bit(bitboards[ptype], source);
+            set_bit(bitboards[ptype], target);
+            refresh_accumulator(&currentNnue);
+        } else {
+            nnue_pop_bit(ptype, source);
+            nnue_set_bit(ptype, target);
+        }
 
         if (capture){
             if (get_move_enpessant(move)){
                 if (side == white){
-                    pop_bit(bitboards[p], target+8);
+                    nnue_pop_bit(p, target+8);
                 } else {
-                    pop_bit(bitboards[P], target-8);
+                    nnue_pop_bit(P, target-8);
                 }
             } else {
                 if (side == white){
                     for (int piece = p; piece <= k; piece++) {
                         if (get_bit(bitboards[piece], target)) {
 
-                            pop_bit(bitboards[piece], target);
+                            nnue_pop_bit(piece, target);
 
                             break;
                         }
@@ -529,7 +534,7 @@ int make_move(int move, int flag, int zobristUpdate){
                     for (int piece = P; piece <= K; piece++) {
                         if (get_bit(bitboards[piece], target)) {
 
-                            pop_bit(bitboards[piece], target);
+                            nnue_pop_bit(piece, target);
 
                             break;
                         }
@@ -547,27 +552,27 @@ int make_move(int move, int flag, int zobristUpdate){
         if (get_move_castle(move)){
             if (side == white){
                 if (target == 62){
-                    pop_bit(bitboards[R], 63);
-                    set_bit(bitboards[R], 61);
+                    nnue_pop_bit(R, 63);
+                    nnue_set_bit(R, 61);
                 } else if (target == 58){
-                    pop_bit(bitboards[R], 56);
-                    set_bit(bitboards[R], 59);
+                    nnue_pop_bit(R, 56);
+                    nnue_set_bit(R, 59);
                 }
             } else {
                 if (target == 6){
-                    pop_bit(bitboards[r], 7);
-                    set_bit(bitboards[r], 5);
+                    nnue_pop_bit(r, 7);
+                    nnue_set_bit(r, 5);
                 } else if (target == 2){
-                    pop_bit(bitboards[r], 0);
-                    set_bit(bitboards[r], 3);
+                    nnue_pop_bit(r, 0);
+                    nnue_set_bit(r, 3);
                 }
             }
         }
 
         int promoted = get_move_promoted(move);
         if (promoted){
-            pop_bit(bitboards[ptype], target);
-            set_bit(bitboards[promoted], target);
+            nnue_pop_bit(ptype, target);
+            nnue_set_bit(promoted, target);
         }
 
         update_occupancies();
@@ -604,9 +609,7 @@ int make_move(int move, int flag, int zobristUpdate){
     } else {
 
         if (get_move_capture(move)){
-
             return make_move(move, all_moves, zobristUpdate);
-
         } else {
             return 0;
         }
@@ -618,9 +621,7 @@ int make_move(int move, int flag, int zobristUpdate){
     return 1;
 }
 
-static inline U64 get_queen_attacks(int square, U64 occupancies){
-    return (get_bishop_attacks(square, occupancies) | get_rook_attacks(square, occupancies));
-}
+
 
 int is_square_attacked(int square, int testingSide){
 
@@ -793,8 +794,8 @@ void parse_fen(char *fen)
     for (int piece = p; piece <= k; piece++)
         occupancies[black] |= bitboards[piece];
 
-    occupancies[both] |= occupancies[white];
-    occupancies[both] |= occupancies[black];
-
+    update_occupancies();
     current_zobrist_key = generate_zobrist_key();
+
+    refresh_accumulator(&currentNnue);
 }

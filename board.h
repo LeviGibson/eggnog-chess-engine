@@ -6,7 +6,7 @@
 #define MBBCHESS_BOARD_H
 
 #include <string.h>
-
+#include "nnue/propogate.h"
 #include "bitboard.h"
 
 #define start_position "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
@@ -74,7 +74,10 @@ typedef struct {
 
 #define copy_board()                                                      \
     U64 bitboards_copy[12], occupancies_copy[3], zobrist_history_copy[zobrist_history_length], current_zobrist_key_copy, zobrist_key_parts_copy[15], zobrist_key_bitboards_copy[12];\
-    int side_copy, enpassant_copy, castle_copy, zobrist_history_length_copy, prevmove_copy; \
+    int side_copy, enpassant_copy, castle_copy, zobrist_history_length_copy, prevmove_copy;                                                                                         \
+                                                                          \
+    int16_t accumulation_copy[2][KPSIZE];                               \
+    memcpy(accumulation_copy, currentNnue.accumulation, sizeof accumulation_copy); \
                                                                           \
     memcpy(zobrist_history_copy, zobrist_history, sizeof zobrist_history_copy);\
     memcpy(bitboards_copy, bitboards, sizeof bitboards_copy);                   \
@@ -87,7 +90,9 @@ typedef struct {
     prevmove_copy = prevmove;\
     current_zobrist_key_copy = current_zobrist_key                          \
 
-#define take_back()                                                       \
+#define take_back() \
+    memcpy(currentNnue.accumulation, accumulation_copy, sizeof accumulation_copy); \
+                    \
     memcpy(bitboards, bitboards_copy, sizeof bitboards);              \
     memcpy(occupancies, occupancies_copy, sizeof occupancies);        \
     memcpy(zobrist_history, zobrist_history_copy, sizeof zobrist_history);\
@@ -118,6 +123,8 @@ U64 bitboards[12];
 U64 occupancies[3];
 
 U64 current_zobrist_key;
+
+NnueData currentNnue;
 
 int enpessant;
 int side;
