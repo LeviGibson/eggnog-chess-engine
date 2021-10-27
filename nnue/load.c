@@ -4,16 +4,6 @@
 
 #define TRANSFORMERSTART ((3 * 4) + 181)
 
-//int16_t in_weights[INSIZE * KPSIZE ];
-//int8_t  l1_weights[L1SIZE * L2SIZE ];
-//int8_t  l2_weights[L2SIZE * L3SIZE ];
-//int8_t  l3_weights[L3SIZE * OUTSIZE];
-//
-//int16_t in_biases[KPSIZE ];
-//int32_t l1_biases[L2SIZE ];
-//int32_t  l2_biases[L3SIZE ];
-//int32_t  l3_biases[OUTSIZE];
-
 alignas(64) int16_t in_weights[INSIZE * KPSIZE ];
 alignas(64) int8_t l1_weights[L1SIZE * L2SIZE ];
 alignas(64) int8_t l2_weights[L2SIZE * L3SIZE ];

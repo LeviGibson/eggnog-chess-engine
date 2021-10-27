@@ -1,11 +1,12 @@
 #ifndef MBBCHESS_TIMEMAN_H
 #define MBBCHESS_TIMEMAN_H
 
-#include <immintrin.h>
+#include <stddef.h>
 
 static inline int get_time_ms()
 {
   #ifdef WIN64
+    #include <immintrin.h>
       return GetTickCount();
   #else
       #include <sys/time.h>
