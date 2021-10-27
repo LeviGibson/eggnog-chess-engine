@@ -70,18 +70,6 @@ void parse_position(char *command) {
 
     }
 
-    for (int i = 0; i < 10; ++i) {
-        printf("%d, ", currentNnue.accumulation[1][i]);
-    }
-
-    printf(": ");
-
-    for (int i = 0; i < 10; ++i) {
-        printf("%d, ", currentNnue.accumulation[0][i]);
-    }
-
-    printf("\n");
-
     current_char = strstr(command, "moves");
     if (current_char != NULL) {
         current_char += 6;
@@ -91,18 +79,6 @@ void parse_position(char *command) {
             uci_move_sequence_length++;
 
             make_move(move, all_moves, 1);
-
-            for (int i = 0; i < 10; ++i) {
-                printf("%d, ", currentNnue.accumulation[1][i]);
-            }
-
-            printf(": ");
-
-            for (int i = 0; i < 10; ++i) {
-                printf("%d, ", currentNnue.accumulation[0][i]);
-            }
-
-            printf("\n");
 
             while ((*current_char) && (*current_char != ' ')) {
                 current_char++;

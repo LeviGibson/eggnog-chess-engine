@@ -135,8 +135,10 @@ void generate_moves(moveList *legalMoves);
 int make_move(int move, int flag, int zobristUpdate);
 
 int is_square_attacked(int square, int testingSide);
+int is_move_direct_check(int move);
 
 void print_board();
+void print_fen();
 
 void parse_fen(char *fen);
 

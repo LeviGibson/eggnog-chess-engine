@@ -474,6 +474,8 @@ static inline void update_occupancies(){
 }
 
 void generate_moves(moveList *legalMoves){
+    legalMoves->count = 0;
+
     generate_knight_moves(legalMoves);
     generate_pawn_moves(legalMoves);
     generate_bishop_moves(legalMoves);
@@ -608,7 +610,7 @@ int make_move(int move, int flag, int zobristUpdate){
             current_zobrist_key = 0ULL;
     } else {
 
-        if (get_move_capture(move)){
+        if (get_move_capture(move) || is_move_direct_check(move)){
             return make_move(move, all_moves, zobristUpdate);
         } else {
             return 0;
@@ -621,7 +623,62 @@ int make_move(int move, int flag, int zobristUpdate){
     return 1;
 }
 
+//Simple and fast function to judge if a move is a check.
+//Does not work with discovered checks or castle-checks
 
+int is_move_direct_check(int move) {
+    int ptype = get_move_piece(move);
+    U64 kingbb = side == white ? bitboards[k] : bitboards[K];
+    int kingsq = bsf(kingbb);
+    int target = get_move_target(move);
+    U64 targetBb = 1ULL << target;
+
+    if (ptype == N || ptype == n){
+        if (knight_mask[target] & kingbb)
+            return 1;
+        else
+            return 0;
+    }
+
+    if (ptype == P){
+        if (pawn_mask[white][target] & kingbb)
+            return 1;
+        else
+            return 0;
+    }
+
+    if (ptype == p){
+        if (pawn_mask[black][target] & kingbb)
+            return 1;
+        else
+            return 0;
+    }
+
+    if (ptype == B || ptype == b){
+        if (get_bishop_attacks(kingsq, occupancies[both]) & targetBb)
+            return 1;
+        else
+            return 0;
+    }
+
+    if (ptype == R || ptype == r){
+        if (get_rook_attacks(kingsq, occupancies[both]) & targetBb)
+            return 1;
+        else
+            return 0;
+    }
+
+    if (ptype == Q || ptype == q){
+        if (get_bishop_attacks(kingsq, occupancies[both]) & targetBb)
+            return 1;
+        if (get_rook_attacks(kingsq, occupancies[both]) & targetBb)
+            return 1;
+
+        return 0;
+    }
+
+    return 0;
+}
 
 int is_square_attacked(int square, int testingSide){
 
@@ -702,7 +759,38 @@ void print_board(){
     printf("    A B C D E F G H\n\n");
 }
 
+int piece_at(int square){
+    for (int i = 0; i < 12; ++i) {
+        if (bitboards[i] & 1ULL << square)
+            return i;
+    }
 
+    return -1;
+}
+
+void print_fen(){
+    for (int r = 0; r < 8; ++r) {
+        int esq = 0;
+        for (int f = 0; f < 8; ++f) {
+
+            int p = piece_at((r * 8) + f);
+            if (p == -1) { esq++; }
+            else {
+                if (esq > 0) {
+                    printf("%d", esq);
+                    esq = 0;
+                }
+                printf("%c", piece_symbols[p]);
+            }
+        }
+        if (esq > 0)
+            printf("%d", esq);
+        if (r != 7)
+            printf("/");
+    }
+
+    printf(side == white ? " w" : " b");
+}
 
 void parse_fen(char *fen)
 {

@@ -3,11 +3,9 @@
 //
 
 #include <string.h>
-#include <stdio.h>
 #include "../board.h"
 
 #include "propogate.h"
-#include <immintrin.h>
 
 int NnuePtypes[12] = {6, 5, 4, 3, 2, K, 12, 11, 10, 9, 8, k};
 
@@ -119,32 +117,15 @@ void refresh_accumulator(NnueData *data) {
     }
 }
 
-void propogate_l1(NnueData *data) {
-
-
-
-    int16_t *accum = (int16_t *) &data->accumulation;
-    memcpy(data->l1, l1_biases, sizeof l1_biases);
+void propogate_l2(NnueData *data){
     memcpy(data->l2, l2_biases, sizeof l2_biases);
-    memcpy(data->l3, l3_biases, sizeof l3_biases);
-
-    for (int i = 0; i < 512; ++i) {
-        for (int j = 0; j < 32; ++j) {
-
-            int offset = 32 * i;
-
-            data->l1[j] += CLIPPED_RELU(accum[i]) * l1_weights[offset + j];
-        }
-    }
-
-    for (int i = 0; i < 32; ++i) {
-        data->l1[i] = clamp(data->l1[i] / 64, 0, 127);
-    }
 
     for (int o = 0; o < 32; ++o) {
-        for (int d = 0; d < 32; ++d) {
-            int offset = 32 * o;
+        if (!data->l1[o])
+            continue;
 
+        int offset = 32 * o;
+        for (int d = 0; d < 32; ++d) {
             data->l2[d] += data->l1[o] * l2_weights[offset + d];
         }
     }
@@ -152,34 +133,52 @@ void propogate_l1(NnueData *data) {
     for (int i = 0; i < 32; ++i) {
         data->l2[i] = clamp(data->l2[i] / 64, 0, 127);
     }
+}
 
+void propogate_l3(NnueData *data){
+    memcpy(data->l3, l3_biases, sizeof l3_biases);
     for (int i = 0; i < 32; ++i) {
         data->l3[0] += data->l2[i] * l3_weights[i];
     }
 }
 
-int nnue_evaluate(NnueData *data) {
+static void propogate_neuron(const short a, const int8_t *b, int *c) {
+    for (int i = 0; i < 32; ++i)
+        c[i] += a * b[i];
+}
 
+int16_t tmp_accum[512];
+
+void propogate_l1(NnueData *data) {
+    memcpy(tmp_accum, data->accumulation, sizeof tmp_accum);
+    memcpy(data->l1, l1_biases, sizeof l1_biases);
+
+    for (int i = 0; i < 512; ++i) {
+        tmp_accum[i] = CLIPPED_RELU(tmp_accum[i]);
+    }
+
+    for (int i = 0; i < 512; ++i) {
+        if (!tmp_accum[i])
+            continue;
+
+        int offset = 32 * i;
+        propogate_neuron(tmp_accum[i], &l1_weights[offset], data->l1);
+    }
+
+    for (int i = 0; i < 32; ++i) {
+        data->l1[i] = data->l1[i] / 64;
+        data->l1[i] = clamp(data->l1[i], 0, 127);
+    }
+}
+
+int nnue_evaluate(NnueData *data) {
     propogate_l1(data);
+    propogate_l2(data);
+    propogate_l3(data);
     data->eval = (side == white) ? data->l3[0] : -data->l3[0];
 
     return data->eval;
 }
-
-//int bit = bsf(bitboard);
-//int sq = w_orient[bit];
-//int pc = NnuePtypes[ptype];
-//
-//append_index(white, make_index(white, sq, pc, w_ksq), data);
-//append_index(black, make_index(black, sq, pc, b_ksq), data);
-
-//void accumulator_relu(NnueData *data){
-//    for (unsigned int c = 0; c < 2; c++) {
-//        for (int i = 0; i < 256; i++) {
-//            data->accumulation[c][i] = CLIPPED_RELU(data->accumulation[c][i]);
-//        }
-//    }
-//}
 
 void nnue_pop_bit(int ptype, int bit){
 

@@ -116,6 +116,7 @@ static inline int score_move(int move, int hashmove){
 
         if (side == white) {start_piece = p; end_piece = k;}
         else{start_piece = P; end_piece = K;}
+
         for (int bb_piece = start_piece; bb_piece < end_piece; bb_piece++){
             if (get_bit(bitboards[bb_piece], target_square)){
                 target_piece = bb_piece;
@@ -161,6 +162,11 @@ static inline void sort_moves(moveList *move_list, int hashmove){
     int zerosFound = partition_zero_scores(move_list, scores);
 
     quickSort(scores, 0, (int )(move_list->count) - 1 - zerosFound, move_list);
+
+//    for (int i = 0; i < move_list->count; ++i) {
+//        print_move(move_list->moves[i]);
+//        printf(" : %d\n", scores[i]);
+//    }
 }
 
 static inline int quiesce(int alpha, int beta) {
@@ -361,7 +367,7 @@ static inline int negamax(int depth, int alpha, int beta, Line *pline) {
 
     int legalMoveCount = 0;
     int move;
-    int bestmove = no_move;
+    int bestMove = no_move;
 
     for (int moveId = 0; moveId < legalMoves.count; moveId++) {
         move = legalMoves.moves[moveId];
@@ -401,7 +407,7 @@ static inline int negamax(int depth, int alpha, int beta, Line *pline) {
 
                 alpha = eval;
 
-                bestmove = move;
+                bestMove = move;
                 hashf = hashfEXACT;
 
                 pline->moves[0] = move;
@@ -436,7 +442,7 @@ static inline int negamax(int depth, int alpha, int beta, Line *pline) {
         }
     }
 
-    RecordHash(depth, alpha, bestmove, hashf);
+    RecordHash(depth, alpha, bestMove, hashf);
     return alpha;
 
 }
