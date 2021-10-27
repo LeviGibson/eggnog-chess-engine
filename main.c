@@ -14,6 +14,7 @@ int main() {
 
     parse_fen(start_position);
     uci_loop();
+    //parse_go("go depth 9");
 
     return 0;
 }

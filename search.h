@@ -11,5 +11,6 @@ typedef struct tagLINE {
 
 void search_position(int depth);
 int stop;
+int ply;
 
 #endif

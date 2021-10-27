@@ -4,6 +4,7 @@
 
 #include "board.h"
 #include "nnue/propogate.h"
+#include "search.h"
 
 #include <stdio.h>
 
@@ -609,8 +610,8 @@ int make_move(int move, int flag, int zobristUpdate){
         } else
             current_zobrist_key = 0ULL;
     } else {
-
-        if (get_move_capture(move) || is_move_direct_check(move)){
+        int in_check = is_square_attacked(bsf((side == white) ? bitboards[K] : bitboards[k]), (side ^ 1));
+        if (get_move_capture(move) || is_move_direct_check(move) || in_check){
             return make_move(move, all_moves, zobristUpdate);
         } else {
             return 0;
