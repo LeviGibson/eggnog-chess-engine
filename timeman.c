@@ -16,9 +16,10 @@ void communicate(){
 }
 
 int choose_movetime(int wtime, int btime){
+
     if (side == white){
-        return wtime / (100-uci_move_sequence_length);
+        return ((wtime / 15));
     } else {
-        return btime / (100-uci_move_sequence_length);
+        return ((btime / 15));
     }
 }

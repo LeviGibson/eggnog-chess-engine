@@ -491,6 +491,8 @@ void search_position(int depth){
 
     int eval;
 
+    int prevBestMove = 0;
+
     for (int currentDepth = 1; currentDepth <= depth; currentDepth++){
         reset_hash_table();
         ply = 0;
@@ -534,6 +536,11 @@ void search_position(int depth){
 
         memcpy(&pv_line, &negamax_line, sizeof negamax_line);
         memset(&negamax_line, 0, sizeof negamax_line);
+
+        //TIME MANAGMENT
+        if (pv_line.moves[0] == prevBestMove)
+            moveTime -= 500;
+        prevBestMove = pv_line.moves[0];
 
         printf("info score %s %d depth %d seldepth %d nodes %ld tbhits %ld pv ",
                (abs(eval) > 4000000) ? "mate" : "cp" , (abs(eval) > 4000000) ? (4900000 - abs(eval)) * (eval / abs(eval)) : eval/64,

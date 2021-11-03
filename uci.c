@@ -124,7 +124,7 @@ void parse_go(char *command) {
 
         wtime = atoi(current_wtime + 6);
 
-        current_btime = strstr(command, "wtime");
+        current_btime = strstr(command, "btime");
         btime = atoi(current_btime + 6);
 
         //printf("wtime : %d\nbtime : %d\n\n", wtime, btime);
