@@ -2,6 +2,7 @@
 #define MBBCHESS_UCI_H
 
 int uci_move_sequence_length;
+int dynamic_time_managment = 0;
 
 void parse_position(char *command);
 void parse_go(char *command);

@@ -128,8 +128,8 @@ void parse_go(char *command) {
         btime = atoi(current_btime + 6);
 
         //printf("wtime : %d\nbtime : %d\n\n", wtime, btime);
+        dynamic_time_managment = 1;
         moveTime = choose_movetime(wtime, btime);
-        printf("MOVETIME %d\n", moveTime);
     }
 
     search_position(depth);
@@ -169,6 +169,7 @@ void uci_loop() {
         if (strncmp(input, "go", 2) == 0) {
 
             parse_go(input);
+            dynamic_time_managment = 0;
 
         }
         if (strncmp(input, "quit", 4) == 0) {

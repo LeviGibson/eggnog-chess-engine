@@ -610,8 +610,7 @@ int make_move(int move, int flag, int zobristUpdate){
         } else
             current_zobrist_key = 0ULL;
     } else {
-        int in_check = is_square_attacked(bsf((side == white) ? bitboards[K] : bitboards[k]), (side ^ 1));
-        if (get_move_capture(move) || is_move_direct_check(move) || in_check){
+        if (get_move_capture(move) || is_move_direct_check(move)){
             return make_move(move, all_moves, zobristUpdate);
         } else {
             return 0;

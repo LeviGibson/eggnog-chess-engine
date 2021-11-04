@@ -162,22 +162,9 @@ static inline void sort_moves(moveList *move_list, int hashmove){
     int zerosFound = partition_zero_scores(move_list, scores);
 
     quickSort(scores, 0, (int )(move_list->count) - 1 - zerosFound, move_list);
-
-//    printf("\n\n\n");
-//
-//    print_fen();
-//
-//    printf("\n%d\n\n", ply);
-//
-//    for (int i = 0; i < move_list->count; ++i) {
-//        print_move(move_list->moves[i]);
-//        printf(" : %d\n", scores[i]);
-//    }
 }
 
-#define QUIESCE_CHECK_LIMIT 3
-
-static inline int quiesce(int alpha, int beta, int checks) {
+static inline int quiesce(int alpha, int beta) {
     if (ply > selDepth){
         selDepth = ply;
     }
@@ -185,7 +172,7 @@ static inline int quiesce(int alpha, int beta, int checks) {
     if (nodes % 2048 == 0)
         communicate();
 
-    if (stop || checks > QUIESCE_CHECK_LIMIT){
+    if (stop){
         return 0;
     }
 
@@ -213,13 +200,14 @@ static inline int quiesce(int alpha, int beta, int checks) {
     generate_moves(&legalMoves);
     sort_moves(&legalMoves, no_move);
 
-    int in_check = is_square_attacked(bsf((side == white) ? bitboards[K] : bitboards[k]), (side ^ 1));
-
     for (int moveId = 0; moveId < legalMoves.count; moveId++){
         int move = legalMoves.moves[moveId];
+
+
+
         if (make_move(move, only_captures, 0)){
             ply++;
-            int score = -quiesce(-beta, -alpha, checks + in_check);
+            int score = -quiesce(-beta, -alpha);
             ply--;
 
             take_back();
@@ -248,7 +236,7 @@ static inline int ZwSearch(int beta, int depth){
     }
 
     if (depth == 0)
-        return quiesce(beta-1, beta, 0);
+        return quiesce(beta-1, beta);
 
     moveList legalMoves;
     legalMoves.count = 0;
@@ -330,7 +318,7 @@ static inline int negamax(int depth, int alpha, int beta, Line *pline) {
 
     if (depth <= 0) {
         pline->length = 0;
-        return quiesce(alpha, beta, 0);
+        return quiesce(alpha, beta);
     }
 
     if (is_threefold_repetition()) {
