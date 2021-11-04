@@ -10,6 +10,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+int dynamic_time_managment = 0;
+
 int parse_move(char *move_string) {
 
     moveList legalMoves;
