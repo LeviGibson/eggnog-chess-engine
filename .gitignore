@@ -1,6 +1,5 @@
 .idea
 .vscode
-
 bin/gmon.out
 bin/eggnog-chess-engine-avx.exe
 bin/eggnog-chess-engine-avx2.exe

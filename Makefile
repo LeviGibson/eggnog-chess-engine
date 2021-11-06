@@ -14,6 +14,10 @@ FILES = main.c\
 NNUEFILES = nnue/load.c nnue/load.h nnue/propogate.c nnue/propogate.h
 FILE = ./bin/eggnog-chess-engine
 
+all:
+	make avx2 && make avx && make sse && make sse2
+release:
+	make avx2 && make avx && make sse && make sse2 && make win_avx2 && make win_avx && make win_sse && make win_sse2
 avx2:
 	gcc -O3 -mavx2 $(FILES) $(NNUEFILES) -o $(FILE)-avx2-linux
 avx:
@@ -23,7 +27,7 @@ sse:
 sse2:
 	gcc -O3 -msse2 $(FILES) $(NNUEFILES) -o $(FILE)-sse2-linux
 debug:
-	gcc $(FILES) $(NNUEFILES) -o eggnog-chess-engine
+	gcc -mavx2 $(FILES) $(NNUEFILES) -o $(FILE)-debug
 prof:
 	gcc -pg $(FILES) $(NNUEFILES) -o $(FILE)-prof
 win_avx2:
@@ -36,13 +40,3 @@ win_sse2:
 	x86_64-w64-mingw32-gcc -o $(FILE)-sse2.exe $(FILES) $(NNUEFILES) -msse2 -O3
 run:
 	./eggnog-chess-engine
-release:
-	make avx2
-	make avx
-	make sse
-	make sse2
-
-	make win_avx2
-	make win_avx
-	make win_sse
-	make win_sse2

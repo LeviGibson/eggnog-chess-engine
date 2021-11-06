@@ -4,7 +4,6 @@
 #include "propogate.h"
 #include "../board.h"
 
-#include <immintrin.h>
 #include <string.h>
 
 
@@ -91,18 +90,24 @@ void append_active_indicies(NnueData *data) {
     }
 }
 
-void add_index(NnueData *data, unsigned int index, unsigned int c) {
+//vectorised by the compiler
+void add_index(short *restrict acc, unsigned int index, unsigned int c) {
     unsigned offset = 256 * index;
+    int16_t *restrict w = in_weights + offset;
+    acc += 256*c;
 
     for (unsigned j = 0; j < 256; j++)
-        data->accumulation[c][j] += in_weights[offset + j];
+        acc[j] += w[j];
 }
 
-void subtract_index(NnueData *data, unsigned index, unsigned c) {
+//vectorised by the compiler
+void subtract_index(short *restrict acc, unsigned index, unsigned c) {
     unsigned offset = 256 * index;
+    int16_t *restrict w = in_weights + offset;
+    acc += 256*c;
 
     for (unsigned j = 0; j < 256; j++)
-        data->accumulation[c][j] -= in_weights[offset + j];
+        acc[j] -= w[j];
 }
 
 void refresh_accumulator(NnueData *data) {
@@ -113,39 +118,26 @@ void refresh_accumulator(NnueData *data) {
 
         for (size_t k = 0; k < data->activeIndexCount[c]; k++) {
             unsigned index = data->activeIndicies[c][k];
-            add_index(data, index, c);
+            add_index(data->accumulation[0], index, c);
         }
     }
 }
 
-void propogate_l2(NnueData *data){
-    memcpy(data->l2, l2_biases, sizeof l2_biases);
-
-    for (int o = 0; o < 32; ++o) {
-        if (!data->l1[o])
-            continue;
-
-        int offset = 32 * o;
-        for (int d = 0; d < 32; ++d) {
-            data->l2[d] += data->l1[o] * l2_weights[offset + d];
-        }
-    }
-
+void clamp_layer(int *layer){
     for (int i = 0; i < 32; ++i) {
-        data->l2[i] = clamp(data->l2[i] / 64, 0, 127);
+        layer[i] /= 64;
+        layer[i] = clamp(layer[i], 0, 127);
     }
 }
 
-void propogate_l3(NnueData *data){
-    memcpy(data->l3, l3_biases, sizeof l3_biases);
-    for (int i = 0; i < 32; ++i) {
-        data->l3[0] += data->l2[i] * l3_weights[i];
+void clamp_accumulator(int16_t *acc){
+    for (int i = 0; i < 512; ++i) {
+        acc[i] = CLIPPED_RELU(acc[i]);
     }
 }
 
-//Vectorised by the compiler
 void propogate_neuron(const short a, const int8_t *b, int *restrict c) {
-    for (int i = 0; i < 32; ++i){
+    for (int i = 0; i < 32; ++i) {
         c[i] += a * b[i];
     }
 }
@@ -156,9 +148,7 @@ void propogate_l1(NnueData *data) {
     memcpy(tmp_accum, data->accumulation, sizeof tmp_accum);
     memcpy(data->l1, l1_biases, sizeof l1_biases);
 
-    for (int i = 0; i < 512; ++i) {
-        tmp_accum[i] = CLIPPED_RELU(tmp_accum[i]);
-    }
+    clamp_accumulator(tmp_accum);
 
     for (int i = 0; i < 512; ++i) {
         if (!tmp_accum[i])
@@ -168,11 +158,31 @@ void propogate_l1(NnueData *data) {
         propogate_neuron(tmp_accum[i], &l1_weights[offset], data->l1);
     }
 
+    clamp_layer(data->l1);
+}
+
+void propogate_l2(NnueData *data){
+    memcpy(data->l2, l2_biases, sizeof l2_biases);
+
+    for (int o = 0; o < 32; ++o) {
+        if (!data->l1[o])
+            continue;
+
+        int offset = 32 * o;
+        propogate_neuron((short )data->l1[o], &l2_weights[offset], data->l2);
+    }
+
+    clamp_layer(data->l2);
+}
+
+void propogate_l3(NnueData *data){
+    memcpy(data->l3, l3_biases, sizeof l3_biases);
     for (int i = 0; i < 32; ++i) {
-        data->l1[i] = data->l1[i] / 64;
-        data->l1[i] = clamp(data->l1[i], 0, 127);
+        data->l3[0] += data->l2[i] * l3_weights[i];
     }
 }
+
+//Vectorised by the compiler
 
 int nnue_evaluate(NnueData *data) {
     propogate_l1(data);
@@ -196,8 +206,8 @@ void nnue_pop_bit(int ptype, int bit){
     int wi = make_index(white, sq, pc, w_ksq);
     int bi = make_index(black, sq, pc, b_ksq);
 
-    subtract_index(&currentNnue, wi, white);
-    subtract_index(&currentNnue, bi, black);
+    subtract_index(currentNnue.accumulation[0], wi, white);
+    subtract_index(currentNnue.accumulation[0], bi, black);
 }
 
 void nnue_set_bit(int ptype, int bit){
@@ -213,6 +223,6 @@ void nnue_set_bit(int ptype, int bit){
     int wi = make_index(white, sq, pc, w_ksq);
     int bi = make_index(black, sq, pc, b_ksq);
 
-    add_index(&currentNnue, wi, white);
-    add_index(&currentNnue, bi, black);
+    add_index(currentNnue.accumulation[0], wi, white);
+    add_index(currentNnue.accumulation[0], bi, black);
 }
