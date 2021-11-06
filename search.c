@@ -6,6 +6,7 @@
 #include "Fathom/tbprobe.h"
 #include "syzygy.h"
 #include "moveOrder.h"
+#include "uci.h"
 #include <stdio.h>
 
 #define aspwindow 50
@@ -108,6 +109,10 @@ static inline int score_move(int move, int hashmove){
         }
     }
 
+    if (hashmove == move){
+        return 5000;
+    }
+
     if (get_move_capture(move)){
         int start_piece, end_piece;
         int target_piece = P;
@@ -141,10 +146,6 @@ static inline int score_move(int move, int hashmove){
             if (score > 100)
                 return score;
 
-        }
-
-        if (hashmove == move){
-            return 5000;
         }
 
         return 0;
@@ -526,8 +527,8 @@ void search_position(int depth){
         memset(&negamax_line, 0, sizeof negamax_line);
 
         //TIME MANAGMENT
-        if (pv_line.moves[0] == prevBestMove)
-            moveTime -= 500;
+        if (pv_line.moves[0] == prevBestMove && dynamic_time_managment)
+            moveTime -= (moveTime / 6);
         prevBestMove = pv_line.moves[0];
 
         printf("info score %s %d depth %d seldepth %d nodes %ld tbhits %ld pv ",
@@ -535,6 +536,8 @@ void search_position(int depth){
                currentDepth, selDepth, nodes, tbHits);
 
         for (int i = 0; i < currentDepth; i++){
+            if (pv_line.moves[i] == 0)
+                break;
             print_move(pv_line.moves[i]);
             printf(" ");
         }

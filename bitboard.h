@@ -79,8 +79,9 @@ U64 bishop_attacks[64][512];
 const U64 rook_magic_numbers[64];
 const U64 bishop_magic_numbers[64];
 
-#define get_rook_attacks(square, occupancies) rook_attacks[square][((rook_magic_numbers[square] * (occupancies & rook_relevant_occupancies[square])) >> (64-rook_relevent_occupancy_count[square]))]
-#define get_bishop_attacks(square, occupancies) bishop_attacks[square][((bishop_magic_numbers[square] * (occupancies & bishop_relevant_occupancies[square])) >> (64-bishop_relevent_occupancy_count[square]))]
+#define get_rook_attacks(square, occupancies) rook_attacks[square][((rook_magic_numbers[square] * ((occupancies) & rook_relevant_occupancies[square])) >> (64-rook_relevent_occupancy_count[square]))]
+#define get_bishop_attacks(square, occupancies) bishop_attacks[square][((bishop_magic_numbers[square] * ((occupancies) & bishop_relevant_occupancies[square])) >> (64-bishop_relevent_occupancy_count[square]))]
 
+#define get_queen_attacks(square, occupancies) (get_rook_attacks((square), (occupancies)) | get_bishop_attacks((square), (occupancies)))
 
 #endif //MBBCHESS_BITBOARD_H

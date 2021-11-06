@@ -12,14 +12,37 @@ FILES = main.c\
  Fathom/*.c Fathom/*.h
 
 NNUEFILES = nnue/load.c nnue/load.h nnue/propogate.c nnue/propogate.h
+FILE = ./bin/eggnog-chess-engine
 
-all:
-	gcc -O2 $(FILES) $(NNUEFILES) -o eggnog-chess-engine
+avx2:
+	gcc -O3 -mavx2 $(FILES) $(NNUEFILES) -o $(FILE)-avx2-linux
+avx:
+	gcc -O3 -mavx $(FILES) $(NNUEFILES) -o $(FILE)-avx-linux
+sse:
+	gcc -O3 -msse $(FILES) $(NNUEFILES) -o $(FILE)-sse-linux
+sse2:
+	gcc -O3 -msse2 $(FILES) $(NNUEFILES) -o $(FILE)-sse2-linux
 debug:
 	gcc $(FILES) $(NNUEFILES) -o eggnog-chess-engine
 prof:
-	gcc -pg -no-pie -fno-builtin $(FILES) $(NNUEFILES) -o eggnog-chess-engine
-win:
-	x86_64-w64-mingw32-gcc -o eggnog-chess-engine.exe $(FILES) $(NNUEFILES) -O2
+	gcc -pg $(FILES) $(NNUEFILES) -o $(FILE)-prof
+win_avx2:
+	x86_64-w64-mingw32-gcc -o $(FILE)-avx2.exe $(FILES) $(NNUEFILES) -mavx2 -O3
+win_avx:
+	x86_64-w64-mingw32-gcc -o $(FILE)-avx.exe $(FILES) $(NNUEFILES) -mavx -O3
+win_sse:
+	x86_64-w64-mingw32-gcc -o $(FILE)-sse.exe $(FILES) $(NNUEFILES) -msse -O3
+win_sse2:
+	x86_64-w64-mingw32-gcc -o $(FILE)-sse2.exe $(FILES) $(NNUEFILES) -msse2 -O3
 run:
 	./eggnog-chess-engine
+release:
+	make avx2
+	make avx
+	make sse
+	make sse2
+
+	make win_avx2
+	make win_avx
+	make win_sse
+	make win_sse2

@@ -623,6 +623,15 @@ int make_move(int move, int flag, int zobristUpdate){
     return 1;
 }
 
+int piece_at(int square){
+    for (int i = 0; i < 12; ++i) {
+        if (bitboards[i] & 1ULL << square)
+            return i;
+    }
+
+    return -1;
+}
+
 //Simple and fast function to judge if a move is a check.
 //Does not work with discovered checks or castle-checks
 
@@ -690,12 +699,44 @@ int is_square_attacked(int square, int testingSide){
     if (get_bishop_attacks(square, occupancies[both]) & ((testingSide == white ? bitboards[B] : bitboards[b]) | (testingSide == white ? bitboards[Q] : bitboards[q]))) return 1;
     if (get_rook_attacks(square, occupancies[both]) & ((testingSide == white ? bitboards[R] : bitboards[r]) | (testingSide == white ? bitboards[Q] : bitboards[q]))) return 1;
 
-    //if (get_queen_attacks(square, occupancies[both]) & ((testingSide == white ? bitboards[Q] : bitboards[q]))) return 1;
-
     if (king_mask[square] & ((testingSide == white ? bitboards[K] : bitboards[k]))) return 1;
 
     return 0;
 }
+
+//
+//int piece_values[12] = {10, 30, 32, 50, 100, 0, -10, -30, -32, -50, -100, 0};
+//
+//int get_smallest_attacker(int square, int testingSide){
+//    if ((testingSide == white) && (pawn_mask[black][square] & bitboards[P])) return P;
+//
+//    if ((testingSide == black) && (pawn_mask[white][square] & bitboards[p])) return p;
+//
+//    if (knight_mask[square] & ((testingSide == white) ? bitboards[N] : bitboards[n])) return testingSide == white ? N : n;
+//
+//    if (get_bishop_attacks(testingSide, occupancies[both]) & ((testingSide == white) ? bitboards[B] : bitboards[b])) testingSide == white ? B : b;
+//
+//    if (get_rook_attacks(testingSide, occupancies[both]) & ((testingSide == white) ? bitboards[R] : bitboards[r])) testingSide == white ? R : r;
+//
+//    if (get_queen_attacks(testingSide, occupancies[both]) & ((testingSide == white) ? bitboards[Q] : bitboards[q])) testingSide == white ? Q : q;
+//
+//    if (king_mask[square] & ((testingSide == white) ? bitboards[K] : bitboards[k])) testingSide == white ? K : k;
+//
+//    return -1;
+//}
+//
+//int static_exchange_evaluation(int move) {
+//    int exchange_eval = 0;
+//
+//    int target = get_move_target(move);
+//    int cap = piece_at(target);
+//    exchange_eval -= piece_values[cap];
+//
+//    if (get_smallest_attacker(target, side^1) != -1)
+//        exchange_eval -= piece_values[get_move_piece(move)];
+//
+//    return side == white ? exchange_eval + 2000 : (-exchange_eval) + 2000;
+//}
 
 int char_pieces[] = {
         ['P'] = P,
@@ -759,14 +800,7 @@ void print_board(){
     printf("    A B C D E F G H\n\n");
 }
 
-int piece_at(int square){
-    for (int i = 0; i < 12; ++i) {
-        if (bitboards[i] & 1ULL << square)
-            return i;
-    }
 
-    return -1;
-}
 
 void print_fen(){
     for (int r = 0; r < 8; ++r) {

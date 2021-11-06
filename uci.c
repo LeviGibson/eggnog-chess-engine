@@ -89,7 +89,6 @@ void parse_position(char *command) {
             current_char++;
 
         }
-        printf("%s\n", current_char);
     }
 }
 
@@ -129,14 +128,11 @@ void parse_go(char *command) {
         current_btime = strstr(command, "btime");
         btime = atoi(current_btime + 6);
 
-        //printf("wtime : %d\nbtime : %d\n\n", wtime, btime);
         dynamic_time_managment = 1;
         moveTime = choose_movetime(wtime, btime);
     }
 
     search_position(depth);
-
-    //search_position(depth, 1);
 
 }
 

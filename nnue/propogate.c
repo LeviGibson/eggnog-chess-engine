@@ -1,11 +1,12 @@
 //
 // Created by levigibson on 10/3/21.
 //
-
-#include <string.h>
+#include "propogate.h"
 #include "../board.h"
 
-#include "propogate.h"
+#include <immintrin.h>
+#include <string.h>
+
 
 int NnuePtypes[12] = {6, 5, 4, 3, 2, K, 12, 11, 10, 9, 8, k};
 
@@ -142,9 +143,11 @@ void propogate_l3(NnueData *data){
     }
 }
 
-static void propogate_neuron(const short a, const int8_t *b, int *c) {
-    for (int i = 0; i < 32; ++i)
+//Vectorised by the compiler
+void propogate_neuron(const short a, const int8_t *b, int *restrict c) {
+    for (int i = 0; i < 32; ++i){
         c[i] += a * b[i];
+    }
 }
 
 int16_t tmp_accum[512];
