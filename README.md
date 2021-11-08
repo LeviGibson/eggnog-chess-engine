@@ -1,6 +1,6 @@
 # eggnog-chess-engine
 
-###[Challenge me on Lichess](https://lichess.org/@/eggnog-chess-engine)
+[Challenge me on Lichess](https://lichess.org/@/eggnog-chess-engine)
 
 eggnog-chess-engine is an NNUE-based chess engine written by Levi Gibson.
 
