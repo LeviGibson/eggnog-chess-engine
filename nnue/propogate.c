@@ -6,6 +6,10 @@
 
 #include <string.h>
 
+#ifdef AVX2
+#include <immintrin.h>
+#endif
+
 
 int NnuePtypes[12] = {6, 5, 4, 3, 2, K, 12, 11, 10, 9, 8, k};
 
@@ -137,9 +141,21 @@ void clamp_accumulator(int16_t *acc){
 }
 
 void propogate_neuron(const short a, const int8_t *b, int *restrict c) {
-    for (int i = 0; i < 32; ++i) {
-        c[i] += a * b[i];
+
+#ifdef AVX2
+    __m256i va = _mm256_set1_epi32(a);
+
+    for (int i = 0 ; i < 32 ; i += 8) {
+        __m256i vb = _mm256_cvtepi8_epi32( _mm_loadl_epi64((__m128i*)&b[i]) );
+        __m256i prod = _mm256_madd_epi16(va, vb);
+        __m256i sum = _mm256_add_epi32(prod, _mm256_loadu_si256((const __m256i*)&c[i]));
+        _mm256_storeu_si256((__m256i*)&c[i], sum);
     }
+#else
+    for (int i = 0; i < 32; ++i)
+        c[i] += a * b[i];
+#endif
+
 }
 
 int16_t tmp_accum[512];

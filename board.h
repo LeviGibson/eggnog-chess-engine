@@ -52,13 +52,13 @@ typedef struct {
     (0x3f & (move))
 
 #define get_move_target(move) \
-    (0xfc0 & (move)) >> 6
+    ((0xfc0 & (move)) >> 6)
 
 #define get_move_piece(move) \
-    (0xf000 & (move)) >> 12
+    ((0xf000 & (move)) >> 12)
 
 #define get_move_promoted(move) \
-    (0xf0000 & (move)) >> 16
+    ((0xf0000 & (move)) >> 16)
 
 #define get_move_enpessant(move) \
     get_bit(move, 20)

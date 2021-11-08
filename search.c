@@ -148,9 +148,56 @@ static inline int score_move(int move, int hashmove){
 
         }
 
+        if (get_move_promoted(move))
+            return 80;
+
+        if (get_move_castle(move))
+            return 50;
+
+        //1134508
+
+        if (get_move_piece(move) == P){
+            U64 attack_mask = pawn_mask[white][get_move_target(move)];
+
+            U64 attacked_pieces = (bitboards[n] | bitboards[r]);
+            if (pawn_mask[white][get_move_target(move)] & bitboards[p])
+                attacked_pieces |= bitboards[b] | bitboards[q];
+            attacked_pieces &= attack_mask;
+
+            if (count_bits(attacked_pieces) == 2)
+                return 100;
+            if (attacked_pieces)
+                return 40;
+
+            if (get_move_double(move))
+                return 10;
+        }
+
+        if (get_move_piece(move) == p){
+            U64 attack_mask = pawn_mask[black][get_move_target(move)];
+
+            U64 attacked_pieces = (bitboards[N] | bitboards[R]);
+            if (pawn_mask[white][get_move_target(move)] & bitboards[p])
+                attacked_pieces |= bitboards[B] | bitboards[Q];
+            attacked_pieces &= attack_mask;
+
+            if (count_bits(attacked_pieces) == 2)
+                return 100;
+            if (attacked_pieces)
+                return 40;
+
+            if (get_move_double(move))
+                return 10;
+        }
+
+        if (get_move_piece(move) == N){
+            return count_bits(knight_mask[get_move_target(move)] & (occupancies[black] - bitboards[p] - bitboards[n])) * 30;
+        }
+
         return 0;
     }
 }
+
 
 static inline void sort_moves(moveList *move_list, int hashmove){
 
@@ -161,7 +208,6 @@ static inline void sort_moves(moveList *move_list, int hashmove){
     }
 
     int zerosFound = partition_zero_scores(move_list, scores);
-
     quickSort(scores, 0, (int )(move_list->count) - 1 - zerosFound, move_list);
 }
 
@@ -413,6 +459,13 @@ static inline int negamax(int depth, int alpha, int beta, Line *pline) {
             }
 
             if (eval >= beta) {
+
+//                if (legalMoveCount > 10 && depth > 2){
+//                    print_fen();
+//                    printf("\n%d\n", legalMoveCount);
+//                    print_move(move);
+//                    printf("\n%d\n\n", ply);
+//                }
 
                 if (!get_move_capture(move)) {
                     killer_moves[ply][1] = killer_moves[ply][0];

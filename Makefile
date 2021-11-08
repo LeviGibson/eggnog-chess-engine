@@ -19,24 +19,24 @@ all:
 release:
 	make avx2 && make avx && make sse && make sse2 && make win_avx2 && make win_avx && make win_sse && make win_sse2
 avx2:
-	gcc -O3 -mavx2 $(FILES) $(NNUEFILES) -o $(FILE)-avx2-linux
+	gcc -O3 -DAVX2 -mavx2 $(FILES) $(NNUEFILES) -o $(FILE)-avx2-linux
 avx:
-	gcc -O3 -mavx $(FILES) $(NNUEFILES) -o $(FILE)-avx-linux
+	gcc -O3 -DAVX -mavx $(FILES) $(NNUEFILES) -o $(FILE)-avx-linux
 sse:
-	gcc -O3 -msse $(FILES) $(NNUEFILES) -o $(FILE)-sse-linux
+	gcc -O3 -DSSE -msse $(FILES) $(NNUEFILES) -o $(FILE)-sse-linux
 sse2:
-	gcc -O3 -msse2 $(FILES) $(NNUEFILES) -o $(FILE)-sse2-linux
+	gcc -O3 -DSSE2 -msse2 $(FILES) $(NNUEFILES) -o $(FILE)-sse2-linux
 debug:
-	gcc -mavx2 $(FILES) $(NNUEFILES) -o $(FILE)-debug
+	gcc $(FILES) $(NNUEFILES) -o $(FILE)-debug
 prof:
 	gcc -pg $(FILES) $(NNUEFILES) -o $(FILE)-prof
 win_avx2:
-	x86_64-w64-mingw32-gcc -o $(FILE)-avx2.exe $(FILES) $(NNUEFILES) -mavx2 -O3
+	x86_64-w64-mingw32-gcc -o $(FILE)-avx2.exe $(FILES) $(NNUEFILES) -mavx2 -DAVX2 -O3
 win_avx:
-	x86_64-w64-mingw32-gcc -o $(FILE)-avx.exe $(FILES) $(NNUEFILES) -mavx -O3
+	x86_64-w64-mingw32-gcc -o $(FILE)-avx.exe $(FILES) $(NNUEFILES) -mavx -DAVX -O3
 win_sse:
-	x86_64-w64-mingw32-gcc -o $(FILE)-sse.exe $(FILES) $(NNUEFILES) -msse -O3
+	x86_64-w64-mingw32-gcc -o $(FILE)-sse.exe $(FILES) $(NNUEFILES) -msse -DSSE -O3
 win_sse2:
-	x86_64-w64-mingw32-gcc -o $(FILE)-sse2.exe $(FILES) $(NNUEFILES) -msse2 -O3
+	x86_64-w64-mingw32-gcc -o $(FILE)-sse2.exe $(FILES) $(NNUEFILES) -msse2 -DSSE2 -O3
 run:
 	./eggnog-chess-engine
