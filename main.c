@@ -1,11 +1,9 @@
-#include <stdio.h>
 #include "bitboard.h"
 #include "board.h"
 #include "uci.h"
 #include "moveOrder.h"
 
 #include "nnue/load.h"
-#include "timeman.h"
 
 int main() {
     init_bitboards();

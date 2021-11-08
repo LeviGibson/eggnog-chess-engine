@@ -10,7 +10,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-int dynamic_time_managment = 0;
+int dynamicTimeManagment = 0;
 
 int parse_move(char *move_string) {
 
@@ -128,11 +128,13 @@ void parse_go(char *command) {
         current_btime = strstr(command, "btime");
         btime = atoi(current_btime + 6);
 
-        dynamic_time_managment = 1;
+        dynamicTimeManagment = 1;
         moveTime = choose_movetime(wtime, btime);
     }
 
     search_position(depth);
+
+    dynamicTimeManagment = 0;
 
 }
 
@@ -167,7 +169,7 @@ void uci_loop() {
         if (strncmp(input, "go", 2) == 0) {
 
             parse_go(input);
-            dynamic_time_managment = 0;
+            dynamicTimeManagment = 0;
 
         }
         if (strncmp(input, "quit", 4) == 0) {

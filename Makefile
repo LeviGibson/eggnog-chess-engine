@@ -5,7 +5,6 @@ FILES = main.c\
  perft.c perft.h \
  uci.c uci.h \
  search.c search.h \
- evaluate.c evaluate.h \
  timeman.c timeman.h \
  transposition.c transposition.h \
  moveOrder.c moveOrder.h \

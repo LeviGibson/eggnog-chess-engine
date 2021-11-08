@@ -21,6 +21,8 @@ static inline int get_time_ms()
 
 int moveTime;
 
+int startingTime;
+
 void start_time();
 void communicate();
 

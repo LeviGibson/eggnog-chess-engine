@@ -100,6 +100,25 @@ int partition_zero_scores(moveList *movearr, int scorearr[]){
     return zerosFound;
 }
 
+U64 filemasks[64] = {
+        0x101010101010101ULL, 0x202020202020202ULL, 0x404040404040404ULL, 0x808080808080808ULL,
+        0x1010101010101010ULL, 0x2020202020202020ULL, 0x4040404040404040ULL, 0x8080808080808080ULL,
+        0x101010101010101ULL, 0x202020202020202ULL, 0x404040404040404ULL, 0x808080808080808ULL,
+        0x1010101010101010ULL, 0x2020202020202020ULL, 0x4040404040404040ULL, 0x8080808080808080ULL,
+        0x101010101010101ULL, 0x202020202020202ULL, 0x404040404040404ULL, 0x808080808080808ULL,
+        0x1010101010101010ULL, 0x2020202020202020ULL, 0x4040404040404040ULL, 0x8080808080808080ULL,
+        0x101010101010101ULL, 0x202020202020202ULL, 0x404040404040404ULL, 0x808080808080808ULL,
+        0x1010101010101010ULL, 0x2020202020202020ULL, 0x4040404040404040ULL, 0x8080808080808080ULL,
+        0x101010101010101ULL, 0x202020202020202ULL, 0x404040404040404ULL, 0x808080808080808ULL,
+        0x1010101010101010ULL, 0x2020202020202020ULL, 0x4040404040404040ULL, 0x8080808080808080ULL,
+        0x101010101010101ULL, 0x202020202020202ULL, 0x404040404040404ULL, 0x808080808080808ULL,
+        0x1010101010101010ULL, 0x2020202020202020ULL, 0x4040404040404040ULL, 0x8080808080808080ULL,
+        0x101010101010101ULL, 0x202020202020202ULL, 0x404040404040404ULL, 0x808080808080808ULL,
+        0x1010101010101010ULL, 0x2020202020202020ULL, 0x4040404040404040ULL, 0x8080808080808080ULL,
+        0x101010101010101ULL, 0x202020202020202ULL, 0x404040404040404ULL, 0x808080808080808ULL,
+        0x1010101010101010ULL, 0x2020202020202020ULL, 0x4040404040404040ULL, 0x8080808080808080ULL,
+};
+
 static inline int score_move(int move, int hashmove){
 
     if (found_pv){
@@ -154,14 +173,15 @@ static inline int score_move(int move, int hashmove){
         if (get_move_castle(move))
             return 50;
 
-        //1134508
 
         if (get_move_piece(move) == P){
             U64 attack_mask = pawn_mask[white][get_move_target(move)];
 
             U64 attacked_pieces = (bitboards[n] | bitboards[r]);
-            if (pawn_mask[white][get_move_target(move)] & bitboards[p])
+
+            if (pawn_mask[black][get_move_target(move)] & bitboards[P])
                 attacked_pieces |= bitboards[b] | bitboards[q];
+
             attacked_pieces &= attack_mask;
 
             if (count_bits(attacked_pieces) == 2)
@@ -177,8 +197,10 @@ static inline int score_move(int move, int hashmove){
             U64 attack_mask = pawn_mask[black][get_move_target(move)];
 
             U64 attacked_pieces = (bitboards[N] | bitboards[R]);
+
             if (pawn_mask[white][get_move_target(move)] & bitboards[p])
                 attacked_pieces |= bitboards[B] | bitboards[Q];
+
             attacked_pieces &= attack_mask;
 
             if (count_bits(attacked_pieces) == 2)
@@ -192,6 +214,18 @@ static inline int score_move(int move, int hashmove){
 
         if (get_move_piece(move) == N){
             return count_bits(knight_mask[get_move_target(move)] & (occupancies[black] - bitboards[p] - bitboards[n])) * 30;
+        }
+
+        if (get_move_piece(move) == R){
+            if (!(filemasks[get_move_target(move)] & bitboards[P])){
+                return 15;
+            }
+        }
+
+        if (get_move_piece(move) == r){
+            if (!(filemasks[get_move_target(move)] & bitboards[p])){
+                return 15;
+            }
         }
 
         return 0;
@@ -249,8 +283,6 @@ static inline int quiesce(int alpha, int beta) {
 
     for (int moveId = 0; moveId < legalMoves.count; moveId++){
         int move = legalMoves.moves[moveId];
-
-
 
         if (make_move(move, only_captures, 0)){
             ply++;
@@ -424,10 +456,14 @@ static inline int negamax(int depth, int alpha, int beta, Line *pline) {
                 eval = -negamax(depth - 1, -beta, -alpha, &line);
             } else {
                 //LMR
+                //NO_LMR test for debugging purposes.
 
-                if ((depth >= 3) && (legalMoveCount > 5) && (in_check == 0) && (get_move_capture(move) == 0) &&
-                    (get_move_promoted(move) == 0)) {
+                if ((depth >= 3) && (legalMoveCount > 5) && (in_check == 0) && (get_move_capture(move) == 0) && (get_move_promoted(move) == 0)) {
+#ifndef NO_LMR
                     eval = -negamax(depth - 2, -alpha - 1, -alpha, &line);
+#else
+                    eval = alpha + 1;
+#endif
                 } else {
                     eval = alpha + 1;
                 }
@@ -499,6 +535,30 @@ static inline int negamax(int depth, int alpha, int beta, Line *pline) {
 #define DEF_ALPHA (-5000000)
 #define DEF_BETA (5000000)
 
+int willMakeNextDepth(int curd, const float *times){
+
+    if (curd < 4)
+        return 1;
+
+    float multiplier = 0;
+    float divisor = 0;
+
+    for (int i = curd - 3; i < curd; ++i) {
+        if (times[i-1] > 1) {
+            multiplier += (times[i] / times[i - 1]);
+            divisor += 1;
+        }
+    }
+
+    if (divisor == 0)
+        return 1;
+
+    multiplier = multiplier / divisor;
+    float timepred = (multiplier * times[curd-1]);
+    float timeleft = (float)(moveTime - (get_time_ms() - startingTime));
+
+    return timepred < timeleft ? 1 : 0;
+}
 
 void search_position(int depth){
     //Table bases
@@ -533,7 +593,12 @@ void search_position(int depth){
 
     int eval;
 
+    //best move from previous depth
     int prevBestMove = 0;
+
+    //how long did it take to search to current depth
+    float depthTime[max_ply];
+    memset(depthTime, 0, sizeof depthTime);
 
     for (int currentDepth = 1; currentDepth <= depth; currentDepth++){
         reset_hash_table();
@@ -541,6 +606,11 @@ void search_position(int depth){
 
         follow_pv = 1;
         found_pv = 0;
+
+        if (dynamicTimeManagment && !willMakeNextDepth(currentDepth, depthTime))
+            break;
+
+        depthTime[currentDepth] = (float )get_time_ms();
 
         int nmRes = negamax(currentDepth, alpha, beta, &negamax_line);
 
@@ -571,6 +641,8 @@ void search_position(int depth){
             break;
         }
 
+        depthTime[currentDepth] = (float)get_time_ms() - depthTime[currentDepth];
+
         eval = nmRes;
 
         alpha = nmRes - aspwindow;
@@ -580,7 +652,7 @@ void search_position(int depth){
         memset(&negamax_line, 0, sizeof negamax_line);
 
         //TIME MANAGMENT
-        if (pv_line.moves[0] == prevBestMove && dynamic_time_managment)
+        if (pv_line.moves[0] == prevBestMove && dynamicTimeManagment)
             moveTime -= (moveTime / 6);
         prevBestMove = pv_line.moves[0];
 

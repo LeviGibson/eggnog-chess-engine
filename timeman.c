@@ -5,19 +5,21 @@
 
 int startingTime;
 
-void start_time(){
-  startingTime = get_time_ms();
+void start_time() {
+    startingTime = get_time_ms();
 }
 
-void communicate(){
-  if ((get_time_ms() - startingTime) >= moveTime){
-    stop = 1;
-  }
+void communicate() {
+    if (!dynamicTimeManagment) {
+        if ((get_time_ms() - startingTime) >= moveTime) {
+            stop = 1;
+        }
+    }
 }
 
-int choose_movetime(int wtime, int btime){
+int choose_movetime(int wtime, int btime) {
 
-    if (side == white){
+    if (side == white) {
         return ((wtime / 15));
     } else {
         return ((btime / 15));
