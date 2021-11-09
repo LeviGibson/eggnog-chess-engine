@@ -20,8 +20,8 @@ void communicate() {
 int choose_movetime(int wtime, int btime) {
 
     if (side == white) {
-        return wtime / (count_bits(occupancies[both]));
+        return wtime / 15;
     } else {
-        return btime / (count_bits(occupancies[both]));
+        return btime / 15;
     }
 }

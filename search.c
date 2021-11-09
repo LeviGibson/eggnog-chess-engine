@@ -679,9 +679,7 @@ void search_position(int depth){
 
         //TIME MANAGMENT
         if (pv_line.moves[0] == prevBestMove && dynamicTimeManagment) {
-            moveTime -= (moveTime / 5);
-        } else {
-            moveTime += (moveTime / 12);
+            moveTime -= (moveTime / 6);
         }
 
         prevBestMove = pv_line.moves[0];
