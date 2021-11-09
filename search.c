@@ -119,6 +119,25 @@ U64 filemasks[64] = {
         0x1010101010101010ULL, 0x2020202020202020ULL, 0x4040404040404040ULL, 0x8080808080808080ULL,
 };
 
+U64 pastPawnMasks[64] = {
+        0x303030303030303ULL, 0x707070707070707ULL, 0xe0e0e0e0e0e0e0eULL, 0x1c1c1c1c1c1c1c1cULL,
+        0x3838383838383838ULL, 0x7070707070707070ULL, 0xe0e0e0e0e0e0e0e0ULL, 0xc0c0c0c0c0c0c0c0ULL,
+        0x303030303030303ULL, 0x707070707070707ULL, 0xe0e0e0e0e0e0e0eULL, 0x1c1c1c1c1c1c1c1cULL,
+        0x3838383838383838ULL, 0x7070707070707070ULL, 0xe0e0e0e0e0e0e0e0ULL, 0xc0c0c0c0c0c0c0c0ULL,
+        0x303030303030303ULL, 0x707070707070707ULL, 0xe0e0e0e0e0e0e0eULL, 0x1c1c1c1c1c1c1c1cULL,
+        0x3838383838383838ULL, 0x7070707070707070ULL, 0xe0e0e0e0e0e0e0e0ULL, 0xc0c0c0c0c0c0c0c0ULL,
+        0x303030303030303ULL, 0x707070707070707ULL, 0xe0e0e0e0e0e0e0eULL, 0x1c1c1c1c1c1c1c1cULL,
+        0x3838383838383838ULL, 0x7070707070707070ULL, 0xe0e0e0e0e0e0e0e0ULL, 0xc0c0c0c0c0c0c0c0ULL,
+        0x303030303030303ULL, 0x707070707070707ULL, 0xe0e0e0e0e0e0e0eULL, 0x1c1c1c1c1c1c1c1cULL,
+        0x3838383838383838ULL, 0x7070707070707070ULL, 0xe0e0e0e0e0e0e0e0ULL, 0xc0c0c0c0c0c0c0c0ULL,
+        0x303030303030303ULL, 0x707070707070707ULL, 0xe0e0e0e0e0e0e0eULL, 0x1c1c1c1c1c1c1c1cULL,
+        0x3838383838383838ULL, 0x7070707070707070ULL, 0xe0e0e0e0e0e0e0e0ULL, 0xc0c0c0c0c0c0c0c0ULL,
+        0x303030303030303ULL, 0x707070707070707ULL, 0xe0e0e0e0e0e0e0eULL, 0x1c1c1c1c1c1c1c1cULL,
+        0x3838383838383838ULL, 0x7070707070707070ULL, 0xe0e0e0e0e0e0e0e0ULL, 0xc0c0c0c0c0c0c0c0ULL,
+        0x303030303030303ULL, 0x707070707070707ULL, 0xe0e0e0e0e0e0e0eULL, 0x1c1c1c1c1c1c1c1cULL,
+        0x3838383838383838ULL, 0x7070707070707070ULL, 0xe0e0e0e0e0e0e0e0ULL, 0xc0c0c0c0c0c0c0c0ULL,
+};
+
 static inline int score_move(int move, int hashmove){
 
     if (found_pv){
@@ -173,7 +192,6 @@ static inline int score_move(int move, int hashmove){
         if (get_move_castle(move))
             return 50;
 
-
         if (get_move_piece(move) == P){
             U64 attack_mask = pawn_mask[white][get_move_target(move)];
 
@@ -186,8 +204,12 @@ static inline int score_move(int move, int hashmove){
 
             if (count_bits(attacked_pieces) == 2)
                 return 100;
+
             if (attacked_pieces)
                 return 40;
+
+            if (!(pastPawnMasks[get_move_target(move)] & bitboards[p]))
+                return 30;
 
             if (get_move_double(move))
                 return 10;
@@ -205,8 +227,12 @@ static inline int score_move(int move, int hashmove){
 
             if (count_bits(attacked_pieces) == 2)
                 return 100;
+
             if (attacked_pieces)
                 return 40;
+
+            if (!(pastPawnMasks[get_move_target(move)] & bitboards[P]))
+                return 20;
 
             if (get_move_double(move))
                 return 10;
@@ -557,7 +583,7 @@ int willMakeNextDepth(int curd, const float *times){
     float timepred = (multiplier * times[curd-1]);
     float timeleft = (float)(moveTime - (get_time_ms() - startingTime));
 
-    return timepred < timeleft ? 1 : 0;
+    return (timepred < (timeleft * 2)) ? 1 : 0;
 }
 
 void search_position(int depth){
@@ -652,8 +678,12 @@ void search_position(int depth){
         memset(&negamax_line, 0, sizeof negamax_line);
 
         //TIME MANAGMENT
-        if (pv_line.moves[0] == prevBestMove && dynamicTimeManagment)
-            moveTime -= (moveTime / 6);
+        if (pv_line.moves[0] == prevBestMove && dynamicTimeManagment) {
+            moveTime -= (moveTime / 5);
+        } else {
+            moveTime += (moveTime / 12);
+        }
+
         prevBestMove = pv_line.moves[0];
 
         printf("info score %s %d depth %d seldepth %d nodes %ld tbhits %ld pv ",

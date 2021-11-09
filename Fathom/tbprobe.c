@@ -111,15 +111,15 @@ typedef HANDLE map_t;
 #undef TB_SOFTWARE_POP_COUNT
 
 #if defined(TB_CUSTOM_POP_COUNT)
-#define popcount(x) TB_CUSTOM_POP_COUNT(x)
+//#define popcount(x) TB_CUSTOM_POP_COUNT(x)
 #elif defined(TB_NO_HW_POP_COUNT)
 #define TB_SOFTWARE_POP_COUNT
 #elif defined (__GNUC__) && defined(__x86_64__) && defined(__SSE4_2__)
 #include <popcntintrin.h>
-#define popcount(x)             (int)_mm_popcnt_u64((x))
+//#define popcount(x)             (int)_mm_popcnt_u64((x))
 #elif defined(_MSC_VER) && (_MSC_VER >= 1500) && defined(_M_AMD64)
 #include <nmmintrin.h>
-#define popcount(x)             (int)_mm_popcnt_u64((x))
+//#define popcount(x)             (int)_mm_popcnt_u64((x))
 #else
 #define TB_SOFTWARE_POP_COUNT
 #endif
@@ -136,7 +136,7 @@ static inline unsigned tb_software_popcount(uint64_t x)
     return (x * 0x0101010101010101ull) >> 56;
 }
 
-#define popcount(x) tb_software_popcount(x)
+//#define popcount(x) tb_software_popcount(x)
 #endif
 
 // LSB (least-significant bit) implementation
@@ -386,7 +386,7 @@ static void unmap_file(void *data, map_t mapping)
 }
 #endif
 
-#define poplsb(x)               ((x) & ((x) - 1))
+//#define poplsb(x)               ((x) & ((x) - 1))
 
 int TB_MaxCardinality = 0, TB_MaxCardinalityDTM = 0;
 unsigned TB_LARGEST = 0;

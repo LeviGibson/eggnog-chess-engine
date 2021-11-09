@@ -9,9 +9,11 @@
 int commonMoveTable[64][64][64];
 
 void init_move_table(){
+    //avoid compiler warning
+    unsigned long tmp;
 
     FILE *fd = fopen("moveTable", "rb");
-    fread((void*)&commonMoveTable, 4, 64*64*64, fd);
+    tmp = fread((void*)&commonMoveTable, 4, 64*64*64, fd);
 }
 
 int get_move_score(int f_prevmove, int move){

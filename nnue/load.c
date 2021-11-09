@@ -26,29 +26,32 @@ void transform_weight_indicies(int8_t arr[], unsigned dims){
 }
 
 int load_model(const char *path){
+    //avoid compiler warnings
+    unsigned long tmp;
+
     FILE *fin = fopen(path, "rb");
 
     //FEATURE TRANSFORMER
     fseek(fin, TRANSFORMERSTART, SEEK_SET);
-    fread(in_biases, sizeof(int16_t), KPSIZE, fin);
-    fread(in_weights, sizeof(int16_t), INSIZE * KPSIZE, fin);
+    tmp = fread(in_biases, sizeof(int16_t), KPSIZE, fin);
+    tmp = fread(in_weights, sizeof(int16_t), INSIZE * KPSIZE, fin);
 
     fseek(fin, 4, SEEK_CUR);
 
     //Hidden Layer 1
-    fread(l1_biases, sizeof (l1_biases[0]), L2SIZE, fin);
-    fread(l1_weights, sizeof (l1_weights[0]), L1SIZE * L2SIZE, fin);
+    tmp = fread(l1_biases, sizeof (l1_biases[0]), L2SIZE, fin);
+    tmp = fread(l1_weights, sizeof (l1_weights[0]), L1SIZE * L2SIZE, fin);
     transform_weight_indicies(l1_weights, L1SIZE);
 
     //Hidden Layer 2
-    fread(l2_biases, sizeof (l2_biases[0]), L3SIZE, fin);
-    fread(l2_weights, sizeof (l2_weights[0]), L2SIZE * L3SIZE, fin);
+    tmp = fread(l2_biases, sizeof (l2_biases[0]), L3SIZE, fin);
+    tmp = fread(l2_weights, sizeof (l2_weights[0]), L2SIZE * L3SIZE, fin);
     transform_weight_indicies(l2_weights, L2SIZE);
 
     //Output Layer
-    fread(l3_biases, sizeof (l3_biases[0]), OUTSIZE, fin);
+    tmp = fread(l3_biases, sizeof (l3_biases[0]), OUTSIZE, fin);
 
-    fread(l3_weights, sizeof (l3_weights[0]), L2SIZE * OUTSIZE, fin);
+    tmp = fread(l3_weights, sizeof (l3_weights[0]), L2SIZE * OUTSIZE, fin);
 
     fclose(fin);
 

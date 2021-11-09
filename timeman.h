@@ -4,19 +4,20 @@
 #include <stddef.h>
 #include <immintrin.h>
 
-#ifndef WIN64
+#ifdef WIN64
+#include <sysinfoapi.h>
+#else
 #include <sys/time.h>
 #endif
 
-static inline int get_time_ms()
-{
-  #ifdef WIN64
-      return GetTickCount();
-  #else
-        struct timeval time_value;
-        gettimeofday(&time_value, NULL);
-      return time_value.tv_sec * 1000 + time_value.tv_usec / 1000;
-  #endif
+static inline int get_time_ms() {
+#ifdef WIN64
+    return GetTickCount();
+#else
+    struct timeval time_value;
+    gettimeofday(&time_value, NULL);
+    return time_value.tv_sec * 1000 + time_value.tv_usec / 1000;
+#endif
 }
 
 int moveTime;
@@ -24,6 +25,7 @@ int moveTime;
 int startingTime;
 
 void start_time();
+
 void communicate();
 
 int choose_movetime(int wtime, int btime);
