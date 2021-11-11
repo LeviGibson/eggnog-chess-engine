@@ -594,8 +594,10 @@ int willMakeNextDepth(int curd, const float *times){
     return (timepred < (timeleft * 2)) ? 1 : 0;
 }
 
-void search_position(int depth){
+void *search_position(void *arg){
     //Table bases
+
+    int depth = *(int*)arg;
 
     if (get_wdl() != TB_RESULT_FAILED) {
         int move = get_root_move();
@@ -605,7 +607,7 @@ void search_position(int depth){
             printf("bestmove ");
             print_move(move);
             printf("\n");
-            return;
+            return NULL;
         }
     }
 
@@ -712,6 +714,8 @@ void search_position(int depth){
         }
 
     }
+
+    dynamicTimeManagment = 0;
 
     printf("bestmove ");
     print_move(pv_line.moves[0]);

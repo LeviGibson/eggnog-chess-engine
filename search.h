@@ -9,7 +9,7 @@ typedef struct tagLINE {
 
 }   Line;
 
-void search_position(int depth);
+void *search_position(void *arg);
 int stop;
 int ply;
 

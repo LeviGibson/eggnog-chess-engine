@@ -9,7 +9,9 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <pthread.h>
 
+pthread_t searchthread;
 int dynamicTimeManagment = 0;
 
 int parse_move(char *move_string) {
@@ -93,9 +95,9 @@ void parse_position(char *command) {
 }
 
 //go wtime 300000 btime 300000
+int depth;
 
 void parse_go(char *command) {
-    int depth = -1;
     char *current_depth = NULL;
     char *current_timelimit = NULL;
     char *current_wtime = NULL;
@@ -132,9 +134,8 @@ void parse_go(char *command) {
         moveTime = choose_movetime(wtime, btime);
     }
 
-    search_position(depth);
-
-    dynamicTimeManagment = 0;
+//    search_position(0, depth);
+    pthread_create(&searchthread, NULL, search_position, &depth);
 
 }
 
@@ -152,8 +153,12 @@ void uci_loop() {
             continue;
         }
 
-        if (input[0] == '\n')
+        if (input[0] == '\n') {
             continue;
+        } else {
+            stop = 1;
+        }
+
         if (strncmp(input, "isready", 7) == 0) {
             printf("readyok\n");
         }
@@ -167,10 +172,7 @@ void uci_loop() {
 
         }
         if (strncmp(input, "go", 2) == 0) {
-
             parse_go(input);
-            dynamicTimeManagment = 0;
-
         }
         if (strncmp(input, "quit", 4) == 0) {
             break;

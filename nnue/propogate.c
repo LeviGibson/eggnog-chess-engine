@@ -198,13 +198,35 @@ void propogate_l3(NnueData *data){
     }
 }
 
-//Vectorised by the compiler
+int materialScore(){
+    int eval = 0;
+
+    eval += 1 * count_bits(bitboards[P]);
+    eval += 3 * count_bits(bitboards[N]);
+    eval += 3 * count_bits(bitboards[B]);
+    eval += 5 * count_bits(bitboards[R]);
+    eval += 10 * count_bits(bitboards[Q]);
+
+    eval -= 1 * count_bits(bitboards[p]);
+    eval -= 3 * count_bits(bitboards[n]);
+    eval -= 3 * count_bits(bitboards[b]);
+    eval -= 5 * count_bits(bitboards[r]);
+    eval -= 10 * count_bits(bitboards[q]);
+
+    return side == white ? eval : -eval;
+}
 
 int nnue_evaluate(NnueData *data) {
     propogate_l1(data);
     propogate_l2(data);
     propogate_l3(data);
     data->eval = (side == white) ? data->l3[0] : -data->l3[0];
+
+    if (data->eval > (180*64)){
+        int mat = materialScore();
+        mat = mat > 0 ? mat : 1;
+        data->eval *= mat;
+    }
 
     return data->eval;
 }
