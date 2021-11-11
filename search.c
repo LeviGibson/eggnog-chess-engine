@@ -16,6 +16,7 @@ int ply = 0;
 int selDepth = 0;
 
 long nodes = 0;
+long qnodes = 0;
 long tbHits = 0;
 
 const int mvv_lva[12][12] = {
@@ -243,14 +244,18 @@ static inline int score_move(int move, int hashmove){
         }
 
         if (get_move_piece(move) == R){
-            if (!(filemasks[get_move_target(move)] & bitboards[P])){
-                return 15;
+            if (filemasks[get_move_source(move)] & bitboards[P]) {
+                if (!(filemasks[get_move_target(move)] & bitboards[P])) {
+                    return 15;
+                }
             }
         }
 
         if (get_move_piece(move) == r){
-            if (!(filemasks[get_move_target(move)] & bitboards[p])){
-                return 15;
+            if (filemasks[get_move_source(move)] & bitboards[p]) {
+                if (!(filemasks[get_move_target(move)] & bitboards[p])) {
+                    return 15;
+                }
             }
         }
 
@@ -284,6 +289,7 @@ static inline int quiesce(int alpha, int beta) {
     }
 
     nodes++;
+    qnodes++;
 
     int stand_pat = nnue_evaluate(&currentNnue);
 
@@ -391,6 +397,12 @@ static inline int negamax(int depth, int alpha, int beta, Line *pline) {
         return 0;
     }
 
+    //do check extensions before probing hash table
+    int in_check = is_square_attacked(bsf((side == white) ? bitboards[K] : bitboards[k]), (side ^ 1));
+
+    if (in_check)
+        depth++;
+
     //HASH TABLE PROBE
     int hash_move = no_move;
     int hash_lookup = ProbeHash(depth, alpha, beta, &hash_move);
@@ -430,10 +442,6 @@ static inline int negamax(int depth, int alpha, int beta, Line *pline) {
         return 0;
     }
 
-    int in_check = is_square_attacked(bsf((side == white) ? bitboards[K] : bitboards[k]), (side ^ 1));
-
-    if (in_check)
-        depth++;
 
     int eval;
     if (depth >= 3 && in_check == 0 && ply
@@ -605,6 +613,7 @@ void search_position(int depth){
 
     stop = 0;
     nodes = 0;
+    qnodes = 0;
     tbHits = 0;
     selDepth = 0;
 
@@ -626,8 +635,10 @@ void search_position(int depth){
     float depthTime[max_ply];
     memset(depthTime, 0, sizeof depthTime);
 
+    reset_hash_table();
+
     for (int currentDepth = 1; currentDepth <= depth; currentDepth++){
-        reset_hash_table();
+
         ply = 0;
 
         follow_pv = 1;
@@ -655,7 +666,6 @@ void search_position(int depth){
             alpha = DEF_ALPHA;
             beta = DEF_BETA;
 
-            reset_hash_table();
             memset(&negamax_line, 0, sizeof negamax_line);
 
             nmRes = negamax(currentDepth, alpha, beta, &negamax_line);
@@ -684,9 +694,9 @@ void search_position(int depth){
 
         prevBestMove = pv_line.moves[0];
 
-        printf("info score %s %d depth %d seldepth %d nodes %ld tbhits %ld pv ",
+        printf("info score %s %d depth %d seldepth %d nodes %ld qnodes %ld tbhits %ld pv ",
                (abs(eval) > 4000000) ? "mate" : "cp" , (abs(eval) > 4000000) ? (4900000 - abs(eval)) * (eval / abs(eval)) : eval/64,
-               currentDepth, selDepth, nodes, tbHits);
+               currentDepth, selDepth, nodes, qnodes, tbHits);
 
         for (int i = 0; i < currentDepth; i++){
             if (pv_line.moves[i] == 0)
