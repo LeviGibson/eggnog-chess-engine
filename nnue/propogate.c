@@ -226,6 +226,10 @@ int nnue_evaluate(NnueData *data) {
         int mat = materialScore();
         mat = mat > 0 ? mat : 1;
         data->eval *= mat;
+    } else if (data->eval < (180*64)){
+        int mat = -materialScore();
+        mat = mat > 0 ? mat : 1;
+        data->eval *= mat;
     }
 
     return data->eval;
