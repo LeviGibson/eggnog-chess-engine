@@ -10,7 +10,7 @@ int main() {
     init_zobrist_keys();
     init_move_table();
 
-    load_model("defualt-nn.nnue");
+    load_model("nn-eba324f53044.nnue");
 
     parse_fen(start_position);
     uci_loop();
