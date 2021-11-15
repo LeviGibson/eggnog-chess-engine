@@ -4,7 +4,6 @@
 #include "search.h"
 #include "timeman.h"
 #include "Fathom/tbprobe.h"
-#include "syzygy.h"
 
 #include <string.h>
 #include <stdio.h>
@@ -18,7 +17,7 @@ int parse_move(char *move_string) {
 
     moveList legalMoves;
     legalMoves.count = 0;
-    generate_moves(&legalMoves);
+    generate_moves(&legalMoves, &UciBoard);
 
     int source_square = (move_string[0] - 'a') + (8 - (move_string[1] - '0')) * 8;
     int target_square = (move_string[2] - 'a') + (8 - (move_string[3] - '0')) * 8;
@@ -59,17 +58,17 @@ void parse_position(char *command) {
     char *current_char = command;
 
     if (strncmp(command, "startpos", 8) == 0) {
-        parse_fen(start_position);
+        parse_fen(start_position, &UciBoard);
 
     } else {
 
         current_char = strstr(command, "fen");
 
         if (current_char == NULL)
-            parse_fen(start_position);
+            parse_fen(start_position, &UciBoard);
         else {
             current_char += 4;
-            parse_fen(current_char);
+            parse_fen(current_char, &UciBoard);
         }
 
     }
@@ -82,7 +81,7 @@ void parse_position(char *command) {
             int move = parse_move(current_char);
             uci_move_sequence_length++;
 
-            make_move(move, all_moves, 1);
+            make_move(move, all_moves, 1, &UciBoard);
 
             while ((*current_char) && (*current_char != ' ')) {
                 current_char++;
@@ -131,12 +130,10 @@ void parse_go(char *command) {
         btime = atoi(current_btime + 6);
 
         dynamicTimeManagment = 1;
-        moveTime = choose_movetime(wtime, btime);
+        moveTime = choose_movetime(wtime, btime, UciBoard.side);
     }
 
-//    search_position(0, depth);
     pthread_create(&searchthread, NULL, search_position, &depth);
-
 }
 
 void uci_loop() {
@@ -184,7 +181,6 @@ void uci_loop() {
             printf("uciok\n");
         }
         if (strncmp(input, "setoption name SyzygyPath value", 31) == 0) {
-            tbInitilised = 1;
 
             char path[strlen(input) - 32];
             memset(path, 0, sizeof path);

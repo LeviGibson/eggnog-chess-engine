@@ -2,14 +2,11 @@
 // Created by levigibson on 10/3/21.
 //
 #include "propogate.h"
-#include "../board.h"
-
 #include <string.h>
 
 #ifdef AVX2
 #include <immintrin.h>
 #endif
-
 
 int NnuePtypes[12] = {6, 5, 4, 3, 2, K, 12, 11, 10, 9, 8, k};
 
@@ -69,18 +66,18 @@ static void append_index(int c, int index, NnueData *data) {
     data->activeIndicies[c][data->activeIndexCount[c]++] = index;
 }
 
-void append_active_indicies(NnueData *data) {
+void append_active_indicies(NnueData *data, Board *board) {
     data->activeIndexCount[black] = 0;
     data->activeIndexCount[white] = 0;
 
-    int w_ksq = w_orient[bsf(bitboards[K])];
-    int b_ksq = b_orient[bsf(bitboards[k])];
+    int w_ksq = w_orient[bsf(board->bitboards[K])];
+    int b_ksq = b_orient[bsf(board->bitboards[k])];
 
     for (unsigned ptype = P; ptype < k; ++ptype) {
         if (ptype == K)
             continue;
 
-        U64 bitboard = bitboards[ptype];
+        U64 bitboard = board->bitboards[ptype];
         while (bitboard) {
             int bit = bsf(bitboard);
             int sq = w_orient[bit];
@@ -114,8 +111,8 @@ void subtract_index(short *restrict acc, unsigned index, unsigned c) {
         acc[j] -= w[j];
 }
 
-void refresh_accumulator(NnueData *data) {
-    append_active_indicies(data);
+void refresh_accumulator(NnueData *data, Board *board) {
+    append_active_indicies(data, board);
 
     for (unsigned int c = 0; c < 2; c++) {
         memcpy(data->accumulation[c], in_biases, 256 * sizeof(int16_t));
@@ -158,9 +155,9 @@ void propogate_neuron(const short a, const int8_t *b, int *restrict c) {
 
 }
 
-int16_t tmp_accum[512];
-
 void propogate_l1(NnueData *data) {
+    int16_t tmp_accum[512];
+
     memcpy(tmp_accum, data->accumulation, sizeof tmp_accum);
     memcpy(data->l1, l1_biases, sizeof l1_biases);
 
@@ -198,36 +195,36 @@ void propogate_l3(NnueData *data){
     }
 }
 
-int materialScore(){
+int materialScore(Board *board){
     int eval = 0;
 
-    eval += 1 * count_bits(bitboards[P]);
-    eval += 3 * count_bits(bitboards[N]);
-    eval += 3 * count_bits(bitboards[B]);
-    eval += 5 * count_bits(bitboards[R]);
-    eval += 10 * count_bits(bitboards[Q]);
+    eval += 1 * count_bits(board->bitboards[P]);
+    eval += 3 * count_bits(board->bitboards[N]);
+    eval += 3 * count_bits(board->bitboards[B]);
+    eval += 5 * count_bits(board->bitboards[R]);
+    eval += 10 * count_bits(board->bitboards[Q]);
 
-    eval -= 1 * count_bits(bitboards[p]);
-    eval -= 3 * count_bits(bitboards[n]);
-    eval -= 3 * count_bits(bitboards[b]);
-    eval -= 5 * count_bits(bitboards[r]);
-    eval -= 10 * count_bits(bitboards[q]);
+    eval -= 1 * count_bits(board->bitboards[p]);
+    eval -= 3 * count_bits(board->bitboards[n]);
+    eval -= 3 * count_bits(board->bitboards[b]);
+    eval -= 5 * count_bits(board->bitboards[r]);
+    eval -= 10 * count_bits(board->bitboards[q]);
 
-    return side == white ? eval : -eval;
+    return board->side == white ? eval : -eval;
 }
 
-int nnue_evaluate(NnueData *data) {
+int nnue_evaluate(NnueData *data, Board *board) {
     propogate_l1(data);
     propogate_l2(data);
     propogate_l3(data);
-    data->eval = (side == white) ? data->l3[0] : -data->l3[0];
+    data->eval = (board->side == white) ? data->l3[0] : -data->l3[0];
 
     if (data->eval > (180*64)){
-        int mat = materialScore();
+        int mat = materialScore(board);
         mat = mat > 0 ? mat : 1;
         data->eval *= mat;
     } else if (data->eval < (180*64)){
-        int mat = -materialScore();
+        int mat = -materialScore(board);
         mat = mat > 0 ? mat : 1;
         data->eval *= mat;
     }
@@ -235,12 +232,12 @@ int nnue_evaluate(NnueData *data) {
     return data->eval;
 }
 
-void nnue_pop_bit(int ptype, int bit){
+void nnue_pop_bit(int ptype, int bit, Board *board){
 
-    pop_bit(bitboards[ptype], bit);
+    pop_bit(board->bitboards[ptype], bit);
 
-    int w_ksq = w_orient[bsf(bitboards[K])];
-    int b_ksq = b_orient[bsf(bitboards[k])];
+    int w_ksq = w_orient[bsf(board->bitboards[K])];
+    int b_ksq = b_orient[bsf(board->bitboards[k])];
 
     int sq = w_orient[bit];
     int pc = NnuePtypes[ptype];
@@ -248,16 +245,16 @@ void nnue_pop_bit(int ptype, int bit){
     int wi = make_index(white, sq, pc, w_ksq);
     int bi = make_index(black, sq, pc, b_ksq);
 
-    subtract_index(currentNnue.accumulation[0], wi, white);
-    subtract_index(currentNnue.accumulation[0], bi, black);
+    subtract_index(board->currentNnue.accumulation[0], wi, white);
+    subtract_index(board->currentNnue.accumulation[0], bi, black);
 }
 
-void nnue_set_bit(int ptype, int bit){
+void nnue_set_bit(int ptype, int bit, Board *board){
 
-    set_bit(bitboards[ptype], bit);
+    set_bit(board->bitboards[ptype], bit);
 
-    int w_ksq = w_orient[bsf(bitboards[K])];
-    int b_ksq = b_orient[bsf(bitboards[k])];
+    int w_ksq = w_orient[bsf(board->bitboards[K])];
+    int b_ksq = b_orient[bsf(board->bitboards[k])];
 
     int sq = w_orient[bit];
     int pc = NnuePtypes[ptype];
@@ -265,6 +262,6 @@ void nnue_set_bit(int ptype, int bit){
     int wi = make_index(white, sq, pc, w_ksq);
     int bi = make_index(black, sq, pc, b_ksq);
 
-    add_index(currentNnue.accumulation[0], wi, white);
-    add_index(currentNnue.accumulation[0], bi, black);
+    add_index(board->currentNnue.accumulation[0], wi, white);
+    add_index(board->currentNnue.accumulation[0], bi, black);
 }

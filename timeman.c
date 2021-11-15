@@ -17,7 +17,7 @@ void communicate() {
     }
 }
 
-int choose_movetime(int wtime, int btime) {
+int choose_movetime(int wtime, int btime, int side) {
 
     if (side == white) {
         return wtime / 15;

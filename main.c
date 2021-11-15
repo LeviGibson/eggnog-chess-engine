@@ -12,7 +12,8 @@ int main() {
 
     load_model("nn-eba324f53044.nnue");
 
-    parse_fen(start_position);
+    parse_fen(start_position, &UciBoard);
+
     uci_loop();
 
     return 0;

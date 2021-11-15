@@ -7,12 +7,6 @@
 
 #include <stdio.h>
 
-U64 bitboards[12];
-U64 occupancies[3];
-int enpessant = no_sq;
-int side = -1;
-int castle = 0;
-
 const char *square_to_coordinates[] = {
         "a8", "b8", "c8", "d8", "e8", "f8", "g8", "h8",
         "a7", "b7", "c7", "d7", "e7", "f7", "g7", "h7",
@@ -47,18 +41,17 @@ void init_zobrist_keys(){
     side_keys[white] = get_random_U64();
     side_keys[black] = get_random_U64();
 
-    zobrist_history_length = 0;
 }
 
-U64 update_zobrist_key(){
+U64 update_zobrist_key(Board *board){
 
-    U64 key = current_zobrist_key;
+    U64 key = board->current_zobrist_key;
 
     for (int piece = P; piece <= k; piece++){
-        if (bitboards[piece] != zobrist_key_bitboards[piece]){
-            key ^= zobrist_key_parts[piece];
+        if (board->bitboards[piece] != board->zobrist_key_bitboards[piece]){
+            key ^= board->zobrist_key_parts[piece];
 
-            U64 bitboard = bitboards[piece];
+            U64 bitboard = board->bitboards[piece];
             U64 bitboard_key = 0ULL;
 
             int bb_count = count_bits(bitboard);
@@ -72,30 +65,30 @@ U64 update_zobrist_key(){
             }
 
             key ^= bitboard_key;
-            zobrist_key_parts[piece] = bitboard_key;
-            zobrist_key_bitboards[piece] = bitboards[piece];
+            board->zobrist_key_parts[piece] = bitboard_key;
+            board->zobrist_key_bitboards[piece] = board->bitboards[piece];
         }
     }
 
-    key ^= zobrist_key_parts[12] ^ zobrist_key_parts[13];
+    key ^= board->zobrist_key_parts[12] ^ board->zobrist_key_parts[13];
 
-    key ^= side_keys[side];
-    key ^= castle_keys[castle];
+    key ^= side_keys[board->side];
+    key ^= castle_keys[board->castle];
 
-    zobrist_key_parts[12] = side_keys[side];
-    zobrist_key_parts[13] = castle_keys[castle];
+    board->zobrist_key_parts[12] = side_keys[board->side];
+    board->zobrist_key_parts[13] = castle_keys[board->castle];
     //memcpy(&zobrist_key_bitboards, &bitboards, sizeof bitboards);
 
     return key;
 }
 
-U64 generate_zobrist_key(){
+U64 generate_zobrist_key(Board *board){
 
-    memcpy(zobrist_key_bitboards, bitboards, sizeof bitboards);
+    memcpy(board->zobrist_key_bitboards, board->bitboards, sizeof board->bitboards);
 
     U64 key = 0ULL;
     for (int piece = P; piece <= k; piece++){
-        U64 bitboard = bitboards[piece];
+        U64 bitboard = board->bitboards[piece];
         U64 bitboard_key = 0ULL;
         while (bitboard){
             int square = bsf(bitboard);
@@ -105,7 +98,7 @@ U64 generate_zobrist_key(){
             pop_bit(bitboard, square);
         }
 
-        zobrist_key_parts[piece] = bitboard_key;
+        board->zobrist_key_parts[piece] = bitboard_key;
 
         key ^= bitboard_key;
     }
@@ -114,28 +107,28 @@ U64 generate_zobrist_key(){
         key ^= enpessent_keys[enpessant];
     }**/
 
-    key ^= side_keys[side];
-    key ^= castle_keys[castle];
+    key ^= side_keys[board->side];
+    key ^= castle_keys[board->castle];
 
-    zobrist_key_parts[12] = side_keys[side];
-    zobrist_key_parts[13] = castle_keys[castle];
+    board->zobrist_key_parts[12] = side_keys[board->side];
+    board->zobrist_key_parts[13] = castle_keys[board->castle];
 
     return key;
 }
 
-int is_threefold_repetition(){
+int is_threefold_repetition(Board *board){
 
-    if (zobrist_history_length < 8)
+    if (board->zobrist_history_length < 8)
         return 0;
 
-    if (zobrist_history_length >= 100){
+    if (board->zobrist_history_length >= 100){
         return 1;
     }
 
-    for (int position = 0; position <= zobrist_history_length; position++){
+    for (int position = 0; position <= board->zobrist_history_length; position++){
         int repetitions = 0;
-        for (int compare = position+1; compare <= zobrist_history_length; compare++){
-            if (zobrist_history[compare] == zobrist_history[position]){
+        for (int compare = position+1; compare <= board->zobrist_history_length; compare++){
+            if (board->zobrist_history[compare] == board->zobrist_history[position]){
 
                 repetitions++;
 
@@ -150,11 +143,11 @@ int is_threefold_repetition(){
 
 }
 
-static inline void generate_knight_moves(moveList *legalMoves){
-    int ptype = ((side == white) ? N : n);
-    U64 bitboard = bitboards[ptype];
+static inline void generate_knight_moves(moveList *legalMoves, Board *board){
+    int ptype = ((board->side == white) ? N : n);
+    U64 bitboard = board->bitboards[ptype];
 
-    U64 friendly_occupanices = occupancies[side];
+    U64 friendly_occupanices = board->occupancies[board->side];
 
     while (bitboard){
         int square = bsf(bitboard);
@@ -164,7 +157,7 @@ static inline void generate_knight_moves(moveList *legalMoves){
         while (bb_moves){
             int target = bsf(bb_moves);
 
-            if ((1ULL << target) & occupancies[both]) {
+            if ((1ULL << target) & board->occupancies[both]) {
                 legalMoves->moves[legalMoves->count] = encode_move(square, target, ptype, 0, 0, 1, 0, 0);
                 legalMoves->count++;
             }
@@ -180,32 +173,32 @@ static inline void generate_knight_moves(moveList *legalMoves){
     }
 }
 
-static inline void generate_pawn_moves(moveList *legalMoves){
-    int ptype = ((side == white) ? P : p);
-    U64 bitboard = bitboards[ptype];
+static inline void generate_pawn_moves(moveList *legalMoves, Board *board){
+    int ptype = ((board->side == white) ? P : p);
+    U64 bitboard = board->bitboards[ptype];
 
-    U64 enemy_occupanices = (side == white) ? occupancies[black] : occupancies[white];
+    U64 enemy_occupanices = (board->side == white) ? board->occupancies[black] : board->occupancies[white];
 
-    if (enpessant != no_sq)
-        enemy_occupanices |= 1ULL << enpessant;
+    if (board->enpessant != no_sq)
+        enemy_occupanices |= 1ULL << board->enpessant;
 
     while (bitboard){
         int square = bsf(bitboard);
 
         //Pawn Captures
-        U64 bb_moves = pawn_mask[side][square] & enemy_occupanices;
+        U64 bb_moves = pawn_mask[board->side][square] & enemy_occupanices;
 
         while (bb_moves){
             int target = bsf(bb_moves);
 
             //Enpessant
-            if (target == enpessant) {
+            if (target == board->enpessant) {
                 legalMoves->moves[legalMoves->count] = encode_move(square, target, ptype, 0, 1, 1, 0, 0);
                 legalMoves->count++;
             }
             else {
                 if ((target <= 7) || (target >= 56)) {
-                    if (side == white) {
+                    if (board->side == white) {
                         legalMoves->moves[legalMoves->count] = encode_move(square, target, ptype, Q, 0, 1, 0, 0);
                         legalMoves->count++;
                         legalMoves->moves[legalMoves->count] = encode_move(square, target, ptype, B, 0, 1, 0, 0);
@@ -235,8 +228,8 @@ static inline void generate_pawn_moves(moveList *legalMoves){
         }
 
         //Pawn quiet moves
-        if (side == white){
-            if (!(occupancies[both] & 1ULL << (square-8))) {
+        if (board->side == white){
+            if (!(board->occupancies[both] & 1ULL << (square-8))) {
 
                 if (square <= 15) {
                     legalMoves->moves[legalMoves->count] = encode_move(square, (square-8), ptype, Q, 0, 0, 0, 0);
@@ -255,14 +248,14 @@ static inline void generate_pawn_moves(moveList *legalMoves){
 
                 //double pawn pushes
                 if (square >= 48) {
-                    if (!(occupancies[both] & 1ULL << (square-16))){
+                    if (!(board->occupancies[both] & 1ULL << (square-16))){
                         legalMoves->moves[legalMoves->count] = encode_move(square, (square-16), ptype, 0, 0, 0, 1, 0);
                         legalMoves->count++;
                     }
                 }
             }
         } else {
-            if (!(occupancies[both] & 1ULL << (square+8))) {
+            if (!(board->occupancies[both] & 1ULL << (square+8))) {
 
                 if (square >= 48) {
                     legalMoves->moves[legalMoves->count] = encode_move(square, (square+8), ptype, q, 0, 0, 0, 0);
@@ -281,7 +274,7 @@ static inline void generate_pawn_moves(moveList *legalMoves){
 
                 //double pawn pushes
                 if (square <= 15) {
-                    if (!(occupancies[both] & 1ULL << (square+16))){
+                    if (!(board->occupancies[both] & 1ULL << (square+16))){
                         legalMoves->moves[legalMoves->count] = encode_move(square, (square+16), ptype, 0, 0, 0, 1, 0);
                         legalMoves->count++;
                     }
@@ -293,21 +286,21 @@ static inline void generate_pawn_moves(moveList *legalMoves){
     }
 }
 
-static inline void generate_bishop_moves(moveList *legalMoves){
-    int ptype = ((side == white) ? B : b);
-    U64 bitboard = bitboards[ptype];
+static inline void generate_bishop_moves(moveList *legalMoves, Board *board){
+    int ptype = ((board->side == white) ? B : b);
+    U64 bitboard = board->bitboards[ptype];
 
-    U64 friendly_occupanices = occupancies[side];
+    U64 friendly_occupanices = board->occupancies[board->side];
 
     while (bitboard){
         int square = bsf(bitboard);
 
-        U64 bb_moves = get_bishop_attacks(square, occupancies[both]) & (~friendly_occupanices);
+        U64 bb_moves = get_bishop_attacks(square, board->occupancies[both]) & (~friendly_occupanices);
 
         while (bb_moves){
             int target = bsf(bb_moves);
 
-            if ((1ULL << target) & occupancies[both]) {
+            if ((1ULL << target) & board->occupancies[both]) {
                 legalMoves->moves[legalMoves->count] = encode_move(square, target, ptype, 0, 0, 1, 0, 0);
                 legalMoves->count++;
             } else {
@@ -322,21 +315,21 @@ static inline void generate_bishop_moves(moveList *legalMoves){
     }
 }
 
-static inline void generate_rook_moves(moveList *legalMoves){
-    int ptype = ((side == white) ? R : r);
-    U64 bitboard = bitboards[ptype];
+static inline void generate_rook_moves(moveList *legalMoves, Board *board){
+    int ptype = ((board->side == white) ? R : r);
+    U64 bitboard = board->bitboards[ptype];
 
-    U64 friendly_occupanices = occupancies[side];
+    U64 friendly_occupanices = board->occupancies[board->side];
 
     while (bitboard){
         int square = bsf(bitboard);
 
-        U64 bb_moves = get_rook_attacks(square, occupancies[both]) & (~friendly_occupanices);
+        U64 bb_moves = get_rook_attacks(square, board->occupancies[both]) & (~friendly_occupanices);
 
         while (bb_moves){
             int target = bsf(bb_moves);
 
-            if ((1ULL << target) & occupancies[both]) {
+            if ((1ULL << target) & board->occupancies[both]) {
                 legalMoves->moves[legalMoves->count] = encode_move(square, target, ptype, 0, 0, 1, 0, 0);
                 legalMoves->count++;
             }
@@ -352,21 +345,21 @@ static inline void generate_rook_moves(moveList *legalMoves){
     }
 }
 
-static inline void generate_queen_moves(moveList *legalMoves){
-    int ptype = ((side == white) ? Q : q);
-    U64 bitboard = bitboards[ptype];
+static inline void generate_queen_moves(moveList *legalMoves, Board *board){
+    int ptype = ((board->side == white) ? Q : q);
+    U64 bitboard = board->bitboards[ptype];
 
-    U64 friendly_occupanices = occupancies[side];
+    U64 friendly_occupanices = board->occupancies[board->side];
 
     while (bitboard){
         int square = bsf(bitboard);
 
-        U64 bb_moves = (get_bishop_attacks(square, occupancies[both]) | get_rook_attacks(square, occupancies[both])) & (~friendly_occupanices);
+        U64 bb_moves = (get_bishop_attacks(square, board->occupancies[both]) | get_rook_attacks(square, board->occupancies[both])) & (~friendly_occupanices);
 
         while (bb_moves){
             int target = bsf(bb_moves);
 
-            if ((1ULL << target) & occupancies[both]) {
+            if ((1ULL << target) & board->occupancies[both]) {
                 legalMoves->moves[legalMoves->count] = encode_move(square, target, ptype, 0, 0, 1, 0, 0);
                 legalMoves->count++;
             } else {
@@ -381,14 +374,14 @@ static inline void generate_queen_moves(moveList *legalMoves){
     }
 }
 
-static inline void generate_king_moves(moveList *legalMoves){
-    int ptype = ((side == white) ? K : k);
-    U64 bitboard = bitboards[ptype];
+static inline void generate_king_moves(moveList *legalMoves, Board *board){
+    int ptype = ((board->side == white) ? K : k);
+    U64 bitboard = board->bitboards[ptype];
 
-    U64 friendly_occupanices = occupancies[side];
+    U64 friendly_occupanices = board->occupancies[board->side];
 
     if (bitboard == 0){
-        print_board();
+        print_board(board);
     }
 
     int square = bsf(bitboard);
@@ -398,7 +391,7 @@ static inline void generate_king_moves(moveList *legalMoves){
     while (bb_moves){
         int target = bsf(bb_moves);
 
-        if ((1ULL << target) & occupancies[both]) {
+        if ((1ULL << target) & board->occupancies[both]) {
             //source, target, ptype, prom, enpessant, capture
             legalMoves->moves[legalMoves->count] = encode_move(square, target, ptype, 0, 0, 1, 0, 0);
             legalMoves->count++;
@@ -413,43 +406,43 @@ static inline void generate_king_moves(moveList *legalMoves){
     }
 
     //castling
-    if (side == white){
-        if (castle & wk){
+    if (board->side == white){
+        if (board->castle & wk){
             //0x6000000000000000ULL
             //(1ULL << f1) | (1ULL << g1)))
-            if (!(occupancies[both] & 0x6000000000000000ULL)){
-                if (!(is_square_attacked(f1, black)) && !(is_square_attacked(g1, black)) && !(is_square_attacked(e1, black))){
+            if (!(board->occupancies[both] & 0x6000000000000000ULL)){
+                if (!(is_square_attacked(f1, black, board)) && !(is_square_attacked(g1, black, board)) && !(is_square_attacked(e1, black, board))){
                     legalMoves->moves[legalMoves->count] = encode_move(square, 62, ptype, 0, 0, 0, 0, 1);
                     legalMoves->count++;
                 }
             }
         }
-        if (castle & (wq)){
+        if (board->castle & (wq)){
             //0xe00000000000000ULL
             //((1ULL << d1) | (1ULL << c1) | (1ULL << b1))
-            if (!(occupancies[both] & 0xe00000000000000ULL)){
-                if (!(is_square_attacked(c1, black)) && !(is_square_attacked(d1, black)) && !(is_square_attacked(e1, black))){
+            if (!(board->occupancies[both] & 0xe00000000000000ULL)){
+                if (!(is_square_attacked(c1, black, board)) && !(is_square_attacked(d1, black, board)) && !(is_square_attacked(e1, black, board))){
                     legalMoves->moves[legalMoves->count] = encode_move(square, 58, ptype, 0, 0, 0, 0, 1);
                     legalMoves->count++;
                 }
             }
         }
     }else{
-        if (castle & bk){
+        if (board->castle & bk){
             //0x60ULL
             //((1ULL << f8) | (1ULL << g8))
-            if (!(occupancies[both] & 0x60ULL)){
-                if (!(is_square_attacked(f8, white)) && !(is_square_attacked(g8, white)) && !(is_square_attacked(e8, white))){
+            if (!(board->occupancies[both] & 0x60ULL)){
+                if (!(is_square_attacked(f8, white, board)) && !(is_square_attacked(g8, white, board)) && !(is_square_attacked(e8, white, board))){
                     legalMoves->moves[legalMoves->count] = encode_move(square, 6, ptype, 0, 0, 0, 0, 1);
                     legalMoves->count++;
                 }
             }
         }
-        if (castle & (bq)){
+        if (board->castle & (bq)){
             //0xeULL
             //((1ULL << d8) | (1ULL << c8) | (1ULL << b8))
-            if (!(occupancies[both] & 0xeULL)){
-                if (!(is_square_attacked(c8, white)) && !(is_square_attacked(d8, white)) && !(is_square_attacked(e8, white))){
+            if (!(board->occupancies[both] & 0xeULL)){
+                if (!(is_square_attacked(c8, white, board)) && !(is_square_attacked(d8, white, board)) && !(is_square_attacked(e8, white, board))){
                     legalMoves->moves[legalMoves->count] = encode_move(square, 2, ptype, 0, 0, 0, 0, 1);
                     legalMoves->count++;
                 }
@@ -458,30 +451,30 @@ static inline void generate_king_moves(moveList *legalMoves){
     }
 }
 
-static inline void update_occupancies(){
+static inline void update_occupancies(Board *board){
 
-    memset(occupancies, 0ULL, sizeof(occupancies));
+    memset(board->occupancies, 0ULL, sizeof(board->occupancies));
 
     for (int piece = P; piece <= K; piece++){
-        occupancies[white] |= bitboards[piece];
+        board->occupancies[white] |= board->bitboards[piece];
     }
 
     for (int piece = p; piece <= k; piece++){
-        occupancies[black] |= bitboards[piece];
+        board->occupancies[black] |= board->bitboards[piece];
     }
 
-    occupancies[both] = (occupancies[black] | occupancies[white]);
+    board->occupancies[both] = (board->occupancies[black] | board->occupancies[white]);
 }
 
-void generate_moves(moveList *legalMoves){
+void generate_moves(moveList *legalMoves, Board *board){
     legalMoves->count = 0;
 
-    generate_knight_moves(legalMoves);
-    generate_pawn_moves(legalMoves);
-    generate_bishop_moves(legalMoves);
-    generate_rook_moves(legalMoves);
-    generate_queen_moves(legalMoves);
-    generate_king_moves(legalMoves);
+    generate_knight_moves(legalMoves, board);
+    generate_pawn_moves(legalMoves, board);
+    generate_bishop_moves(legalMoves, board);
+    generate_rook_moves(legalMoves, board);
+    generate_queen_moves(legalMoves, board);
+    generate_king_moves(legalMoves, board);
 }
 
 const int castling_right_table[64] = {
@@ -495,7 +488,7 @@ const int castling_right_table[64] = {
         13, 15, 15, 15, 12, 15, 15, 14
 };
 
-int make_move(int move, int flag, int zobristUpdate){
+int make_move(int move, int flag, int zobristUpdate, Board *board){
 
     if (flag == all_moves){
         copy_board();
@@ -507,36 +500,36 @@ int make_move(int move, int flag, int zobristUpdate){
 
         //if move is a king move, refresh the accumulator;
         if (ptype == K || ptype == k){
-            pop_bit(bitboards[ptype], source);
-            set_bit(bitboards[ptype], target);
-            refresh_accumulator(&currentNnue);
+            pop_bit(board->bitboards[ptype], source);
+            set_bit(board->bitboards[ptype], target);
+            refresh_accumulator(&board->currentNnue, board);
         } else {
-            nnue_pop_bit(ptype, source);
-            nnue_set_bit(ptype, target);
+            nnue_pop_bit(ptype, source, board);
+            nnue_set_bit(ptype, target, board);
         }
 
         if (capture){
             if (get_move_enpessant(move)){
-                if (side == white){
-                    nnue_pop_bit(p, target+8);
+                if (board->side == white){
+                    nnue_pop_bit(p, target+8, board);
                 } else {
-                    nnue_pop_bit(P, target-8);
+                    nnue_pop_bit(P, target-8, board);
                 }
             } else {
-                if (side == white){
+                if (board->side == white){
                     for (int piece = p; piece <= k; piece++) {
-                        if (get_bit(bitboards[piece], target)) {
+                        if (get_bit(board->bitboards[piece], target)) {
 
-                            nnue_pop_bit(piece, target);
+                            nnue_pop_bit(piece, target, board);
 
                             break;
                         }
                     }
                 } else {
                     for (int piece = P; piece <= K; piece++) {
-                        if (get_bit(bitboards[piece], target)) {
+                        if (get_bit(board->bitboards[piece], target)) {
 
-                            nnue_pop_bit(piece, target);
+                            nnue_pop_bit(piece, target, board);
 
                             break;
                         }
@@ -546,85 +539,85 @@ int make_move(int move, int flag, int zobristUpdate){
         }
 
         if (get_move_double(move)){
-            enpessant = (side == white) ? (target + 8) : (target - 8);
+            board->enpessant = (board->side == white) ? (target + 8) : (target - 8);
         } else {
-            enpessant = no_sq;
+            board->enpessant = no_sq;
         }
 
         if (get_move_castle(move)){
-            if (side == white){
+            if (board->side == white){
                 if (target == 62){
-                    nnue_pop_bit(R, 63);
-                    nnue_set_bit(R, 61);
+                    nnue_pop_bit(R, 63, board);
+                    nnue_set_bit(R, 61, board);
                 } else if (target == 58){
-                    nnue_pop_bit(R, 56);
-                    nnue_set_bit(R, 59);
+                    nnue_pop_bit(R, 56, board);
+                    nnue_set_bit(R, 59, board);
                 }
             } else {
                 if (target == 6){
-                    nnue_pop_bit(r, 7);
-                    nnue_set_bit(r, 5);
+                    nnue_pop_bit(r, 7, board);
+                    nnue_set_bit(r, 5, board);
                 } else if (target == 2){
-                    nnue_pop_bit(r, 0);
-                    nnue_set_bit(r, 3);
+                    nnue_pop_bit(r, 0, board);
+                    nnue_set_bit(r, 3, board);
                 }
             }
         }
 
         int promoted = get_move_promoted(move);
         if (promoted){
-            nnue_pop_bit(ptype, target);
-            nnue_set_bit(promoted, target);
+            nnue_pop_bit(ptype, target, board);
+            nnue_set_bit(promoted, target, board);
         }
 
-        update_occupancies();
+        update_occupancies(board);
 
-        if (side == white){
-            if (is_square_attacked(bsf(bitboards[K]), black)){
+        if (board->side == white){
+            if (is_square_attacked(bsf(board->bitboards[K]), black, board)){
                 take_back();
                 return 0;
             }
         } else {
-            if (is_square_attacked(bsf(bitboards[k]), white)){
+            if (is_square_attacked(bsf(board->bitboards[k]), white, board)){
                 take_back();
                 return 0;
             }
         }
 
-        castle &= castling_right_table[source];
-        castle &= castling_right_table[target];
+        board->castle &= castling_right_table[source];
+        board->castle &= castling_right_table[target];
 
-        side ^= 1;
+        board->side ^= 1;
 
-        if ((ptype == P) || (ptype == p) || (castle_copy != castle) || capture){
-            memset(zobrist_history, 0, sizeof(zobrist_history));
-            zobrist_history_length = 0;
+        if ((ptype == P) || (ptype == p) || (board_copy.castle != board->castle) || capture){
+            memset(board->zobrist_history, 0, sizeof(board->zobrist_history));
+            board->zobrist_history_length = 0;
         }
 
         //UPDATE ZOBRIST HISTORY
         if (zobristUpdate) {
-            current_zobrist_key = update_zobrist_key();
-            zobrist_history[zobrist_history_length] = current_zobrist_key;
-            zobrist_history_length++;
+            board->current_zobrist_key = update_zobrist_key(board);
+            board->zobrist_history[board->zobrist_history_length] = board->current_zobrist_key;
+            board->zobrist_history_length++;
         } else
-            current_zobrist_key = 0ULL;
+            board->current_zobrist_key = 0ULL;
     } else {
-        if (get_move_capture(move) || is_move_direct_check(move)){
-            return make_move(move, all_moves, zobristUpdate);
+        if (get_move_capture(move) || is_move_direct_check(move, board)){
+            return make_move(move, all_moves, zobristUpdate, board);
         } else {
             return 0;
         }
 
     }
 
-    prevmove = move;
+    board->prevmove = move;
 
     return 1;
 }
 
-int piece_at(int square){
+int piece_at(int square, Board *board){
     for (int i = 0; i < 12; ++i) {
-        if (bitboards[i] & 1ULL << square)
+        if (board->bitboards[i] & 1ULL << square)
             return i;
     }
 
@@ -634,9 +627,9 @@ int piece_at(int square){
 //Simple and fast function to judge if a move is a check.
 //Does not work with discovered checks or castle-checks
 
-int is_move_direct_check(int move) {
+int is_move_direct_check(int move, Board *board) {
     int ptype = get_move_piece(move);
-    U64 kingbb = side == white ? bitboards[k] : bitboards[K];
+    U64 kingbb = board->side == white ? board->bitboards[k] : board->bitboards[K];
     int kingsq = bsf(kingbb);
     int target = get_move_target(move);
     U64 targetBb = 1ULL << target;
@@ -663,23 +656,23 @@ int is_move_direct_check(int move) {
     }
 
     if (ptype == B || ptype == b){
-        if (get_bishop_attacks(kingsq, occupancies[both]) & targetBb)
+        if (get_bishop_attacks(kingsq, board->occupancies[both]) & targetBb)
             return 1;
         else
             return 0;
     }
 
     if (ptype == R || ptype == r){
-        if (get_rook_attacks(kingsq, occupancies[both]) & targetBb)
+        if (get_rook_attacks(kingsq, board->occupancies[both]) & targetBb)
             return 1;
         else
             return 0;
     }
 
     if (ptype == Q || ptype == q){
-        if (get_bishop_attacks(kingsq, occupancies[both]) & targetBb)
+        if (get_bishop_attacks(kingsq, board->occupancies[both]) & targetBb)
             return 1;
-        if (get_rook_attacks(kingsq, occupancies[both]) & targetBb)
+        if (get_rook_attacks(kingsq, board->occupancies[both]) & targetBb)
             return 1;
 
         return 0;
@@ -688,17 +681,17 @@ int is_move_direct_check(int move) {
     return 0;
 }
 
-int is_square_attacked(int square, int testingSide){
+int is_square_attacked(int square, int testingSide, Board *board){
 
-    if ((testingSide == white) && (pawn_mask[black][square] & bitboards[P])) return 1;
-    if ((testingSide == black) && (pawn_mask[white][square] & bitboards[p])) return 1;
+    if ((testingSide == white) && (pawn_mask[black][square] & board->bitboards[P])) return 1;
+    if ((testingSide == black) && (pawn_mask[white][square] & board->bitboards[p])) return 1;
 
-    if (knight_mask[square] & ((testingSide == white ? bitboards[N] : bitboards[n]))) return 1;
+    if (knight_mask[square] & ((testingSide == white ? board->bitboards[N] : board->bitboards[n]))) return 1;
 
-    if (get_bishop_attacks(square, occupancies[both]) & ((testingSide == white ? bitboards[B] : bitboards[b]) | (testingSide == white ? bitboards[Q] : bitboards[q]))) return 1;
-    if (get_rook_attacks(square, occupancies[both]) & ((testingSide == white ? bitboards[R] : bitboards[r]) | (testingSide == white ? bitboards[Q] : bitboards[q]))) return 1;
+    if (get_bishop_attacks(square, board->occupancies[both]) & ((testingSide == white ? board->bitboards[B] : board->bitboards[b]) | (testingSide == white ? board->bitboards[Q] : board->bitboards[q]))) return 1;
+    if (get_rook_attacks(square, board->occupancies[both]) & ((testingSide == white ? board->bitboards[R] : board->bitboards[r]) | (testingSide == white ? board->bitboards[Q] : board->bitboards[q]))) return 1;
 
-    if (king_mask[square] & ((testingSide == white ? bitboards[K] : bitboards[k]))) return 1;
+    if (king_mask[square] & ((testingSide == white ? board->bitboards[K] : board->bitboards[k]))) return 1;
 
     return 0;
 }
@@ -772,7 +765,7 @@ void print_move(int move){
     }
 }
 
-void print_board(){
+void print_board(Board *board){
     int rank = 8;
     for (int square = 0; square < 64; square++){
 
@@ -785,7 +778,7 @@ void print_board(){
         int found_piece = 0;
 
         for (int piece = P; piece <= k; piece++){
-            if (get_bit(bitboards[piece], square)){
+            if (get_bit(board->bitboards[piece], square)){
                 printf("%c ", piece_symbols[piece]);
                 found_piece = 1;
                 break;
@@ -801,12 +794,12 @@ void print_board(){
 
 
 
-void print_fen(){
+void print_fen(Board *board){
     for (int r = 0; r < 8; ++r) {
         int esq = 0;
         for (int f = 0; f < 8; ++f) {
 
-            int p = piece_at((r * 8) + f);
+            int p = piece_at((r * 8) + f, board);
             if (p == -1) { esq++; }
             else {
                 if (esq > 0) {
@@ -822,21 +815,23 @@ void print_fen(){
             printf("/");
     }
 
-    printf(side == white ? " w" : " b");
+    printf(board->side == white ? " w" : " b");
 }
 
-void parse_fen(char *fen)
+void parse_fen(char *fen, Board *board)
 {
-    memset(bitboards, 0ULL, sizeof(bitboards));
+    board->zobrist_history_length = 0;
 
-    memset(occupancies, 0ULL, sizeof(occupancies));
+    memset(board->bitboards, 0ULL, sizeof(board->bitboards));
 
-    memset(zobrist_history, 0, sizeof(zobrist_history));
-    zobrist_history_length = 0;
+    memset(board->occupancies, 0ULL, sizeof(board->occupancies));
 
-    side = 0;
-    enpessant = no_sq;
-    castle = 0;
+    memset(board->zobrist_history, 0, sizeof(board->zobrist_history));
+    board->zobrist_history_length = 0;
+
+    board->side = 0;
+    board->enpessant = no_sq;
+    board->castle = 0;
 
     for (int rank = 0; rank < 8; rank++)
     {
@@ -848,7 +843,7 @@ void parse_fen(char *fen)
             {
                 int piece = char_pieces[*fen];
 
-                set_bit(bitboards[piece], square);
+                set_bit(board->bitboards[piece], square);
 
                 fen++;
             }
@@ -861,7 +856,7 @@ void parse_fen(char *fen)
 
                 for (int bb_piece = P; bb_piece <= k; bb_piece++)
                 {
-                    if (get_bit(bitboards[bb_piece], square))
+                    if (get_bit(board->bitboards[bb_piece], square))
                         piece = bb_piece;
                 }
                 if (piece == -1)
@@ -878,7 +873,7 @@ void parse_fen(char *fen)
     }
     fen++;
 
-    (*fen == 'w') ? (side = white) : (side = black);
+    (*fen == 'w') ? (board->side = white) : (board->side = black);
 
     fen += 2;
 
@@ -886,10 +881,10 @@ void parse_fen(char *fen)
     {
         switch (*fen)
         {
-            case 'K': castle |= wk; break;
-            case 'Q': castle |= wq; break;
-            case 'k': castle |= bk; break;
-            case 'q': castle |= bq; break;
+            case 'K': board->castle |= wk; break;
+            case 'Q': board->castle |= wq; break;
+            case 'k': board->castle |= bk; break;
+            case 'q': board->castle |= bq; break;
             case '-': break;
         }
 
@@ -903,20 +898,20 @@ void parse_fen(char *fen)
         int file = fen[0] - 'a';
         int rank = 8 - (fen[1] - '0');
 
-        enpessant = rank * 8 + file;
+        board->enpessant = rank * 8 + file;
     }
 
     else
-        enpessant = no_sq;
+        board->enpessant = no_sq;
 
     for (int piece = P; piece <= K; piece++)
-        occupancies[white] |= bitboards[piece];
+        board->occupancies[white] |= board->bitboards[piece];
 
     for (int piece = p; piece <= k; piece++)
-        occupancies[black] |= bitboards[piece];
+        board->occupancies[black] |= board->bitboards[piece];
 
-    update_occupancies();
-    current_zobrist_key = generate_zobrist_key();
+    update_occupancies(board);
+    board->current_zobrist_key = generate_zobrist_key(board);
 
-    refresh_accumulator(&currentNnue);
+    refresh_accumulator(&board->currentNnue, board);
 }

@@ -6,7 +6,8 @@
 #define MBBCHESS_PERFT_H
 
 
+#include "board.h"
 
-void perft_test(int depth);
+void perft_test(int depth, Board *board);
 
 #endif //MBBCHESS_PERFT_H

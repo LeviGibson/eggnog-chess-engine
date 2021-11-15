@@ -12,7 +12,6 @@
 #define aspwindow 50
 #define no_move -15
 
-int ply = 0;
 int selDepth = 0;
 
 long nodes = 0;
@@ -139,10 +138,10 @@ U64 pastPawnMasks[64] = {
         0x3838383838383838ULL, 0x7070707070707070ULL, 0xe0e0e0e0e0e0e0e0ULL, 0xc0c0c0c0c0c0c0c0ULL,
 };
 
-static inline int score_move(int move, int hashmove){
+static inline int score_move(int move, int hashmove, Board *board){
 
     if (found_pv){
-        if (move == pv_line.moves[ply]){
+        if (move == pv_line.moves[board->ply]){
             found_pv = 0;
             return 20000;
         }
@@ -158,11 +157,11 @@ static inline int score_move(int move, int hashmove){
 
         int target_square = get_move_target(move);
 
-        if (side == white) {start_piece = p; end_piece = k;}
+        if (board->side == white) {start_piece = p; end_piece = k;}
         else{start_piece = P; end_piece = K;}
 
         for (int bb_piece = start_piece; bb_piece < end_piece; bb_piece++){
-            if (get_bit(bitboards[bb_piece], target_square)){
+            if (get_bit(board->bitboards[bb_piece], target_square)){
                 target_piece = bb_piece;
                 break;
             }
@@ -170,15 +169,15 @@ static inline int score_move(int move, int hashmove){
 
         return mvv_lva[get_move_piece(move)][target_piece]+1000;
     } else {
-        if (move == killer_moves[ply][0]){
+        if (move == killer_moves[board->ply][0]){
             return(800);
         }
-        if (move == killer_moves[ply][1]){
+        if (move == killer_moves[board->ply][1]){
             return(700);
         }
 
-        if (prevmove != 0) {
-            int score = get_move_score(prevmove, move);
+        if (board->prevmove != 0) {
+            int score = get_move_score(board->prevmove, move);
 
             //this seems stupid and it is
             //but not really because of the function partition_zero_scores()
@@ -196,10 +195,10 @@ static inline int score_move(int move, int hashmove){
         if (get_move_piece(move) == P){
             U64 attack_mask = pawn_mask[white][get_move_target(move)];
 
-            U64 attacked_pieces = (bitboards[n] | bitboards[r]);
+            U64 attacked_pieces = (board->bitboards[n] | board->bitboards[r]);
 
-            if (pawn_mask[black][get_move_target(move)] & bitboards[P])
-                attacked_pieces |= bitboards[b] | bitboards[q];
+            if (pawn_mask[black][get_move_target(move)] & board->bitboards[P])
+                attacked_pieces |= board->bitboards[b] | board->bitboards[q];
 
             attacked_pieces &= attack_mask;
 
@@ -209,7 +208,7 @@ static inline int score_move(int move, int hashmove){
             if (attacked_pieces)
                 return 40;
 
-            if (!(pastPawnMasks[get_move_target(move)] & bitboards[p]))
+            if (!(pastPawnMasks[get_move_target(move)] & board->bitboards[p]))
                 return 30;
 
             if (get_move_double(move))
@@ -219,10 +218,10 @@ static inline int score_move(int move, int hashmove){
         if (get_move_piece(move) == p){
             U64 attack_mask = pawn_mask[black][get_move_target(move)];
 
-            U64 attacked_pieces = (bitboards[N] | bitboards[R]);
+            U64 attacked_pieces = (board->bitboards[N] | board->bitboards[R]);
 
-            if (pawn_mask[white][get_move_target(move)] & bitboards[p])
-                attacked_pieces |= bitboards[B] | bitboards[Q];
+            if (pawn_mask[white][get_move_target(move)] & board->bitboards[p])
+                attacked_pieces |= board->bitboards[B] | board->bitboards[Q];
 
             attacked_pieces &= attack_mask;
 
@@ -232,7 +231,7 @@ static inline int score_move(int move, int hashmove){
             if (attacked_pieces)
                 return 40;
 
-            if (!(pastPawnMasks[get_move_target(move)] & bitboards[P]))
+            if (!(pastPawnMasks[get_move_target(move)] & board->bitboards[P]))
                 return 20;
 
             if (get_move_double(move))
@@ -240,20 +239,20 @@ static inline int score_move(int move, int hashmove){
         }
 
         if (get_move_piece(move) == N){
-            return count_bits(knight_mask[get_move_target(move)] & (occupancies[black] - bitboards[p] - bitboards[n])) * 30;
+            return count_bits(knight_mask[get_move_target(move)] & (board->occupancies[black] - board->bitboards[p] - board->bitboards[n])) * 30;
         }
 
         if (get_move_piece(move) == R){
-            if (filemasks[get_move_source(move)] & bitboards[P]) {
-                if (!(filemasks[get_move_target(move)] & bitboards[P])) {
+            if (filemasks[get_move_source(move)] & board->bitboards[P]) {
+                if (!(filemasks[get_move_target(move)] & board->bitboards[P])) {
                     return 15;
                 }
             }
         }
 
         if (get_move_piece(move) == r){
-            if (filemasks[get_move_source(move)] & bitboards[p]) {
-                if (!(filemasks[get_move_target(move)] & bitboards[p])) {
+            if (filemasks[get_move_source(move)] & board->bitboards[p]) {
+                if (!(filemasks[get_move_target(move)] & board->bitboards[p])) {
                     return 15;
                 }
             }
@@ -264,21 +263,21 @@ static inline int score_move(int move, int hashmove){
 }
 
 
-static inline void sort_moves(moveList *move_list, int hashmove){
+static inline void sort_moves(moveList *move_list, int hashmove, Board *board){
 
     int scores[move_list->count];
 
     for (int i = 0; i < move_list->count; i++) {
-        scores[i] = score_move(move_list->moves[i], hashmove);
+        scores[i] = score_move(move_list->moves[i], hashmove, board);
     }
 
     int zerosFound = partition_zero_scores(move_list, scores);
     quickSort(scores, 0, (int )(move_list->count) - 1 - zerosFound, move_list);
 }
 
-static inline int quiesce(int alpha, int beta) {
-    if (ply > selDepth){
-        selDepth = ply;
+static inline int quiesce(int alpha, int beta, Board *board) {
+    if (board->ply > selDepth){
+        selDepth = board->ply;
     }
 
     if (nodes % 2048 == 0)
@@ -291,7 +290,7 @@ static inline int quiesce(int alpha, int beta) {
     nodes++;
     qnodes++;
 
-    int stand_pat = nnue_evaluate(&currentNnue);
+    int stand_pat = nnue_evaluate(&board->currentNnue, board);
 
     if (stand_pat >= beta){
         return beta;
@@ -304,22 +303,22 @@ static inline int quiesce(int alpha, int beta) {
     moveList legalMoves;
     legalMoves.count = 0;
 
-    U64 old_occupancies = occupancies[white] | occupancies[black];
-
-    occupancies[both] = old_occupancies;
+    //TODO wtf is this?
+    U64 old_occupancies = board->occupancies[white] | board->occupancies[black];
+    board->occupancies[both] = old_occupancies;
 
     copy_board();
 
-    generate_moves(&legalMoves);
-    sort_moves(&legalMoves, no_move);
+    generate_moves(&legalMoves, board);
+    sort_moves(&legalMoves, no_move, board);
 
     for (int moveId = 0; moveId < legalMoves.count; moveId++){
         int move = legalMoves.moves[moveId];
 
-        if (make_move(move, only_captures, 0)){
-            ply++;
-            int score = -quiesce(-beta, -alpha);
-            ply--;
+        if (make_move(move, only_captures, 0, board)){
+            board->ply++;
+            int score = -quiesce(-beta, -alpha, board);
+            board->ply--;
 
             take_back();
 
@@ -336,7 +335,7 @@ static inline int quiesce(int alpha, int beta) {
 
 }
 
-static inline int ZwSearch(int beta, int depth){
+static inline int ZwSearch(int beta, int depth, Board *board){
     nodes++;
 
     if (nodes % 2048 == 0)
@@ -347,13 +346,13 @@ static inline int ZwSearch(int beta, int depth){
     }
 
     if (depth == 0)
-        return quiesce(beta-1, beta);
+        return quiesce(beta-1, beta, board);
 
     moveList legalMoves;
     legalMoves.count = 0;
 
-    generate_moves(&legalMoves);
-    sort_moves(&legalMoves, no_move);
+    generate_moves(&legalMoves, board);
+    sort_moves(&legalMoves, no_move, board);
 
     copy_board();
 
@@ -362,9 +361,9 @@ static inline int ZwSearch(int beta, int depth){
 
         int score;
 
-        if (make_move(move, all_moves, 0)){
+        if (make_move(move, all_moves, 0, board)){
 
-            score = -ZwSearch(-beta + 1, depth-1);
+            score = -ZwSearch(-beta + 1, depth-1, board);
 
             take_back();
 
@@ -376,7 +375,7 @@ static inline int ZwSearch(int beta, int depth){
     return beta-1;
 }
 
-void find_pv(moveList *moves){
+void find_pv(moveList *moves, int ply){
     follow_pv = 0;
     for (int moveId = 0; moveId < moves->count; moveId++){
         if (moves->moves[moveId] == pv_line.moves[ply]){
@@ -386,7 +385,7 @@ void find_pv(moveList *moves){
     }
 }
 
-static inline int negamax(int depth, int alpha, int beta, Line *pline) {
+static inline int negamax(int depth, int alpha, int beta, Line *pline, Board *board) {
     //general maintenence
     nodes++;
 
@@ -398,21 +397,21 @@ static inline int negamax(int depth, int alpha, int beta, Line *pline) {
     }
 
     //do check extensions before probing hash table
-    int in_check = is_square_attacked(bsf((side == white) ? bitboards[K] : bitboards[k]), (side ^ 1));
+    int in_check = is_square_attacked(bsf((board->side == white) ? board->bitboards[K] : board->bitboards[k]), (board->side ^ 1), board);
 
     if (in_check)
         depth++;
 
     //HASH TABLE PROBE
     int hash_move = no_move;
-    int hash_lookup = ProbeHash(depth, alpha, beta, &hash_move);
+    int hash_lookup = ProbeHash(depth, alpha, beta, &hash_move, board);
     if ((hash_lookup) != valUNKNOWN) {
         return hash_lookup;
     }
 
     //TB PROBE
-    if (ply != 0) {
-        U32 tbres = get_wdl();
+    if (board->ply != 0) {
+        U32 tbres = get_wdl(board);
 
         if (tbres != TB_RESULT_FAILED) {
 
@@ -435,24 +434,24 @@ static inline int negamax(int depth, int alpha, int beta, Line *pline) {
 
     if (depth <= 0) {
         pline->length = 0;
-        return quiesce(alpha, beta);
+        return quiesce(alpha, beta, board);
     }
 
-    if (is_threefold_repetition()) {
+    if (is_threefold_repetition(board)) {
         return 0;
     }
 
 
     int eval;
-    if (depth >= 3 && in_check == 0 && ply
-        && !((occupancies[white] == (bitboards[K] | bitboards[P])) ||
-             (occupancies[black] == (bitboards[k] | bitboards[p])))) {
+    if (depth >= 3 && in_check == 0 && board->ply
+        && !((board->occupancies[white] == (board->bitboards[K] | board->bitboards[P])) ||
+             (board->occupancies[black] == (board->bitboards[k] | board->bitboards[p])))) {
         copy_board();
 
-        side ^= 1;
-        enpessant = no_sq;
+        board->side ^= 1;
+        board->enpessant = no_sq;
 
-        eval = -ZwSearch(1 - beta, depth - 3);
+        eval = -ZwSearch(1 - beta, depth - 3, board);
 
         take_back();
         if (eval >= beta) {
@@ -463,13 +462,13 @@ static inline int negamax(int depth, int alpha, int beta, Line *pline) {
     moveList legalMoves;
     memset(&legalMoves, 0, sizeof legalMoves);
 
-    generate_moves(&legalMoves);
+    generate_moves(&legalMoves, board);
 
     if (follow_pv) {
-        find_pv(&legalMoves);
+        find_pv(&legalMoves, board->ply);
     }
 
-    sort_moves(&legalMoves, hash_move);
+    sort_moves(&legalMoves, hash_move, board);
 
     copy_board();
 
@@ -480,21 +479,21 @@ static inline int negamax(int depth, int alpha, int beta, Line *pline) {
     for (int moveId = 0; moveId < legalMoves.count; moveId++) {
         move = legalMoves.moves[moveId];
 
-        if (make_move(move, all_moves, 1)) {
+        if (make_move(move, all_moves, 1, board)) {
 
             legalMoveCount++;
 
-            ply++;
+            board->ply++;
 
             if (legalMoveCount == 0) {
-                eval = -negamax(depth - 1, -beta, -alpha, &line);
+                eval = -negamax(depth - 1, -beta, -alpha, &line, board);
             } else {
                 //LMR
                 //NO_LMR test for debugging purposes.
 
                 if ((depth >= 3) && (legalMoveCount > 5) && (in_check == 0) && (get_move_capture(move) == 0) && (get_move_promoted(move) == 0)) {
 #ifndef NO_LMR
-                    eval = -negamax(depth - 2, -alpha - 1, -alpha, &line);
+                    eval = -negamax(depth - 2, -alpha - 1, -alpha, &line, board);
 #else
                     eval = alpha + 1;
 #endif
@@ -504,14 +503,14 @@ static inline int negamax(int depth, int alpha, int beta, Line *pline) {
 
                 //PV search
                 if (eval > alpha) {
-                    eval = -negamax(depth - 1, -alpha - 1, -alpha, &line);
+                    eval = -negamax(depth - 1, -alpha - 1, -alpha, &line, board);
                     if ((eval > alpha) && (eval < beta)) {
-                        eval = -negamax(depth - 1, -beta, -alpha, &line);
+                        eval = -negamax(depth - 1, -beta, -alpha, &line, board);
                     }
                 }
             }
 
-            ply--;
+            board->ply--;
 
             take_back();
 
@@ -538,13 +537,13 @@ static inline int negamax(int depth, int alpha, int beta, Line *pline) {
 //                }
 
                 if (!get_move_capture(move)) {
-                    killer_moves[ply][1] = killer_moves[ply][0];
-                    killer_moves[ply][0] = move;
+                    killer_moves[board->ply][1] = killer_moves[board->ply][0];
+                    killer_moves[board->ply][0] = move;
 
-                    history_moves[side][get_move_source(move)][get_move_target(move)] += depth * depth;
+                    history_moves[board->side][get_move_source(move)][get_move_target(move)] += depth * depth;
                 }
 
-                RecordHash(depth, beta, move, hashfBETA);
+                RecordHash(depth, beta, move, hashfBETA, board);
 
                 return beta;
             }
@@ -554,14 +553,14 @@ static inline int negamax(int depth, int alpha, int beta, Line *pline) {
 
     if (legalMoveCount == 0) {
         if (in_check) {
-            return (-4900000) + ply;
+            return (-4900000) + board->ply;
 
         } else {
             return 0;
         }
     }
 
-    RecordHash(depth, alpha, bestMove, hashf);
+    RecordHash(depth, alpha, bestMove, hashf, board);
     return alpha;
 
 }
@@ -597,10 +596,13 @@ int willMakeNextDepth(int curd, const float *times){
 void *search_position(void *arg){
     //Table bases
 
+    Board board;
+    memcpy(&board, &UciBoard, sizeof(Board));
+
     int depth = *(int*)arg;
 
-    if (get_wdl() != TB_RESULT_FAILED) {
-        int move = get_root_move();
+    if (get_wdl(&board) != TB_RESULT_FAILED) {
+        int move = get_root_move(&board);
 
         //this is shit code but thats okay its not my fault :)
         if (move != 0) {
@@ -641,7 +643,7 @@ void *search_position(void *arg){
 
     for (int currentDepth = 1; currentDepth <= depth; currentDepth++){
 
-        ply = 0;
+        board.ply = 0;
 
         follow_pv = 1;
         found_pv = 0;
@@ -651,7 +653,7 @@ void *search_position(void *arg){
 
         depthTime[currentDepth] = (float )get_time_ms();
 
-        int nmRes = negamax(currentDepth, alpha, beta, &negamax_line);
+        int nmRes = negamax(currentDepth, alpha, beta, &negamax_line, &board);
 
         if (stop) {
             break;
@@ -659,7 +661,7 @@ void *search_position(void *arg){
 
         //if the evaluation is outside of aspiration window bounds, reset alpha and beta and continue the search
         if ((nmRes >= beta) || (nmRes <= alpha)){
-            ply = 0;
+            board.ply = 0;
             selDepth = 0;
 
             follow_pv = 1;
@@ -670,7 +672,7 @@ void *search_position(void *arg){
 
             memset(&negamax_line, 0, sizeof negamax_line);
 
-            nmRes = negamax(currentDepth, alpha, beta, &negamax_line);
+            nmRes = negamax(currentDepth, alpha, beta, &negamax_line, &board);
 
         }
 

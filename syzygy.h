@@ -5,9 +5,9 @@
 #ifndef EGGNOG_CHESS_ENGINE_SYZYGY_H
 #define EGGNOG_CHESS_ENGINE_SYZYGY_H
 
-int tbInitilised;
+#include "board.h"
 
-int get_root_move();
-unsigned get_wdl();
+int get_root_move(Board *board);
+unsigned get_wdl(Board *board);
 
 #endif //EGGNOG_CHESS_ENGINE_SYZYGY_H

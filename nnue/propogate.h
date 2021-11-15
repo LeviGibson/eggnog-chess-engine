@@ -5,12 +5,12 @@
 #ifndef HALFKP_PROBE_PROPOGATE_H
 #define HALFKP_PROBE_PROPOGATE_H
 
+#include <stdint.h>
 #include "load.h"
 
-#define CLIPPED_RELU(x) clamp(x, 0, 127)
-#define clamp(a, b, c) ((a) < (b) ? (b) : (a) > (c) ? (c) : (a))
+typedef struct NnueData NnueData;
 
-typedef struct NNUEDATA {
+struct NnueData{
     int32_t l1[L2SIZE ];
     int32_t l2[L3SIZE ];
     int32_t l3[OUTSIZE];
@@ -21,13 +21,18 @@ typedef struct NNUEDATA {
 
     unsigned activeIndicies[2][32];
     unsigned activeIndexCount[2];
-} NnueData;
+};
 
-int nnue_evaluate(NnueData *data);
+#include "../board.h"
 
-void nnue_pop_bit(int ptype, int bit);
-void nnue_set_bit(int ptype, int bit);
+#define CLIPPED_RELU(x) clamp(x, 0, 127)
+#define clamp(a, b, c) ((a) < (b) ? (b) : (a) > (c) ? (c) : (a))
 
-void refresh_accumulator(NnueData *data);
+int nnue_evaluate(NnueData *data, Board *board);
+
+void nnue_pop_bit(int ptype, int bit, Board *board);
+void nnue_set_bit(int ptype, int bit, Board *board);
+
+void refresh_accumulator(NnueData *data, Board *board);
 
 #endif //HALFKP_PROBE_PROPOGATE_H
