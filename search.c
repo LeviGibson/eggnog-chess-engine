@@ -9,7 +9,7 @@
 #include "uci.h"
 #include <stdio.h>
 
-#define aspwindow 50
+#define aspwindow 1700
 #define no_move -15
 
 int selDepth = 0;
@@ -671,6 +671,8 @@ void *search_position(void *arg){
             beta = DEF_BETA;
 
             memset(&negamax_line, 0, sizeof negamax_line);
+
+            printf("Aspiration Research\n");
 
             nmRes = negamax(currentDepth, alpha, beta, &negamax_line, &board);
 
