@@ -8,6 +8,7 @@
 #include "moveOrder.h"
 #include "uci.h"
 #include <stdio.h>
+#include <pthread.h>
 
 #define aspwindow 1700
 #define no_move -15
@@ -40,7 +41,6 @@ int history_moves[2][64][64];
 Line pv_line;
 
 int follow_pv, found_pv;
-
 
 static inline void swap(int* a, int* b)
 {
@@ -140,7 +140,7 @@ U64 pastPawnMasks[64] = {
 
 static inline int score_move(int move, int hashmove, Board *board){
 
-    if (found_pv){
+    if (found_pv && !board->helperThread){
         if (move == pv_line.moves[board->ply]){
             found_pv = 0;
             return 20000;
@@ -565,6 +565,51 @@ static inline int negamax(int depth, int alpha, int beta, Line *pline, Board *bo
 
 }
 
+typedef struct NegamaxArgs NegamaxArgs;
+struct NegamaxArgs{
+    int depth;
+    int alpha;
+    int beta;
+    Line *pline;
+    Board board;
+};
+
+void negamax_thread(void *args){
+    NegamaxArgs *nargs = args;
+    negamax(nargs->depth, nargs->alpha, nargs->beta, nargs->pline, &nargs->board);
+}
+
+
+int root(int depth, int alpha, int beta, Line *pline, Board *board){
+    if (threadCount == 1)
+        return negamax(depth, alpha, beta, pline, board);
+
+
+    pthread_t thread;
+
+    NegamaxArgs args;
+
+    Line line;
+    memset(&line, 0, sizeof(line));
+
+    args.depth = depth;
+    args.alpha = alpha;
+    args.beta = beta;
+    args.pline = &line;
+    args.board = *board;
+    args.board.helperThread = 1;
+
+    pthread_create(&thread, NULL, (void *(*)(void *)) negamax_thread, &args);
+
+    int eval = negamax(depth, alpha, beta, pline, board);
+
+    stop = 1;
+    pthread_join(thread, NULL);
+    stop = 0;
+
+    return eval;
+}
+
 #define DEF_ALPHA (-5000000)
 #define DEF_BETA (5000000)
 
@@ -653,7 +698,7 @@ void *search_position(void *arg){
 
         depthTime[currentDepth] = (float )get_time_ms();
 
-        int nmRes = negamax(currentDepth, alpha, beta, &negamax_line, &board);
+        int nmRes = root(currentDepth, alpha, beta, &negamax_line, &board);
 
         if (stop) {
             break;
@@ -672,9 +717,7 @@ void *search_position(void *arg){
 
             memset(&negamax_line, 0, sizeof negamax_line);
 
-            printf("Aspiration Research\n");
-
-            nmRes = negamax(currentDepth, alpha, beta, &negamax_line, &board);
+            nmRes = root(currentDepth, alpha, beta, &negamax_line, &board);
 
         }
 
@@ -700,9 +743,9 @@ void *search_position(void *arg){
 
         prevBestMove = pv_line.moves[0];
 
-        printf("info score %s %d depth %d seldepth %d nodes %ld qnodes %ld tbhits %ld pv ",
+        printf("info score %s %d depth %d seldepth %d nodes %ld qnodes %ld tbhits %ld time %d pv ",
                (abs(eval) > 4000000) ? "mate" : "cp" , (abs(eval) > 4000000) ? (4900000 - abs(eval)) * (eval / abs(eval)) : eval/64,
-               currentDepth, selDepth, nodes, qnodes, tbHits);
+               currentDepth, selDepth, nodes, qnodes, tbHits, (get_time_ms() - startingTime));
 
         for (int i = 0; i < currentDepth; i++){
             if (pv_line.moves[i] == 0)

@@ -96,6 +96,8 @@ void parse_position(char *command) {
 //go wtime 300000 btime 300000
 int depth;
 
+int threadCount = 1;
+
 void parse_go(char *command) {
     char *current_depth = NULL;
     char *current_timelimit = NULL;
@@ -178,8 +180,15 @@ void uci_loop() {
             printf("id name Eggnog Chess\n");
             printf("id name Levi Gibson\n");
             printf("option name SyzygyPath type string default <empty>\n");
+            printf("option name Threads type spin default 1 min 1 max 512\n");
             printf("uciok\n");
         }
+
+        if (strncmp(input, "setoption name Threads value", 28) == 0) {
+            printf("info string Threading is in beta. it barely works have fun ;)\n");
+            threadCount = atoi(input + 29);
+        }
+
         if (strncmp(input, "setoption name SyzygyPath value", 31) == 0) {
 
             char path[strlen(input) - 32];
@@ -191,3 +200,4 @@ void uci_loop() {
 
     }
 }
+

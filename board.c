@@ -912,6 +912,7 @@ void parse_fen(char *fen, Board *board)
 
     update_occupancies(board);
     board->current_zobrist_key = generate_zobrist_key(board);
+    board->helperThread = 0;
 
     refresh_accumulator(&board->currentNnue, board);
 }

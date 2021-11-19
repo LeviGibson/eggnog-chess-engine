@@ -45,6 +45,8 @@ struct Board{
     int side;
     int castle;
     int prevmove;
+
+    int helperThread;
 };
 
 //MOVE ENCODING____________
@@ -155,3 +157,4 @@ void print_fen(Board *board);
 void parse_fen(char *fen, Board *board);
 
 #endif //MBBCHESS_BOARD_H
+
