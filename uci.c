@@ -156,6 +156,8 @@ void uci_loop() {
             continue;
         } else {
             stop = 1;
+            pthread_join(searchthread, NULL);
+            stop = 0;
         }
 
         if (strncmp(input, "isready", 7) == 0) {
@@ -185,7 +187,6 @@ void uci_loop() {
         }
 
         if (strncmp(input, "setoption name Threads value", 28) == 0) {
-            printf("info string Threading is in beta. it barely works have fun ;)\n");
             threadCount = atoi(input + 29);
         }
 

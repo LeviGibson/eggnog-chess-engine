@@ -140,10 +140,10 @@ U64 pastPawnMasks[64] = {
 
 static inline int score_move(int move, int hashmove, Board *board){
 
-    if (found_pv && !board->helperThread){
+    if (found_pv){
         if (move == pv_line.moves[board->ply]){
             found_pv = 0;
-            return 20000;
+            return board->helperThread ? -20000 : 20000;
         }
     }
 
@@ -565,6 +565,19 @@ static inline int negamax(int depth, int alpha, int beta, Line *pline, Board *bo
 
 }
 
+void remove_illigal_moves(moveList *moves, Board *board){
+    copy_board();
+    for (int i = 0; i < moves->count; ++i) {
+        if (make_move(moves->moves[i], all_moves, 1, board)) {
+            take_back();
+        } else {
+            memcpy(&moves->moves[i], &moves->moves[i+1], (256*4) - (i*4));
+            moves->count--;
+            i--;
+        }
+    }
+}
+
 typedef struct NegamaxArgs NegamaxArgs;
 struct NegamaxArgs{
     int depth;
@@ -574,38 +587,55 @@ struct NegamaxArgs{
     Board board;
 };
 
+typedef struct Thread Thread;
+struct Thread{
+    pthread_t pthread;
+    Line line;
+    NegamaxArgs args;
+};
+
 void negamax_thread(void *args){
     NegamaxArgs *nargs = args;
-    negamax(nargs->depth, nargs->alpha, nargs->beta, nargs->pline, &nargs->board);
+    for (int i = 0; i < max_ply; ++i) {
+        memset(nargs->pline, 0, sizeof (Line));
+
+        negamax(i, nargs->alpha, nargs->beta, nargs->pline, &nargs->board);
+        if (stop)
+            return;
+    }
 }
 
-
 int root(int depth, int alpha, int beta, Line *pline, Board *board){
+
     if (threadCount == 1)
         return negamax(depth, alpha, beta, pline, board);
 
+    moveList legalMoves;
+    generate_moves(&legalMoves, board);
+    remove_illigal_moves(&legalMoves, board);
+    sort_moves(&legalMoves, no_move, board);
 
-    pthread_t thread;
+    int numThreads = threadCount < legalMoves.count ? threadCount : legalMoves.count;
 
-    NegamaxArgs args;
+    Thread threads[numThreads];
+    memset(&threads, 0, sizeof threads);
 
-    Line line;
-    memset(&line, 0, sizeof(line));
+    for (int i = 0; i < numThreads; ++i) {
+        threads[i].args = (struct NegamaxArgs){.depth = depth - 1, .alpha = alpha, .beta = beta, .pline = &threads[i].line, .board = *board};
+        make_move(legalMoves.moves[i], all_moves, 1, &threads[i].args.board);
 
-    args.depth = depth;
-    args.alpha = alpha;
-    args.beta = beta;
-    args.pline = &line;
-    args.board = *board;
-    args.board.helperThread = 1;
-
-    pthread_create(&thread, NULL, (void *(*)(void *)) negamax_thread, &args);
+        pthread_create(&threads[i].pthread, NULL, (void *(*)(void *)) negamax_thread, &threads[i].args);
+    }
 
     int eval = negamax(depth, alpha, beta, pline, board);
 
+    int originalStop = stop;
+
     stop = 1;
-    pthread_join(thread, NULL);
-    stop = 0;
+    for (int i = 0; i < numThreads; ++i) {
+        pthread_join(threads[i].pthread, NULL);
+    }
+    stop = originalStop;
 
     return eval;
 }
