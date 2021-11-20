@@ -15,6 +15,8 @@ build for all CPUs:
 
 `make avx2`
 
+`make popcnt`
+
 `make avx`
 
 `make sse`

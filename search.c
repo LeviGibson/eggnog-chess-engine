@@ -119,23 +119,40 @@ U64 filemasks[64] = {
         0x1010101010101010ULL, 0x2020202020202020ULL, 0x4040404040404040ULL, 0x8080808080808080ULL,
 };
 
-U64 pastPawnMasks[64] = {
-        0x303030303030303ULL, 0x707070707070707ULL, 0xe0e0e0e0e0e0e0eULL, 0x1c1c1c1c1c1c1c1cULL,
-        0x3838383838383838ULL, 0x7070707070707070ULL, 0xe0e0e0e0e0e0e0e0ULL, 0xc0c0c0c0c0c0c0c0ULL,
-        0x303030303030303ULL, 0x707070707070707ULL, 0xe0e0e0e0e0e0e0eULL, 0x1c1c1c1c1c1c1c1cULL,
-        0x3838383838383838ULL, 0x7070707070707070ULL, 0xe0e0e0e0e0e0e0e0ULL, 0xc0c0c0c0c0c0c0c0ULL,
-        0x303030303030303ULL, 0x707070707070707ULL, 0xe0e0e0e0e0e0e0eULL, 0x1c1c1c1c1c1c1c1cULL,
-        0x3838383838383838ULL, 0x7070707070707070ULL, 0xe0e0e0e0e0e0e0e0ULL, 0xc0c0c0c0c0c0c0c0ULL,
-        0x303030303030303ULL, 0x707070707070707ULL, 0xe0e0e0e0e0e0e0eULL, 0x1c1c1c1c1c1c1c1cULL,
-        0x3838383838383838ULL, 0x7070707070707070ULL, 0xe0e0e0e0e0e0e0e0ULL, 0xc0c0c0c0c0c0c0c0ULL,
-        0x303030303030303ULL, 0x707070707070707ULL, 0xe0e0e0e0e0e0e0eULL, 0x1c1c1c1c1c1c1c1cULL,
-        0x3838383838383838ULL, 0x7070707070707070ULL, 0xe0e0e0e0e0e0e0e0ULL, 0xc0c0c0c0c0c0c0c0ULL,
-        0x303030303030303ULL, 0x707070707070707ULL, 0xe0e0e0e0e0e0e0eULL, 0x1c1c1c1c1c1c1c1cULL,
-        0x3838383838383838ULL, 0x7070707070707070ULL, 0xe0e0e0e0e0e0e0e0ULL, 0xc0c0c0c0c0c0c0c0ULL,
-        0x303030303030303ULL, 0x707070707070707ULL, 0xe0e0e0e0e0e0e0eULL, 0x1c1c1c1c1c1c1c1cULL,
-        0x3838383838383838ULL, 0x7070707070707070ULL, 0xe0e0e0e0e0e0e0e0ULL, 0xc0c0c0c0c0c0c0c0ULL,
-        0x303030303030303ULL, 0x707070707070707ULL, 0xe0e0e0e0e0e0e0eULL, 0x1c1c1c1c1c1c1c1cULL,
-        0x3838383838383838ULL, 0x7070707070707070ULL, 0xe0e0e0e0e0e0e0e0ULL, 0xc0c0c0c0c0c0c0c0ULL,
+U64 pastPawnMasks[2][64] = {
+        {0x0ULL, 0x0ULL, 0x0ULL, 0x0ULL,
+         0x0ULL, 0x0ULL, 0x0ULL, 0x0ULL,
+         0x3ULL, 0x7ULL, 0xeULL, 0x1cULL,
+         0x38ULL, 0x70ULL, 0xe0ULL, 0xc0ULL,
+         0x303ULL, 0x707ULL, 0xe0eULL, 0x1c1cULL,
+         0x3838ULL, 0x7070ULL, 0xe0e0ULL, 0xc0c0ULL,
+         0x30303ULL, 0x70707ULL, 0xe0e0eULL, 0x1c1c1cULL,
+         0x383838ULL, 0x707070ULL, 0xe0e0e0ULL, 0xc0c0c0ULL,
+         0x3030303ULL, 0x7070707ULL, 0xe0e0e0eULL, 0x1c1c1c1cULL,
+         0x38383838ULL, 0x70707070ULL, 0xe0e0e0e0ULL, 0xc0c0c0c0ULL,
+         0x303030303ULL, 0x707070707ULL, 0xe0e0e0e0eULL, 0x1c1c1c1c1cULL,
+         0x3838383838ULL, 0x7070707070ULL, 0xe0e0e0e0e0ULL, 0xc0c0c0c0c0ULL,
+         0x30303030303ULL, 0x70707070707ULL, 0xe0e0e0e0e0eULL, 0x1c1c1c1c1c1cULL,
+         0x383838383838ULL, 0x707070707070ULL, 0xe0e0e0e0e0e0ULL, 0xc0c0c0c0c0c0ULL,
+         0x3030303030303ULL, 0x7070707070707ULL, 0xe0e0e0e0e0e0eULL, 0x1c1c1c1c1c1c1cULL,
+         0x38383838383838ULL, 0x70707070707070ULL, 0xe0e0e0e0e0e0e0ULL, 0xc0c0c0c0c0c0c0ULL,},
+
+        {0x303030303030300ULL, 0x707070707070700ULL, 0xe0e0e0e0e0e0e00ULL, 0x1c1c1c1c1c1c1c00ULL,
+         0x3838383838383800ULL, 0x7070707070707000ULL, 0xe0e0e0e0e0e0e000ULL, 0xc0c0c0c0c0c0c000ULL,
+         0x303030303030000ULL, 0x707070707070000ULL, 0xe0e0e0e0e0e0000ULL, 0x1c1c1c1c1c1c0000ULL,
+         0x3838383838380000ULL, 0x7070707070700000ULL, 0xe0e0e0e0e0e00000ULL, 0xc0c0c0c0c0c00000ULL,
+         0x303030303000000ULL, 0x707070707000000ULL, 0xe0e0e0e0e000000ULL, 0x1c1c1c1c1c000000ULL,
+         0x3838383838000000ULL, 0x7070707070000000ULL, 0xe0e0e0e0e0000000ULL, 0xc0c0c0c0c0000000ULL,
+         0x303030300000000ULL, 0x707070700000000ULL, 0xe0e0e0e00000000ULL, 0x1c1c1c1c00000000ULL,
+         0x3838383800000000ULL, 0x7070707000000000ULL, 0xe0e0e0e000000000ULL, 0xc0c0c0c000000000ULL,
+         0x303030000000000ULL, 0x707070000000000ULL, 0xe0e0e0000000000ULL, 0x1c1c1c0000000000ULL,
+         0x3838380000000000ULL, 0x7070700000000000ULL, 0xe0e0e00000000000ULL, 0xc0c0c00000000000ULL,
+         0x303000000000000ULL, 0x707000000000000ULL, 0xe0e000000000000ULL, 0x1c1c000000000000ULL,
+         0x3838000000000000ULL, 0x7070000000000000ULL, 0xe0e0000000000000ULL, 0xc0c0000000000000ULL,
+         0x300000000000000ULL, 0x700000000000000ULL, 0xe00000000000000ULL, 0x1c00000000000000ULL,
+         0x3800000000000000ULL, 0x7000000000000000ULL, 0xe000000000000000ULL, 0xc000000000000000ULL,
+         0x0ULL, 0x0ULL, 0x0ULL, 0x0ULL,
+         0x0ULL, 0x0ULL, 0x0ULL, 0x0ULL,}
 };
 
 static inline int score_move(int move, int hashmove, Board *board){
@@ -208,7 +225,7 @@ static inline int score_move(int move, int hashmove, Board *board){
             if (attacked_pieces)
                 return 40;
 
-            if (!(pastPawnMasks[get_move_target(move)] & board->bitboards[p]))
+            if (!(pastPawnMasks[white][get_move_target(move)] & board->bitboards[p]))
                 return 30;
 
             if (get_move_double(move))
@@ -231,8 +248,8 @@ static inline int score_move(int move, int hashmove, Board *board){
             if (attacked_pieces)
                 return 40;
 
-            if (!(pastPawnMasks[get_move_target(move)] & board->bitboards[P]))
-                return 20;
+            if (!(pastPawnMasks[black][get_move_target(move)] & board->bitboards[P]))
+                return 30;
 
             if (get_move_double(move))
                 return 10;
@@ -401,6 +418,16 @@ static inline int negamax(int depth, int alpha, int beta, Line *pline, Board *bo
 
     if (in_check)
         depth++;
+
+    if (board->occupancies[both] == (WK | BK | WP | BP)) {
+        if (get_move_piece(board->prevmove) == P) {
+            if (!(pastPawnMasks[white][get_move_target(board->prevmove)] & board->bitboards[p]))
+                depth++;
+        } else if (get_move_piece(board->prevmove) == P) {
+            if (!(pastPawnMasks[black][get_move_target(board->prevmove)] & board->bitboards[P]))
+                depth++;
+        }
+    }
 
     //HASH TABLE PROBE
     int hash_move = no_move;

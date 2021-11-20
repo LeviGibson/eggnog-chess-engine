@@ -20,6 +20,20 @@ typedef struct Board Board;
 enum{wk = 1, wq = 2, bk = 4, bq = 8};
 enum {all_moves, only_captures};
 
+#define WK board->bitboards[K]
+#define WN board->bitboards[N]
+#define WB board->bitboards[B]
+#define WR board->bitboards[R]
+#define WQ board->bitboards[Q]
+#define WP board->bitboards[P]
+
+#define BK board->bitboards[k]
+#define BN board->bitboards[n]
+#define BB board->bitboards[b]
+#define BR board->bitboards[r]
+#define BQ board->bitboards[q]
+#define BP board->bitboards[p]
+
 typedef struct {
     int moves[256];
     U32 count;

@@ -40,13 +40,11 @@ void RecordHash(int depth, int val, int best, int hashf, Board *board){
     //U64 key = generate_zobrist_key();
     if ((val != 0) && (val < 40000) && (val > -40000)) {
         HASHE *phashe = &hash_table[board->current_zobrist_key % tt_size];
-        if ((phashe->depth < depth) || ((phashe->depth == depth) && (hashf < phashe->flags))) {
-            phashe->key = board->current_zobrist_key;
-            phashe->best = best;
-            phashe->value = val;
-            phashe->flags = hashf;
-            phashe->depth = depth;
-        }
+        phashe->key = board->current_zobrist_key;
+        phashe->best = best;
+        phashe->value = val;
+        phashe->flags = hashf;
+        phashe->depth = depth;
     }
 }
 
