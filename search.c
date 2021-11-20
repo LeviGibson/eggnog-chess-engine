@@ -13,6 +13,8 @@
 #define aspwindow 1700
 #define no_move -15
 
+int tbsearch = 0;
+
 int selDepth = 0;
 
 long nodes = 0;
@@ -440,15 +442,28 @@ static inline int negamax(int depth, int alpha, int beta, Line *pline, Board *bo
     if (board->ply != 0) {
         U32 tbres = get_wdl(board);
 
-        if (tbres != TB_RESULT_FAILED) {
+        if (!tbsearch) {
+            if (tbres != TB_RESULT_FAILED) {
 
-            tbHits++;
-            if (tbres == 4)
-                return 4000000;
-            if (tbres == 2)
-                return 0;
-            if (tbres == 0)
-                return -4000000;
+                tbHits++;
+                if (tbres == 4)
+                    return 4000000;
+                if (tbres == 2)
+                    return 0;
+                if (tbres == 0)
+                    return -4000000;
+            }
+        } else {
+            int move = get_root_move(board);
+            if (move != 0) {
+
+                if (tbres == 4)
+                    return 4000000;
+                if (tbres == 2)
+                    return 0;
+                if (tbres == 0)
+                    return -4000000;
+            }
         }
     }
 
@@ -712,6 +727,8 @@ void *search_position(void *arg){
             print_move(move);
             printf("\n");
             return NULL;
+        } else{
+            tbsearch = 1;
         }
     }
 
@@ -820,6 +837,7 @@ void *search_position(void *arg){
     }
 
     dynamicTimeManagment = 0;
+    tbsearch = 0;
 
     printf("bestmove ");
     print_move(pv_line.moves[0]);
