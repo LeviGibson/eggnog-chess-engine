@@ -30,6 +30,8 @@ popcnt:
 	gcc $(COMMONFLAGS) -DPOPCNT -mpopcnt $(FILES) $(NNUEFILES) -o $(FILE)-popcnt-linux
 debug:
 	gcc $(FILES) $(NNUEFILES) -pthread -o $(FILE)-debug
+gdb:
+	gcc $(COMMONFLAGS) -DAVX2 -mavx2 $(FILES) $(NNUEFILES) -g
 prof:
 	gcc -pg $(FILES) $(NNUEFILES) -o $(FILE)-prof
 win_avx2:

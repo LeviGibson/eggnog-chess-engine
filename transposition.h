@@ -13,7 +13,8 @@
 #define hashfALPHA   1
 #define hashfBETA    2
 #define valUNKNOWN -1
-#define tt_size 5000000ULL
+#define tt_size 2000000ULL
+#define tt_linesize (tt_size * 2)
 
 typedef struct tagHASHE {
     U64 key;
@@ -28,5 +29,7 @@ void RecordHash(int depth, int val, int best, int hashf, Line *pline, Board *boa
 int ProbeHash(int depth, int alpha, int beta, int *move, Line *pline, Board *board);
 
 void reset_hash_table();
+void init_transposition();
+void transposition_free();
 
 #endif //EGGNOG_CHESS_ENGINE_TRANSPOSITION_H

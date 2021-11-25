@@ -258,7 +258,11 @@ static inline int score_move(int move, int hashmove, Board *board){
         }
 
         if (get_move_piece(move) == N){
-            return count_bits(knight_mask[get_move_target(move)] & (board->occupancies[black] - board->bitboards[p] - board->bitboards[n])) * 30;
+            return count_bits(knight_mask[get_move_target(move)] & (board->occupancies[black] - BP - BN)) * 30;
+        }
+
+        if (get_move_piece(move) == n){
+            return count_bits(knight_mask[get_move_target(move)] & (board->occupancies[white] - WP - WN)) * 30;
         }
 
         if (get_move_piece(move) == R){
