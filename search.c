@@ -431,13 +431,9 @@ static inline int negamax(int depth, int alpha, int beta, Line *pline, Board *bo
         }
     }
 
-    if (is_threefold_repetition(board)) {
-        return 0;
-    }
-
     //HASH TABLE PROBE
     int hash_move = no_move;
-    int hash_lookup = ProbeHash(depth, alpha, beta, &hash_move, pline, board);
+    int hash_lookup = ProbeHash(depth, alpha, beta, &hash_move, board);
     if ((hash_lookup) != valUNKNOWN) {
         return hash_lookup;
     }
@@ -481,6 +477,10 @@ static inline int negamax(int depth, int alpha, int beta, Line *pline, Board *bo
     if (depth <= 0) {
         pline->length = 0;
         return quiesce(alpha, beta, board);
+    }
+
+    if (is_threefold_repetition(board)) {
+        return 0;
     }
 
 
@@ -585,7 +585,7 @@ static inline int negamax(int depth, int alpha, int beta, Line *pline, Board *bo
                     history_moves[board->side][get_move_source(move)][get_move_target(move)] += depth * depth;
                 }
 
-                RecordHash(depth, beta, move, hashfBETA, pline, board);
+                RecordHash(depth, beta, move, hashfBETA, board);
 
                 return beta;
             }
@@ -602,7 +602,7 @@ static inline int negamax(int depth, int alpha, int beta, Line *pline, Board *bo
         }
     }
 
-    RecordHash(depth, alpha, bestMove, hashf, pline, board);
+    RecordHash(depth, alpha, bestMove, hashf, board);
     return alpha;
 
 }
@@ -758,11 +758,7 @@ void *search_position(void *arg){
     float depthTime[max_ply];
     memset(depthTime, 0, sizeof depthTime);
 
-    int hash_move = no_move;
-    int hash_lookup = ProbeHash(6, alpha, beta, &hash_move, &pv_line, &board);
-    if ((hash_lookup) != valUNKNOWN) {
-        dynamicTimeManagment = 0;
-    }
+    reset_hash_table();
 
     for (int currentDepth = 1; currentDepth <= depth; currentDepth++){
 
