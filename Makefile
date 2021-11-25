@@ -29,7 +29,7 @@ sse2:
 popcnt:
 	gcc $(COMMONFLAGS) -DPOPCNT -mpopcnt $(FILES) $(NNUEFILES) -o $(FILE)-popcnt-linux
 debug:
-	gcc $(FILES) $(NNUEFILES) -o $(FILE)-debug
+	gcc $(FILES) $(NNUEFILES) -pthread -o $(FILE)-debug
 prof:
 	gcc -pg $(FILES) $(NNUEFILES) -o $(FILE)-prof
 win_avx2:

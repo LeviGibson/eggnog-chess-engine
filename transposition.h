@@ -7,6 +7,7 @@
 
 #include "bitboard.h"
 #include "board.h"
+#include "search.h"
 
 #define hashfEXACT   0
 #define hashfALPHA   1
@@ -20,10 +21,11 @@ typedef struct tagHASHE {
     int flags;
     int value;
     int best;
+    int *line;
 }   HASHE;
 
-void RecordHash(int depth, int val, int best, int hashf, Board *board);
-int ProbeHash(int depth, int alpha, int beta, int *move, Board *board);
+void RecordHash(int depth, int val, int best, int hashf, Line *pline, Board *board);
+int ProbeHash(int depth, int alpha, int beta, int *move, Line *pline, Board *board);
 
 void reset_hash_table();
 
