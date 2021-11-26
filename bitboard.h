@@ -27,10 +27,17 @@ enum {
 };
 
 #include <assert.h>
+
 //BIT MACROS_____________
 #define get_bit(bitboard, square)((bitboard) & (1ULL << (square)))
-#define set_bit(bitboard, square)((bitboard) |= (1ULL << (square)))
-#define pop_bit(bitboard, square)(bitboard) ^= (1ULL << (square))
+
+#define set_bit(bitboard, square)\
+    assert((get_bit(bitboard, square) == 0ULL));\
+    (bitboard) |= (1ULL << (square))
+
+#define pop_bit(bitboard, square)\
+    assert(get_bit(bitboard, square));  \
+    (bitboard) ^= (1ULL << (square))
 //#define pop_bit(bitboard, square) if (get_bit((bitboard), (square))) {((bitboard) ^= (1ULL << (square)));}
 
 //count bits in U64

@@ -10,8 +10,9 @@
 #include <stdio.h>
 #include <pthread.h>
 
-#define aspwindow 1700
-#define no_move -15
+#define aspwindow (1700)
+#define no_move (-15)
+#define max(x, y) (y) > (x) ? (y) : (x)
 
 int tbsearch = 0;
 
@@ -167,7 +168,7 @@ static inline int score_move(int move, int hashmove, Board *board){
     }
 
     if (hashmove == move){
-        return 5000;
+        return 10000;
     }
 
     if (get_move_capture(move)){
@@ -440,8 +441,9 @@ static inline int negamax(int depth, int alpha, int beta, Line *pline, Board *bo
     }
 
     //HASH TABLE PROBE
+    int staticeval = 9999999;
     int hash_move = no_move;
-    int hash_lookup = ProbeHash(depth, alpha, beta, &hash_move, pline, board);
+    int hash_lookup = ProbeHash(depth, alpha, beta, &hash_move, &staticeval, pline, board);
     if ((hash_lookup) != valUNKNOWN) {
         return hash_lookup;
     }
@@ -475,6 +477,9 @@ static inline int negamax(int depth, int alpha, int beta, Line *pline, Board *bo
         }
     }
 
+    if (staticeval == 9999999)
+        staticeval = nnue_evaluate(&board->currentNnue, board);
+
     found_pv = 0;
 
     Line line;
@@ -502,6 +507,27 @@ static inline int negamax(int depth, int alpha, int beta, Line *pline, Board *bo
         take_back();
         if (eval >= beta) {
             return beta;
+        }
+    }
+
+    if (!(beta - alpha > 1) && !in_check && depth <= 3) {
+
+        int value = staticeval + (125 * 64);
+        if (value < beta) {
+            int new_value;
+            if (depth == 1) {
+                new_value = quiesce(alpha, beta, board);
+                pline->length = 0;
+                return max(value, new_value);
+            }
+            value += (175 * 64);
+            if (value < beta && depth <= 3) {
+                new_value = quiesce(alpha, beta, board);
+                if (new_value < beta) {
+                    pline->length = 0;
+                    return max(new_value, value);
+                }
+            }
         }
     }
 
@@ -589,7 +615,7 @@ static inline int negamax(int depth, int alpha, int beta, Line *pline, Board *bo
                     history_moves[board->side][get_move_source(move)][get_move_target(move)] += depth * depth;
                 }
 
-                RecordHash(depth, beta, move, hashfBETA, pline, board);
+                RecordHash(depth, beta, bestMove, hashfBETA, staticeval, pline, board);
 
                 return beta;
             }
@@ -606,7 +632,7 @@ static inline int negamax(int depth, int alpha, int beta, Line *pline, Board *bo
         }
     }
 
-    RecordHash(depth, alpha, bestMove, hashf, pline, board);
+    RecordHash(depth, alpha, bestMove, hashf, staticeval, pline, board);
     return alpha;
 
 }
@@ -626,7 +652,6 @@ void remove_illigal_moves(moveList *moves, Board *board){
 
 typedef struct NegamaxArgs NegamaxArgs;
 struct NegamaxArgs{
-    int depth;
     int alpha;
     int beta;
     Line *pline;
@@ -661,13 +686,13 @@ int root(int depth, int alpha, int beta, Line *pline, Board *board){
     remove_illigal_moves(&legalMoves, board);
     sort_moves(&legalMoves, no_move, board);
 
-    int numThreads = threadCount < legalMoves.count ? threadCount : legalMoves.count;
+    int numThreads = threadCount < legalMoves.count ? (int)threadCount : (int)legalMoves.count;
 
     Thread threads[numThreads];
     memset(&threads, 0, sizeof threads);
 
     for (int i = 0; i < numThreads; ++i) {
-        threads[i].args = (struct NegamaxArgs){.depth = depth - 1, .alpha = alpha, .beta = beta, .pline = &threads[i].line, .board = *board};
+        threads[i].args = (struct NegamaxArgs){.alpha = alpha, .beta = beta, .pline = &threads[i].line, .board = *board};
         make_move(legalMoves.moves[i], all_moves, 1, &threads[i].args.board);
 
         pthread_create(&threads[i].pthread, NULL, (void *(*)(void *)) negamax_thread, &threads[i].args);
@@ -763,7 +788,8 @@ void *search_position(void *arg){
     memset(depthTime, 0, sizeof depthTime);
 
     int hash_move = no_move;
-    int hash_lookup = ProbeHash(6, alpha, beta, &hash_move, &pv_line, &board);
+    int staticeval = 0;
+    int hash_lookup = ProbeHash(6, alpha, beta, &hash_move, &staticeval, &pv_line, &board);
     if ((hash_lookup) != valUNKNOWN) {
         dynamicTimeManagment = 0;
     }

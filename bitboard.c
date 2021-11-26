@@ -611,8 +611,9 @@ U64 set_occupancy(int index, U64 mask){
     for (int bit = 0; bit < bits_in_mask; bit++){
         int bitIndex = bsf(mask);
 
-        if (index & (1<<bit))
+        if (index & (1<<bit)) {
             set_bit(occupancies, bitIndex);
+        }
         pop_bit(mask, bitIndex);
     }
     return occupancies;
