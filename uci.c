@@ -25,10 +25,10 @@ int parse_move(char *move_string) {
     for (int move_count = 0; move_count < legalMoves.count; move_count++) {
 
         int move = legalMoves.moves[move_count];
-        int promoted_piece = get_move_promoted(move);
+        int promoted_piece = getpromoted(move);
 
-        if ((get_move_source(move) == source_square) && (get_move_target(move) == target_square)) {
-            int promoted_piece = get_move_promoted(move);
+        if ((getsource(move) == source_square) && (gettarget(move) == target_square)) {
+            int promoted_piece = getpromoted(move);
             if (promoted_piece) {
 
                 if (move_string[4] == 'q' && (promoted_piece == Q || promoted_piece == q)) {

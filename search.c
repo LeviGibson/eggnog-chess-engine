@@ -39,7 +39,6 @@ const int mvv_lva[12][12] = {
 };
 
 int killer_moves[max_ply][2];
-int history_moves[2][64][64];
 
 Line pv_line;
 
@@ -171,11 +170,11 @@ static inline int score_move(int move, int hashmove, Board *board){
         return 10000;
     }
 
-    if (get_move_capture(move)){
+    if (getcapture(move)){
         int start_piece, end_piece;
         int target_piece = P;
 
-        int target_square = get_move_target(move);
+        int target_square = gettarget(move);
 
         if (board->side == white) {start_piece = p; end_piece = k;}
         else{start_piece = P; end_piece = K;}
@@ -187,7 +186,7 @@ static inline int score_move(int move, int hashmove, Board *board){
             }
         }
 
-        return mvv_lva[get_move_piece(move)][target_piece]+1000;
+        return mvv_lva[getpiece(move)][target_piece] + 1000;
     } else {
         if (move == killer_moves[board->ply][0]){
             return(800);
@@ -206,19 +205,19 @@ static inline int score_move(int move, int hashmove, Board *board){
 
         }
 
-        if (get_move_promoted(move))
+        if (getpromoted(move))
             return 80;
 
-        if (get_move_castle(move))
+        if (getcastle(move))
             return 50;
 
-        if (get_move_piece(move) == P){
-            U64 attack_mask = pawn_mask[white][get_move_target(move)];
+        if (getpiece(move) == P){
+            U64 attack_mask = pawn_mask[white][gettarget(move)];
 
-            U64 attacked_pieces = (board->bitboards[n] | board->bitboards[r]);
+            U64 attacked_pieces = BN | BR;
 
-            if (pawn_mask[black][get_move_target(move)] & board->bitboards[P])
-                attacked_pieces |= board->bitboards[b] | board->bitboards[q];
+            if (pawn_mask[black][gettarget(move)] & WP)
+                attacked_pieces |= BB | BQ;
 
             attacked_pieces &= attack_mask;
 
@@ -228,19 +227,19 @@ static inline int score_move(int move, int hashmove, Board *board){
             if (attacked_pieces)
                 return 40;
 
-            if (!(pastPawnMasks[white][get_move_target(move)] & board->bitboards[p]))
+            if (!(pastPawnMasks[white][gettarget(move)] & board->bitboards[p]))
                 return 30;
 
-            if (get_move_double(move))
+            if (getdouble(move))
                 return 10;
         }
 
-        if (get_move_piece(move) == p){
-            U64 attack_mask = pawn_mask[black][get_move_target(move)];
+        if (getpiece(move) == p){
+            U64 attack_mask = pawn_mask[black][gettarget(move)];
 
             U64 attacked_pieces = (board->bitboards[N] | board->bitboards[R]);
 
-            if (pawn_mask[white][get_move_target(move)] & board->bitboards[p])
+            if (pawn_mask[white][gettarget(move)] & board->bitboards[p])
                 attacked_pieces |= board->bitboards[B] | board->bitboards[Q];
 
             attacked_pieces &= attack_mask;
@@ -251,32 +250,32 @@ static inline int score_move(int move, int hashmove, Board *board){
             if (attacked_pieces)
                 return 40;
 
-            if (!(pastPawnMasks[black][get_move_target(move)] & board->bitboards[P]))
+            if (!(pastPawnMasks[black][gettarget(move)] & board->bitboards[P]))
                 return 30;
 
-            if (get_move_double(move))
+            if (getdouble(move))
                 return 10;
         }
 
-        if (get_move_piece(move) == N){
-            return count_bits(knight_mask[get_move_target(move)] & (board->occupancies[black] - BP - BN)) * 30;
+        if (getpiece(move) == N){
+            return count_bits(knight_mask[gettarget(move)] & (board->occupancies[black] - BP - BN)) * 30;
         }
 
-        if (get_move_piece(move) == n){
-            return count_bits(knight_mask[get_move_target(move)] & (board->occupancies[white] - WP - WN)) * 30;
+        if (getpiece(move) == n){
+            return count_bits(knight_mask[gettarget(move)] & (board->occupancies[white] - WP - WN)) * 30;
         }
 
-        if (get_move_piece(move) == R){
-            if (filemasks[get_move_source(move)] & board->bitboards[P]) {
-                if (!(filemasks[get_move_target(move)] & board->bitboards[P])) {
+        if (getpiece(move) == R){
+            if (filemasks[getsource(move)] & board->bitboards[P]) {
+                if (!(filemasks[gettarget(move)] & board->bitboards[P])) {
                     return 15;
                 }
             }
         }
 
-        if (get_move_piece(move) == r){
-            if (filemasks[get_move_source(move)] & board->bitboards[p]) {
-                if (!(filemasks[get_move_target(move)] & board->bitboards[p])) {
+        if (getpiece(move) == r){
+            if (filemasks[getsource(move)] & board->bitboards[p]) {
+                if (!(filemasks[gettarget(move)] & board->bitboards[p])) {
                     return 15;
                 }
             }
@@ -427,11 +426,11 @@ static inline int negamax(int depth, int alpha, int beta, Line *pline, Board *bo
         depth++;
 
     if (board->occupancies[both] == (WK | BK | WP | BP)) {
-        if (get_move_piece(board->prevmove) == P) {
-            if (!(pastPawnMasks[white][get_move_target(board->prevmove)] & board->bitboards[p]))
+        if (getpiece(board->prevmove) == P) {
+            if (!(pastPawnMasks[white][gettarget(board->prevmove)] & board->bitboards[p]))
                 depth++;
-        } else if (get_move_piece(board->prevmove) == P) {
-            if (!(pastPawnMasks[black][get_move_target(board->prevmove)] & board->bitboards[P]))
+        } else if (getpiece(board->prevmove) == P) {
+            if (!(pastPawnMasks[black][gettarget(board->prevmove)] & board->bitboards[P]))
                 depth++;
         }
     }
@@ -444,7 +443,7 @@ static inline int negamax(int depth, int alpha, int beta, Line *pline, Board *bo
     int staticeval = 9999999;
     int hash_move = no_move;
     int hash_lookup = ProbeHash(depth, alpha, beta, &hash_move, &staticeval, pline, board);
-    if ((hash_lookup) != valUNKNOWN) {
+    if ((hash_lookup) != valUNKNOWN && board->ply != 0) {
         return hash_lookup;
     }
 
@@ -563,7 +562,7 @@ static inline int negamax(int depth, int alpha, int beta, Line *pline, Board *bo
                 //LMR
                 //NO_LMR test for debugging purposes.
 
-                if ((depth >= 3) && (legalMoveCount > 5) && (in_check == 0) && (get_move_capture(move) == 0) && (get_move_promoted(move) == 0)) {
+                if ((depth >= 3) && (legalMoveCount > 5) && (in_check == 0) && (getcapture(move) == 0) && (getpromoted(move) == 0)) {
 #ifndef NO_LMR
                     eval = -negamax(depth - 2, -alpha - 1, -alpha, &line, board);
 #else
@@ -575,6 +574,16 @@ static inline int negamax(int depth, int alpha, int beta, Line *pline, Board *bo
 
                 //PV search
                 if (eval > alpha) {
+//                    if ((depth >= 3) && (legalMoveCount > 5) && (in_check == 0) && (get_move_capture(move) == 0) && (get_move_promoted(move) == 0))
+//                    {
+//                        if (legalMoveCount > 10 && depth > 4) {
+//                            print_fen(board);
+//                            printf("\n%d\n", legalMoveCount);
+//                            print_move(move);
+//                            printf("\n%d\n\n", depth);
+//                        }
+//                    }
+
                     eval = -negamax(depth - 1, -alpha - 1, -alpha, &line, board);
                     if ((eval > alpha) && (eval < beta)) {
                         eval = -negamax(depth - 1, -beta, -alpha, &line, board);
@@ -602,17 +611,16 @@ static inline int negamax(int depth, int alpha, int beta, Line *pline, Board *bo
             if (eval >= beta) {
 
 //                if (legalMoveCount > 10 && depth > 2){
-//                    print_fen();
+//                    print_fen(board);
 //                    printf("\n%d\n", legalMoveCount);
 //                    print_move(move);
-//                    printf("\n%d\n\n", ply);
+//                    printf("\n%d\n\n", board->ply);
 //                }
 
-                if (!get_move_capture(move)) {
+                if (!getcapture(move)) {
                     killer_moves[board->ply][1] = killer_moves[board->ply][0];
                     killer_moves[board->ply][0] = move;
 
-                    history_moves[board->side][get_move_source(move)][get_move_target(move)] += depth * depth;
                 }
 
                 RecordHash(depth, beta, bestMove, hashfBETA, staticeval, pline, board);
@@ -770,7 +778,6 @@ void *search_position(void *arg){
     selDepth = 0;
 
     memset(killer_moves, 0, sizeof(killer_moves));
-    memset(history_moves, 0, sizeof(history_moves));
 
     Line negamax_line;
     negamax_line.length = 0;

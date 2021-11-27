@@ -51,6 +51,7 @@ struct Board{
 
     U64 current_zobrist_key;
 
+    int nnueUpdate;
     NnueData currentNnue;
 
     int ply;
@@ -87,28 +88,28 @@ struct Board{
 #define encode_move(source, target, ptype, prom, enpessant, capture, doublePush, castle) \
     ((source) | ((target) << 6) | ((ptype) << 12) | ((prom) << 16) | ((enpessant) << 20) | ((capture) << 21) | ((doublePush) << 22) | ((castle) << 23))
 
-#define get_move_source(move) \
+#define getsource(move) \
     (0x3f & (move))
 
-#define get_move_target(move) \
+#define gettarget(move) \
     ((0xfc0 & (move)) >> 6)
 
-#define get_move_piece(move) \
+#define getpiece(move) \
     ((0xf000 & (move)) >> 12)
 
-#define get_move_promoted(move) \
+#define getpromoted(move) \
     ((0xf0000 & (move)) >> 16)
 
-#define get_move_enpessant(move) \
+#define getenpessant(move) \
     get_bit(move, 20)
 
-#define get_move_capture(move) \
+#define getcapture(move) \
     (2097152 & (move))
 
-#define get_move_double(move) \
+#define getdouble(move) \
     get_bit(move, 22)
 
-#define get_move_castle(move) \
+#define getcastle(move) \
     get_bit(move, 23)
 
 #define copy_board() \

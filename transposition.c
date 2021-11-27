@@ -55,7 +55,11 @@ void transposition_free(){
     }
 }
 
-void recover_line(int depth, HASHE *phashe, Line *pline, int alpha){
+//position fen 8/5pk1/6p1/5nP1/5P1p/5R2/4NK1P/1q6 b - - 9 68
+//setoption name Threads value 8
+//go movetime 2000
+
+void recover_line(int depth, HASHE *phashe, Line *pline, int alpha, int *ret, Board *board){
     if (depth <= 1 || phashe->value <= alpha) {
         return;
     }
@@ -64,6 +68,36 @@ void recover_line(int depth, HASHE *phashe, Line *pline, int alpha){
 
     memcpy(pline->moves, &line[1], sizeof(int) * (*line));
     pline->length = *line;
+
+    //threefold repetition testing
+    copy_board();
+
+    board->nnueUpdate = 0;
+    for (int i = 0; i < pline->length; ++i) {
+        int move = pline->moves[i];
+
+//        print_board(board);
+//        for (int j = 0; j <= pline->length; ++j) {
+//            print_move(pline->moves[j]);
+//            printf(" ");
+//        }
+//
+//        printf("\n\n");
+
+        if ((board->zobrist_history_length + pline->length <= 8) ||
+        (!get_bit(getpiece(move), getsource(move)))) {
+            take_back();
+            return;
+        }
+
+        if (!make_move(move, all_moves, 1, board))
+            break;
+    }
+
+    if (is_threefold_repetition(board))
+        *ret = 0;
+
+    take_back();
 }
 
 int ProbeHash(int depth, int alpha, int beta, int *move, int *staticeval, Line *pline, Board *board){
@@ -80,16 +114,16 @@ int ProbeHash(int depth, int alpha, int beta, int *move, int *staticeval, Line *
         if (phashe->depth >= depth) {
 
             if (phashe->flags == hashfEXACT) {
-                recover_line(depth, phashe, pline, alpha);
                 ret = phashe->value;
+                recover_line(depth, phashe, pline, alpha, &ret, board);
             }
             else if ((phashe->flags == hashfALPHA) && (phashe->value <= alpha)) {
-                recover_line(depth, phashe, pline, alpha);
                 ret =  alpha;
+                recover_line(depth, phashe, pline, alpha, &ret, board);
             }
             else if ((phashe->flags == hashfBETA) && (phashe->value >= beta)) {
-                recover_line(depth, phashe, pline, alpha);
                 ret =  beta;
+                recover_line(depth, phashe, pline, alpha, &ret, board);
             }
         }
     }

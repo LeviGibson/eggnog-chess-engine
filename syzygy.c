@@ -14,7 +14,7 @@ int parse_tb_move(unsigned from, unsigned to, Board *board){
     generate_moves(&legalMoves, board);
 
     for (int i = 0; i < legalMoves.count; i++) {
-        if ((get_move_source(legalMoves.moves[i]) == from) && (get_move_target(legalMoves.moves[i]) == to)){
+        if ((getsource(legalMoves.moves[i]) == from) && (gettarget(legalMoves.moves[i]) == to)){
             return legalMoves.moves[i];
         }
     }

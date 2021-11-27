@@ -6,6 +6,8 @@
 
 #ifdef AVX2
 #include <immintrin.h>
+#include <stdio.h>
+
 #endif
 
 int NnuePtypes[12] = {6, 5, 4, 3, 2, K, 12, 11, 10, 9, 8, k};
@@ -251,8 +253,16 @@ void nnue_pop_bit(int ptype, int bit, Board *board){
 }
 
 void nnue_set_bit(int ptype, int bit, Board *board){
+//    if ((((board->bitboards[ptype]) & (1ULL << (bit))) != 0ULL)){
+//        print_board(board);
+//        printf("%d\n", ptype);
+//        print_bitboard(1ULL << bit);
+//    }
 
     set_bit(board->bitboards[ptype], bit);
+
+    if (!board->nnueUpdate)
+        return;
 
     int w_ksq = w_orient[bsf(board->bitboards[K])];
     int b_ksq = b_orient[bsf(board->bitboards[k])];

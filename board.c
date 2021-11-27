@@ -493,10 +493,10 @@ int make_move(int move, int flag, int zobristUpdate, Board *board){
     if (flag == all_moves){
         copy_board();
 
-        int ptype = get_move_piece(move);
-        int source = get_move_source(move);
-        int target = get_move_target(move);
-        int capture = get_move_capture(move);
+        int ptype = getpiece(move);
+        int source = getsource(move);
+        int target = gettarget(move);
+        int capture = getcapture(move);
 
         //if move is a king move, refresh the accumulator;
         if (ptype == K || ptype == k){
@@ -509,7 +509,7 @@ int make_move(int move, int flag, int zobristUpdate, Board *board){
         }
 
         if (capture){
-            if (get_move_enpessant(move)){
+            if (getenpessant(move)){
                 if (board->side == white){
                     nnue_pop_bit(p, target+8, board);
                 } else {
@@ -538,13 +538,13 @@ int make_move(int move, int flag, int zobristUpdate, Board *board){
             }
         }
 
-        if (get_move_double(move)){
+        if (getdouble(move)){
             board->enpessant = (board->side == white) ? (target + 8) : (target - 8);
         } else {
             board->enpessant = no_sq;
         }
 
-        if (get_move_castle(move)){
+        if (getcastle(move)){
             if (board->side == white){
                 if (target == 62){
                     nnue_pop_bit(R, 63, board);
@@ -564,7 +564,7 @@ int make_move(int move, int flag, int zobristUpdate, Board *board){
             }
         }
 
-        int promoted = get_move_promoted(move);
+        int promoted = getpromoted(move);
         if (promoted){
             nnue_pop_bit(ptype, target, board);
             nnue_set_bit(promoted, target, board);
@@ -602,7 +602,7 @@ int make_move(int move, int flag, int zobristUpdate, Board *board){
         } else
             board->current_zobrist_key = 0ULL;
     } else {
-        if (get_move_capture(move) || is_move_direct_check(move, board)){
+        if (getcapture(move) || is_move_direct_check(move, board)){
             return make_move(move, all_moves, zobristUpdate, board);
         } else {
             return 0;
@@ -628,10 +628,10 @@ int piece_at(int square, Board *board){
 //Does not work with discovered checks or castle-checks
 
 int is_move_direct_check(int move, Board *board) {
-    int ptype = get_move_piece(move);
+    int ptype = getpiece(move);
     U64 kingbb = board->side == white ? board->bitboards[k] : board->bitboards[K];
     int kingsq = bsf(kingbb);
-    int target = get_move_target(move);
+    int target = gettarget(move);
     U64 targetBb = 1ULL << target;
 
     if (ptype == N || ptype == n){
@@ -750,17 +750,17 @@ char piece_symbols[12] = {
 };
 
 void print_move(int move){
-    printf("%s%s", square_to_coordinates[get_move_source(move)], square_to_coordinates[get_move_target(move)]);
-    if ((get_move_promoted(move) == Q) | (get_move_promoted(move) == q)){
+    printf("%s%s", square_to_coordinates[getsource(move)], square_to_coordinates[gettarget(move)]);
+    if ((getpromoted(move) == Q) | (getpromoted(move) == q)){
         printf("q");
     }
-    if ((get_move_promoted(move) == B) | (get_move_promoted(move) == b)){
+    if ((getpromoted(move) == B) | (getpromoted(move) == b)){
         printf("b");
     }
-    if ((get_move_promoted(move) == N) | (get_move_promoted(move) == n)){
+    if ((getpromoted(move) == N) | (getpromoted(move) == n)){
         printf("n");
     }
-    if ((get_move_promoted(move) == R) | (get_move_promoted(move) == r)){
+    if ((getpromoted(move) == R) | (getpromoted(move) == r)){
         printf("r");
     }
 }
@@ -913,6 +913,7 @@ void parse_fen(char *fen, Board *board)
     update_occupancies(board);
     board->current_zobrist_key = generate_zobrist_key(board);
     board->helperThread = 0;
+    board->nnueUpdate = 1;
 
     refresh_accumulator(&board->currentNnue, board);
 }
