@@ -68,36 +68,6 @@ void recover_line(int depth, HASHE *phashe, Line *pline, int alpha, int *ret, Bo
 
     memcpy(pline->moves, &line[1], sizeof(int) * (*line));
     pline->length = *line;
-
-    //threefold repetition testing
-    copy_board();
-
-    board->nnueUpdate = 0;
-    for (int i = 0; i < pline->length; ++i) {
-        int move = pline->moves[i];
-
-//        print_board(board);
-//        for (int j = 0; j <= pline->length; ++j) {
-//            print_move(pline->moves[j]);
-//            printf(" ");
-//        }
-//
-//        printf("\n\n");
-
-        if ((board->zobrist_history_length + pline->length <= 8) ||
-        (!get_bit(getpiece(move), getsource(move)))) {
-            take_back();
-            return;
-        }
-
-        if (!make_move(move, all_moves, 1, board))
-            break;
-    }
-
-    if (is_threefold_repetition(board))
-        *ret = 0;
-
-    take_back();
 }
 
 int ProbeHash(int depth, int alpha, int beta, int *move, int *staticeval, Line *pline, Board *board){
