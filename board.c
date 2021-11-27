@@ -125,14 +125,19 @@ int is_threefold_repetition(Board *board){
         return 1;
     }
 
+    int repetitionlimit = 2;
+
     for (int position = 0; position <= board->zobrist_history_length; position++){
+        if (position == (board->zobrist_history_search_index + 1))
+            repetitionlimit = 1;
+
         int repetitions = 0;
         for (int compare = position+1; compare <= board->zobrist_history_length; compare++){
             if (board->zobrist_history[compare] == board->zobrist_history[position]){
 
                 repetitions++;
 
-                if (repetitions >= 2){
+                if (repetitions >= repetitionlimit){
                     return 1;
                 }
             }
@@ -602,7 +607,7 @@ int make_move(int move, int flag, int zobristUpdate, Board *board){
         } else
             board->current_zobrist_key = 0ULL;
     } else {
-        if (getcapture(move) || is_move_direct_check(move, board)){
+        if (getcapture(move) || is_move_direct_check(move, board) || getpromoted(move)){
             return make_move(move, all_moves, zobristUpdate, board);
         } else {
             return 0;

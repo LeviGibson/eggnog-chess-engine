@@ -42,6 +42,7 @@ typedef struct {
 struct Board{
     U64 zobrist_history[101];
     int zobrist_history_length;
+    int zobrist_history_search_index;
 
     U64 zobrist_key_parts[15];
     U64 zobrist_key_bitboards[12];

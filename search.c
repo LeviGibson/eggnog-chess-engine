@@ -435,6 +435,9 @@ static inline int negamax(int depth, int alpha, int beta, Line *pline, Board *bo
         }
     }
 
+    if (board->ply == 0)
+        board->zobrist_history_search_index = board->zobrist_history_length;
+
     if (is_threefold_repetition(board)) {
         return 0;
     }
@@ -794,12 +797,13 @@ void *search_position(void *arg){
     float depthTime[max_ply];
     memset(depthTime, 0, sizeof depthTime);
 
-    int hash_move = no_move;
-    int staticeval = 0;
-    int hash_lookup = ProbeHash(6, alpha, beta, &hash_move, &staticeval, &pv_line, &board);
-    if ((hash_lookup) != valUNKNOWN) {
-        dynamicTimeManagment = 0;
-    }
+//    int hash_move = no_move;
+//    int staticeval = 0;
+//    int hash_lookup = ProbeHash(6, alpha, beta, &hash_move, &staticeval, &pv_line, &board);
+//    if ((hash_lookup) != valUNKNOWN) {
+//        dynamicTimeManagment = 0;
+//    }
+    reset_hash_table();
 
     for (int currentDepth = 1; currentDepth <= depth; currentDepth++){
 
