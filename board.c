@@ -498,6 +498,8 @@ int make_move(int move, int flag, int zobristUpdate, Board *board){
     if (flag == all_moves){
         copy_board();
 
+        board->ply++;
+
         int ptype = getpiece(move);
         int source = getsource(move);
         int target = gettarget(move);

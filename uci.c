@@ -49,7 +49,6 @@ int parse_move(char *move_string) {
     return 0;
 }
 
-//position startpos moves e2e4 e7e5 d2d4 d7d5 d4e5 c7c5 e5e6 b8c6 e6f7 e8d7 f7g8r
 
 void parse_position(char *command) {
     uci_move_sequence_length = 0;
@@ -91,6 +90,9 @@ void parse_position(char *command) {
 
         }
     }
+
+    UciBoard.ply = 0;
+    UciBoard.searchColor = UciBoard.side;
 }
 
 //go wtime 300000 btime 300000

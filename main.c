@@ -3,8 +3,6 @@
 #include "uci.h"
 #include "moveOrder.h"
 #include "transposition.h"
-#include <pthread.h>
-#include <stdio.h>
 
 #include "nnue/load.h"
 

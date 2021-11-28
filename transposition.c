@@ -26,17 +26,9 @@ void unlock(pthread_mutex_t *lock){
 }
 
 void reset_hash_table(){
-//    lock(&lmcLock);
-//    for (int i = 0; i < tt_size; ++i)
-//        lock(&ttLocks[i]);
-
     memset(hash_table, 0, sizeof hash_table);
     memset(lines, 0, sizeof lines);
     lineMoveCount = 0;
-
-//    for (int i = 0; i < tt_size; ++i)
-//        unlock(&ttLocks[i]);
-//    unlock(&lmcLock);
 }
 
 void init_transposition(){
@@ -54,10 +46,6 @@ void transposition_free(){
         pthread_mutex_destroy(&ttLocks[i]);
     }
 }
-
-//position fen 8/5pk1/6p1/5nP1/5P1p/5R2/4NK1P/1q6 b - - 9 68
-//setoption name Threads value 8
-//go movetime 2000
 
 void recover_line(int depth, HASHE *phashe, Line *pline, int alpha, int *ret, Board *board){
     if (depth <= 1 || phashe->value <= alpha) {
@@ -104,7 +92,6 @@ int ProbeHash(int depth, int alpha, int beta, int *move, int *staticeval, Line *
 }
 
 void RecordHash(int depth, int val, int best, int hashf, int staticeval, Line *pline, Board *board){
-    //U64 key = generate_zobrist_key();
     if ((val != 0) && (val < 4500000) && (val > -450000)) {
         unsigned index = board->current_zobrist_key % tt_size;
 
@@ -136,8 +123,6 @@ void RecordHash(int depth, int val, int best, int hashf, int staticeval, Line *p
         }
 
         unlock(&ttLocks[index]);
-
-//        locks[index] = 0;
     }
 }
 

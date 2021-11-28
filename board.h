@@ -61,6 +61,7 @@ struct Board{
     int side;
     int castle;
     int prevmove;
+    int searchColor;
 
     int helperThread;
 };

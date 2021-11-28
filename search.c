@@ -313,7 +313,7 @@ static inline int quiesce(int alpha, int beta, Board *board) {
     nodes++;
     qnodes++;
 
-    int stand_pat = nnue_evaluate(&board->currentNnue, board);
+    int stand_pat = nnue_evaluate(board);
 
     if (stand_pat >= beta){
         return beta;
@@ -339,9 +339,7 @@ static inline int quiesce(int alpha, int beta, Board *board) {
         int move = legalMoves.moves[moveId];
 
         if (make_move(move, only_captures, 0, board)){
-            board->ply++;
             int score = -quiesce(-beta, -alpha, board);
-            board->ply--;
 
             take_back();
 
@@ -443,12 +441,15 @@ static inline int negamax(int depth, int alpha, int beta, Line *pline, Board *bo
     }
 
     //HASH TABLE PROBE
-    int staticeval = 9999999;
+    int staticeval = NO_EVAL;
     int hash_move = no_move;
     int hash_lookup = ProbeHash(depth, alpha, beta, &hash_move, &staticeval, pline, board);
     if ((hash_lookup) != valUNKNOWN && board->ply != 0) {
         return hash_lookup;
     }
+
+    if (staticeval == NO_EVAL)
+        staticeval = nnue_evaluate(board);
 
     //TB PROBE
     if (board->ply != 0) {
@@ -479,9 +480,6 @@ static inline int negamax(int depth, int alpha, int beta, Line *pline, Board *bo
         }
     }
 
-    if (staticeval == 9999999)
-        staticeval = nnue_evaluate(&board->currentNnue, board);
-
     found_pv = 0;
 
     Line line;
@@ -497,8 +495,7 @@ static inline int negamax(int depth, int alpha, int beta, Line *pline, Board *bo
 
     int eval;
     if (depth >= 3 && in_check == 0 && board->ply
-        && !((board->occupancies[white] == (board->bitboards[K] | board->bitboards[P])) ||
-             (board->occupancies[black] == (board->bitboards[k] | board->bitboards[p])))) {
+        && board->occupancies[both] != (WK | BK | WP | BP)) {
         copy_board();
 
         board->side ^= 1;
@@ -512,7 +509,7 @@ static inline int negamax(int depth, int alpha, int beta, Line *pline, Board *bo
         }
     }
 
-    if (!(beta - alpha > 1) && !in_check && depth <= 3) {
+    if (beta - alpha <= 1 && !in_check && depth <= 3) {
 
         int value = staticeval + (125 * 64);
         if (value < beta) {
@@ -557,7 +554,6 @@ static inline int negamax(int depth, int alpha, int beta, Line *pline, Board *bo
 
             legalMoveCount++;
 
-            board->ply++;
 
             if (legalMoveCount == 0) {
                 eval = -negamax(depth - 1, -beta, -alpha, &line, board);
@@ -594,7 +590,6 @@ static inline int negamax(int depth, int alpha, int beta, Line *pline, Board *bo
                 }
             }
 
-            board->ply--;
 
             take_back();
 

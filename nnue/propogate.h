@@ -28,7 +28,7 @@ struct NnueData{
 #define CLIPPED_RELU(x) clamp(x, 0, 127)
 #define clamp(a, b, c) ((a) < (b) ? (b) : (a) > (c) ? (c) : (a))
 
-int nnue_evaluate(NnueData *data, Board *board);
+int nnue_evaluate(Board *board);
 
 void nnue_pop_bit(int ptype, int bit, Board *board);
 void nnue_set_bit(int ptype, int bit, Board *board);

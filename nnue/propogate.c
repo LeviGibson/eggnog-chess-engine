@@ -215,18 +215,19 @@ int materialScore(Board *board){
     return board->side == white ? eval : -eval;
 }
 
-int nnue_evaluate(NnueData *data, Board *board) {
+int nnue_evaluate(Board *board) {
+    NnueData *data = &board->currentNnue;
     propogate_l1(data);
     propogate_l2(data);
     propogate_l3(data);
     data->eval = (board->side == white) ? data->l3[0] : -data->l3[0];
 
     //convert winning advantages into material rather than activity
-    if (data->eval > (100*64) && (board->ply % 2 == 0)){
+    if (data->eval > (100*64) && (board->side == board->searchColor)){
         int mat = materialScore(board);
         mat = mat > 0 ? mat : 1;
         data->eval *= mat;
-    } else if (data->eval < (100*64) && (board->ply % 2 != 0)){
+    } else if (data->eval < (100*64) && (board->side != board->searchColor)){
         int mat = -materialScore(board);
         mat = mat > 0 ? mat : 1;
         data->eval *= mat;
