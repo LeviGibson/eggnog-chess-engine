@@ -222,11 +222,11 @@ int nnue_evaluate(NnueData *data, Board *board) {
     data->eval = (board->side == white) ? data->l3[0] : -data->l3[0];
 
     //convert winning advantages into material rather than activity
-    if (data->eval > (100*64)){
+    if (data->eval > (100*64) && (board->ply % 2 == 0)){
         int mat = materialScore(board);
         mat = mat > 0 ? mat : 1;
         data->eval *= mat;
-    } else if (data->eval < (100*64)){
+    } else if (data->eval < (100*64) && (board->ply % 2 != 0)){
         int mat = -materialScore(board);
         mat = mat > 0 ? mat : 1;
         data->eval *= mat;

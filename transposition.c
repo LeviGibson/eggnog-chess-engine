@@ -26,17 +26,17 @@ void unlock(pthread_mutex_t *lock){
 }
 
 void reset_hash_table(){
-    lock(&lmcLock);
-    for (int i = 0; i < tt_size; ++i)
-        lock(&ttLocks[i]);
+//    lock(&lmcLock);
+//    for (int i = 0; i < tt_size; ++i)
+//        lock(&ttLocks[i]);
 
     memset(hash_table, 0, sizeof hash_table);
     memset(lines, 0, sizeof lines);
     lineMoveCount = 0;
 
-    for (int i = 0; i < tt_size; ++i)
-        unlock(&ttLocks[i]);
-    unlock(&lmcLock);
+//    for (int i = 0; i < tt_size; ++i)
+//        unlock(&ttLocks[i]);
+//    unlock(&lmcLock);
 }
 
 void init_transposition(){
