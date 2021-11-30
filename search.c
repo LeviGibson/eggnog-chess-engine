@@ -12,7 +12,6 @@
 
 #define aspwindow (1700)
 #define no_move (-15)
-#define max(x, y) (y) > (x) ? (y) : (x)
 
 int tbsearch = 0;
 

@@ -8,6 +8,7 @@ int dynamicTimeManagment;
 
 Board UciBoard;
 int threadCount;
+int moveOverhead;
 
 void parse_position(char *command);
 void parse_go(char *command);

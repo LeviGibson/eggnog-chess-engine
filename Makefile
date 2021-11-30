@@ -13,6 +13,7 @@ FILES = main.c\
 NNUEFILES = nnue/load.c nnue/load.h nnue/propogate.c nnue/propogate.h
 FILE = ./bin/eggnog-chess-engine
 COMMONFLAGS = -O3 -pthread
+WINFLAGS = -l:libwinpthread.a
 
 all:
 	make avx2 && make avx && make sse && make sse2 && make popcnt
@@ -35,12 +36,12 @@ gdb:
 prof:
 	gcc -pg $(FILES) $(NNUEFILES) -o $(FILE)-prof
 win_avx2:
-	x86_64-w64-mingw32-gcc -o $(FILE)-avx2.exe $(FILES) $(NNUEFILES) -mavx2 -DAVX2 $(COMMONFLAGS)
+	x86_64-w64-mingw32-gcc -o $(FILE)-avx2.exe $(FILES) $(NNUEFILES) -mavx2 -DAVX2 $(COMMONFLAGS) $(WINFLAGS)
 win_avx:
-	x86_64-w64-mingw32-gcc -o $(FILE)-avx.exe $(FILES) $(NNUEFILES) -mavx -DAVX $(COMMONFLAGS)
+	x86_64-w64-mingw32-gcc -o $(FILE)-avx.exe $(FILES) $(NNUEFILES) -mavx -DAVX $(COMMONFLAGS) $(WINFLAGS)
 win_sse:
-	x86_64-w64-mingw32-gcc -o $(FILE)-sse.exe $(FILES) $(NNUEFILES) -msse -DSSE $(COMMONFLAGS)
+	x86_64-w64-mingw32-gcc -o $(FILE)-sse.exe $(FILES) $(NNUEFILES) -msse -DSSE $(COMMONFLAGS) $(WINFLAGS)
 win_sse2:
-	x86_64-w64-mingw32-gcc -o $(FILE)-sse2.exe $(FILES) $(NNUEFILES) -msse2 -DSSE2 $(COMMONFLAGS)
+	x86_64-w64-mingw32-gcc -o $(FILE)-sse2.exe $(FILES) $(NNUEFILES) -msse2 -DSSE2 $(COMMONFLAGS) $(WINFLAGS)
 win_popcnt:
-	x86_64-w64-mingw32-gcc -o $(FILE)-sse2.exe $(FILES) $(NNUEFILES) -mpopcnt -DPOPCNT $(COMMONFLAGS)
+	x86_64-w64-mingw32-gcc -o $(FILE)-sse2.exe $(FILES) $(NNUEFILES) -mpopcnt -DPOPCNT $(COMMONFLAGS) $(WINFLAGS)
