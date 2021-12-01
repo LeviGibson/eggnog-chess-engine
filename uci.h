@@ -10,6 +10,7 @@ Board UciBoard;
 int threadCount;
 int moveOverhead;
 
+void change_to_correct_directory(char *argv);
 void parse_position(char *command);
 void parse_go(char *command);
 void uci_loop();

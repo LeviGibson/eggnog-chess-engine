@@ -6,7 +6,9 @@
 
 #include "nnue/load.h"
 
-int main() {
+int main(int argc, char* argv[]) {
+    change_to_correct_directory(argv[0]);
+
     init_bitboards();
     init_zobrist_keys();
     init_move_table();

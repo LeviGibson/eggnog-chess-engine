@@ -9,10 +9,25 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <pthread.h>
+#include <unistd.h>
 
 pthread_t searchthread;
 int dynamicTimeManagment = 0;
 int moveOverhead = 0;
+
+void change_to_correct_directory(char *argv){
+    int lastslash = 0;
+    for (int i = 0; argv[i]; ++i) {
+        if (argv[i] == '/'){
+            lastslash = i;
+        }
+    }
+
+    char path[lastslash + 2];
+    memcpy(path, argv, sizeof(path) - 1);
+
+    __attribute__((unused)) int x = chdir(path);
+}
 
 int parse_move(char *move_string) {
 
