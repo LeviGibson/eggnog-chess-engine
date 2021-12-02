@@ -48,7 +48,7 @@ void transposition_free(){
 }
 
 void recover_line(int depth, HASHE *phashe, Line *pline, int alpha, int *ret, Board *board){
-    if (depth <= 1 || phashe->value <= alpha) {
+    if (depth <= 1 || phashe->value <= alpha || phashe->line == NULL) {
         return;
     }
 
@@ -106,7 +106,7 @@ void RecordHash(int depth, int val, int best, int hashf, int staticeval, Line *p
         phashe->depth = depth;
         phashe->line = NULL;
 
-        if (depth > 1) {
+        if (depth > 1 && pline != NULL) {
             lock(&lmcLock);
 
             if (lineMoveCount > (tt_linesize - 20)){

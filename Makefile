@@ -1,16 +1,16 @@
 FILES = main.c\
- syzygy.c syzygy.h \
- bitboard.c bitboard.h \
- board.c board.h \
- perft.c perft.h \
- uci.c uci.h \
- search.c search.h \
- timeman.c timeman.h \
- transposition.c transposition.h \
- moveOrder.c moveOrder.h \
- Fathom/*.c Fathom/*.h
+ syzygy.c\
+ bitboard.c\
+ board.c\
+ perft.c\
+ uci.c\
+ search.c\
+ timeman.c\
+ transposition.c\
+ moveOrder.c\
+ Fathom/*.c
 
-NNUEFILES = nnue/load.c nnue/load.h nnue/propogate.c nnue/propogate.h
+NNUEFILES = nnue/load.c nnue/propogate.c
 FILE = ./bin/eggnog-chess-engine
 COMMONFLAGS = -O3 -pthread
 WINFLAGS = -l:libwinpthread.a
@@ -33,6 +33,7 @@ debug:
 	gcc $(FILES) $(NNUEFILES) -pthread -o $(FILE)-debug
 gdb:
 	gcc $(COMMONFLAGS) -DAVX2 -mavx2 $(FILES) $(NNUEFILES) -g
+	mv ./a.out ./bin/a.out
 prof:
 	gcc -pg $(FILES) $(NNUEFILES) -o $(FILE)-prof
 win_avx2:
@@ -45,3 +46,9 @@ win_sse2:
 	x86_64-w64-mingw32-gcc -o $(FILE)-sse2.exe $(FILES) $(NNUEFILES) -msse2 -DSSE2 $(COMMONFLAGS) $(WINFLAGS)
 win_popcnt:
 	x86_64-w64-mingw32-gcc -o $(FILE)-sse2.exe $(FILES) $(NNUEFILES) -mpopcnt -DPOPCNT $(COMMONFLAGS) $(WINFLAGS)
+clean:
+	rm -f *.gch
+	rm -f nnue/*.gch
+	rm -f Fathom/*.gch
+	rm -f ./bin/a.out
+	rm -f ./bin/eggnog-chess-engine*

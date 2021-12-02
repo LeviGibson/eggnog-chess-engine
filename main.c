@@ -1,3 +1,4 @@
+#include <stdio.h>
 #include "bitboard.h"
 #include "board.h"
 #include "uci.h"

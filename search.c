@@ -480,6 +480,7 @@ static inline int negamax(int depth, int alpha, int beta, Line *pline, Board *bo
     }
 
     found_pv = 0;
+    int pvnode = beta - alpha > 1;
 
     Line line;
     line.length = 0;
@@ -491,10 +492,9 @@ static inline int negamax(int depth, int alpha, int beta, Line *pline, Board *bo
         return quiesce(alpha, beta, board);
     }
 
-
     int eval;
-    if (depth >= 3 && in_check == 0 && board->ply
-        && board->occupancies[both] != (WK | BK | WP | BP)) {
+    if (depth >= 3 && !in_check && board->ply
+        && board->occupancies[both] != (WK | BK | WP | BP | WN | BN)) {
         copy_board();
 
         board->side ^= 1;
@@ -504,11 +504,21 @@ static inline int negamax(int depth, int alpha, int beta, Line *pline, Board *bo
 
         take_back();
         if (eval >= beta) {
+            RecordHash(depth - 2, beta, no_move, hashfBETA, staticeval, NULL, board);
             return beta;
         }
     }
 
-    if (beta - alpha <= 1 && !in_check && depth <= 3) {
+    //info score cp 22 depth 9 seldepth 21 nodes 581179 qnodes 284124 tbhits 0 time 1678 pv e2e4 c7c5 c2c3 b8c6 g1f3 e7e6 d2d4 d7d5 c1g5
+    //info score cp 20 depth 9 seldepth 23 nodes 893922 qnodes 467054 tbhits 0 time 2764 pv c2c4 g8f6 b1c3 e7e5 g1f3 e5e4 f3d4 b8c6 d4c2
+
+//    if (!pvnode && !in_check && depth < 3) {
+//        if (staticeval > beta){
+//            return beta;
+//        }
+//    }
+
+    if (!pvnode && !in_check && depth <= 3) {
 
         int value = staticeval + (125 * 64);
         if (value < beta) {
