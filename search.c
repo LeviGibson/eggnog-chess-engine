@@ -509,14 +509,12 @@ static inline int negamax(int depth, int alpha, int beta, Line *pline, Board *bo
         }
     }
 
-    //info score cp 22 depth 9 seldepth 21 nodes 581179 qnodes 284124 tbhits 0 time 1678 pv e2e4 c7c5 c2c3 b8c6 g1f3 e7e6 d2d4 d7d5 c1g5
-    //info score cp 20 depth 9 seldepth 23 nodes 893922 qnodes 467054 tbhits 0 time 2764 pv c2c4 g8f6 b1c3 e7e5 g1f3 e5e4 f3d4 b8c6 d4c2
 
-//    if (!pvnode && !in_check && depth < 3) {
-//        if (staticeval > beta){
-//            return beta;
-//        }
-//    }
+    if (!pvnode && !in_check && depth < 3) {
+        if ((staticeval - (125 * 64)) > beta){
+            return beta;
+        }
+    }
 
     if (!pvnode && !in_check && depth <= 3) {
 
