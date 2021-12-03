@@ -13,6 +13,9 @@
 #define aspwindow (1700)
 #define no_move (-15)
 
+#define DEF_ALPHA (-5000000)
+#define DEF_BETA (5000000)
+
 int tbsearch = 0;
 
 int selDepth = 0;
@@ -622,7 +625,7 @@ static inline int negamax(int depth, int alpha, int beta, Line *pline, Board *bo
 //                    printf("\n%d\n\n", board->ply);
 //                }
 
-                if (!getcapture(move)) {
+                if (!getcapture(move) && !board->helperThread) {
                     killer_moves[board->ply][1] = killer_moves[board->ply][0];
                     killer_moves[board->ply][0] = move;
 
@@ -688,44 +691,6 @@ void negamax_thread(void *args){
             return;
     }
 }
-
-int root(int depth, int alpha, int beta, Line *pline, Board *board){
-
-    if (threadCount == 1)
-        return negamax(depth, alpha, beta, pline, board);
-
-    moveList legalMoves;
-    generate_moves(&legalMoves, board);
-    remove_illigal_moves(&legalMoves, board);
-    sort_moves(&legalMoves, no_move, board);
-
-    int numThreads = threadCount < legalMoves.count ? (int)threadCount : (int)legalMoves.count;
-
-    Thread threads[numThreads];
-    memset(&threads, 0, sizeof threads);
-
-    for (int i = 0; i < numThreads; ++i) {
-        threads[i].args = (struct NegamaxArgs){.alpha = alpha, .beta = beta, .pline = &threads[i].line, .board = *board};
-        make_move(legalMoves.moves[i], all_moves, 1, &threads[i].args.board);
-
-        pthread_create(&threads[i].pthread, NULL, (void *(*)(void *)) negamax_thread, &threads[i].args);
-    }
-
-    int eval = negamax(depth, alpha, beta, pline, board);
-
-    int originalStop = stop;
-
-    stop = 1;
-    for (int i = 0; i < numThreads; ++i) {
-        pthread_join(threads[i].pthread, NULL);
-    }
-    stop = originalStop;
-
-    return eval;
-}
-
-#define DEF_ALPHA (-5000000)
-#define DEF_BETA (5000000)
 
 int willMakeNextDepth(int curd, const float *times){
 
@@ -807,6 +772,25 @@ void *search_position(void *arg){
 //    }
     reset_hash_table();
 
+    moveList legalMoves;
+    generate_moves(&legalMoves, &board);
+    remove_illigal_moves(&legalMoves, &board);
+    sort_moves(&legalMoves, no_move, &board);
+    int numThreads = threadCount < legalMoves.count ? (int) threadCount : (int) legalMoves.count;
+    Thread threads[numThreads];
+
+    if (threadCount > 1) {
+
+        memset(&threads, 0, sizeof threads);
+
+        for (int i = 0; i < numThreads; ++i) {
+            threads[i].args = (struct NegamaxArgs) {.alpha = DEF_ALPHA, .beta = DEF_BETA, .pline = &threads[i].line, .board = board};
+            make_move(legalMoves.moves[i], all_moves, 1, &threads[i].args.board);
+
+            pthread_create(&threads[i].pthread, NULL, (void *(*)(void *)) negamax_thread, &threads[i].args);
+        }
+    }
+
     for (int currentDepth = 1; currentDepth <= depth; currentDepth++){
 
         board.ply = 0;
@@ -819,7 +803,7 @@ void *search_position(void *arg){
 
         depthTime[currentDepth] = (float )get_time_ms();
 
-        int nmRes = root(currentDepth, alpha, beta, &negamax_line, &board);
+        int nmRes = negamax(currentDepth, alpha, beta, &negamax_line, &board);
 
         if (stop) {
             break;
@@ -838,7 +822,7 @@ void *search_position(void *arg){
 
             memset(&negamax_line, 0, sizeof negamax_line);
 
-            nmRes = root(currentDepth, alpha, beta, &negamax_line, &board);
+            nmRes = negamax(currentDepth, alpha, beta, &negamax_line, &board);
 
         }
 
@@ -881,6 +865,17 @@ void *search_position(void *arg){
             break;
         }
 
+    }
+
+    if (threadCount > 1) {
+        int originalStop = stop;
+
+        stop = 1;
+        for (int i = 0; i < numThreads; ++i) {
+            pthread_join(threads[i].pthread, NULL);
+        }
+
+        stop = originalStop;
     }
 
     dynamicTimeManagment = 0;

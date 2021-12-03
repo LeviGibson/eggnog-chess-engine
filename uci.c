@@ -17,11 +17,26 @@ int moveOverhead = 0;
 
 void change_to_correct_directory(char *argv){
     int lastslash = 0;
+#ifdef WIN32
+    for (int i = 0; argv[i]; ++i) {
+        if (argv[i] == '\\'){
+            lastslash = i;
+        }
+    }
+#elif defined(WIN64)
+    for (int i = 0; argv[i]; ++i) {
+        if (argv[i] == '\\'){
+            lastslash = i;
+        }
+    }
+#else
     for (int i = 0; argv[i]; ++i) {
         if (argv[i] == '/'){
             lastslash = i;
         }
     }
+#endif
+
 
     char path[lastslash + 2];
     memcpy(path, argv, sizeof(path) - 1);
