@@ -42,8 +42,6 @@ const int mvv_lva[12][12] = {
 
 int killer_moves[max_ply][2];
 
-Line pv_line;
-
 int follow_pv, found_pv;
 
 static inline void swap(int* a, int* b)
@@ -162,9 +160,9 @@ U64 pastPawnMasks[2][64] = {
 static inline int score_move(int move, int hashmove, Board *board){
 
     if (found_pv){
-        if (move == pv_line.moves[board->ply]){
+        if (move == board->pv_line.moves[board->ply]){
             found_pv = 0;
-            return board->helperThread ? -20000 : 20000;
+            return 20000;
         }
     }
 
@@ -398,10 +396,10 @@ static inline int ZwSearch(int beta, int depth, Board *board){
     return beta-1;
 }
 
-void find_pv(moveList *moves, int ply){
+void find_pv(moveList *moves, Board *board){
     follow_pv = 0;
     for (int moveId = 0; moveId < moves->count; moveId++){
-        if (moves->moves[moveId] == pv_line.moves[ply]){
+        if (moves->moves[moveId] == board->pv_line.moves[board->ply]){
             found_pv = 1;
             follow_pv = 1;
         }
@@ -546,7 +544,7 @@ static inline int negamax(int depth, int alpha, int beta, Line *pline, Board *bo
     generate_moves(&legalMoves, board);
 
     if (follow_pv) {
-        find_pv(&legalMoves, board->ply);
+        find_pv(&legalMoves, board);
     }
 
     sort_moves(&legalMoves, hash_move, board);
@@ -668,8 +666,6 @@ void remove_illigal_moves(moveList *moves, Board *board){
 
 typedef struct NegamaxArgs NegamaxArgs;
 struct NegamaxArgs{
-    int alpha;
-    int beta;
     Line *pline;
     Board board;
 };
@@ -686,7 +682,10 @@ void negamax_thread(void *args){
     for (int i = 0; i < max_ply; ++i) {
         memset(nargs->pline, 0, sizeof (Line));
 
-        negamax(i, nargs->alpha, nargs->beta, nargs->pline, &nargs->board);
+        int eval = negamax(i, DEF_ALPHA, DEF_BETA, nargs->pline, &nargs->board);
+
+        memcpy(&nargs->board.pv_line, &nargs->pline, sizeof(Line));
+
         if (stop)
             return;
     }
@@ -784,7 +783,7 @@ void *search_position(void *arg){
         memset(&threads, 0, sizeof threads);
 
         for (int i = 0; i < numThreads; ++i) {
-            threads[i].args = (struct NegamaxArgs) {.alpha = DEF_ALPHA, .beta = DEF_BETA, .pline = &threads[i].line, .board = board};
+            threads[i].args = (struct NegamaxArgs) {.pline = &threads[i].line, .board = board};
             make_move(legalMoves.moves[i], all_moves, 1, &threads[i].args.board);
 
             pthread_create(&threads[i].pthread, NULL, (void *(*)(void *)) negamax_thread, &threads[i].args);
@@ -838,24 +837,24 @@ void *search_position(void *arg){
         alpha = nmRes - aspwindow;
         beta = nmRes + aspwindow;
 
-        memcpy(&pv_line, &negamax_line, sizeof negamax_line);
+        memcpy(&board.pv_line, &negamax_line, sizeof negamax_line);
         memset(&negamax_line, 0, sizeof negamax_line);
 
         //TIME MANAGMENT
-        if (pv_line.moves[0] == prevBestMove && dynamicTimeManagment) {
+        if (board.pv_line.moves[0] == prevBestMove && dynamicTimeManagment) {
             moveTime -= (moveTime / 6);
         }
 
-        prevBestMove = pv_line.moves[0];
+        prevBestMove = board.pv_line.moves[0];
 
         printf("info score %s %d depth %d seldepth %d nodes %ld qnodes %ld tbhits %ld time %d pv ",
                (abs(eval) > 4000000) ? "mate" : "cp" , (abs(eval) > 4000000) ? (4900000 - abs(eval)) * (eval / abs(eval)) : eval/64,
                currentDepth, selDepth, nodes, qnodes, tbHits, (get_time_ms() - startingTime));
 
         for (int i = 0; i < currentDepth; i++){
-            if (pv_line.moves[i] == 0)
+            if (board.pv_line.moves[i] == 0)
                 break;
-            print_move(pv_line.moves[i]);
+            print_move(board.pv_line.moves[i]);
             printf(" ");
         }
 
@@ -882,7 +881,7 @@ void *search_position(void *arg){
     tbsearch = 0;
 
     printf("bestmove ");
-    print_move(pv_line.moves[0]);
+    print_move(board.pv_line.moves[0]);
     printf("\n");
 
 }
