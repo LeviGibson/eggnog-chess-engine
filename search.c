@@ -159,7 +159,7 @@ U64 pastPawnMasks[2][64] = {
 
 static inline int score_move(int move, int hashmove, Board *board){
 
-    if (found_pv){
+    if (found_pv && !board->helperThread){
         if (move == board->pv_line.moves[board->ply]){
             found_pv = 0;
             return 20000;
@@ -237,10 +237,10 @@ static inline int score_move(int move, int hashmove, Board *board){
         if (getpiece(move) == p){
             U64 attack_mask = pawn_mask[black][gettarget(move)];
 
-            U64 attacked_pieces = (board->bitboards[N] | board->bitboards[R]);
+            U64 attacked_pieces = (WN | BR);
 
             if (pawn_mask[white][gettarget(move)] & board->bitboards[p])
-                attacked_pieces |= board->bitboards[B] | board->bitboards[Q];
+                attacked_pieces |= (BB | BQ);
 
             attacked_pieces &= attack_mask;
 
@@ -279,6 +279,18 @@ static inline int score_move(int move, int hashmove, Board *board){
                     return 15;
                 }
             }
+        }
+
+        if (getpiece(move) == Q){
+            if (is_move_direct_check(move, board))
+                return 50;
+            return count_bits(king_mask[bsf(BK)] & get_queen_attacks(gettarget(move), board->occupancies[both]));
+        }
+
+        if (getpiece(move) == q){
+            if (is_move_direct_check(move, board))
+                return 50;
+            return count_bits(king_mask[bsf(WK)] & get_queen_attacks(gettarget(move), board->occupancies[both]));
         }
 
         return 0;
@@ -397,6 +409,9 @@ static inline int ZwSearch(int beta, int depth, Board *board){
 }
 
 void find_pv(moveList *moves, Board *board){
+    if (board->helperThread)
+        return;
+
     follow_pv = 0;
     for (int moveId = 0; moveId < moves->count; moveId++){
         if (moves->moves[moveId] == board->pv_line.moves[board->ply]){
