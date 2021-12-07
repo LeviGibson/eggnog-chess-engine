@@ -527,7 +527,7 @@ static inline int negamax(int depth, int alpha, int beta, Line *pline, Board *bo
 
 
     if (!pvnode && !in_check && depth < 3) {
-        if ((staticeval - (125 * 64)) > beta){
+        if ((staticeval - (100 * 64 * depth)) > beta){
             return beta;
         }
     }
