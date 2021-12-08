@@ -40,6 +40,7 @@ void change_to_correct_directory(char *argv){
 
     char path[lastslash + 2];
     memcpy(path, argv, sizeof(path) - 1);
+    path[lastslash+1] = 0;
 
     __attribute__((unused)) int x = chdir(path);
 }

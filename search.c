@@ -10,6 +10,7 @@
 #include <stdio.h>
 #include <pthread.h>
 
+#define NO_LMR
 #define aspwindow (1700)
 #define no_move (-15)
 
@@ -41,6 +42,7 @@ const int mvv_lva[12][12] = {
 };
 
 int killer_moves[max_ply][2];
+float history_moves[12][64][64];
 
 int follow_pv, found_pv;
 
@@ -293,7 +295,9 @@ static inline int score_move(int move, int hashmove, Board *board){
             return count_bits(king_mask[bsf(WK)] & get_queen_attacks(gettarget(move), board->occupancies[both]));
         }
 
-        return 0;
+
+        int score = (int )(history_moves[getpiece(move)][getsource(move)][gettarget(move)] / 1000);
+        return score;
     }
 }
 
@@ -638,10 +642,14 @@ static inline int negamax(int depth, int alpha, int beta, Line *pline, Board *bo
 //                    printf("\n%d\n\n", board->ply);
 //                }
 
+                //info score cp 12 depth 8 seldepth 21 nodes 1240581 qnodes 647070 tbhits 0 time 1580 pv e2e4 e7e5 g1f3 b8c6 f1b5 g8f6 b1c3
+                //info score cp 12 depth 8 seldepth 21 nodes 1238625 qnodes 645916 tbhits 0 time 1583 pv e2e4 e7e5 g1f3 b8c6 f1b5 g8f6 b1c3
+
                 if (!getcapture(move) && !board->helperThread) {
                     killer_moves[board->ply][1] = killer_moves[board->ply][0];
                     killer_moves[board->ply][0] = move;
 
+                    history_moves[getpiece(move)][getsource(move)][gettarget(move)] += (float)(depth*depth);
                 }
 
                 RecordHash(depth, beta, bestMove, hashfBETA, staticeval, pline, board);
@@ -762,6 +770,7 @@ void *search_position(void *arg){
     selDepth = 0;
 
     memset(killer_moves, 0, sizeof(killer_moves));
+    memset(history_moves, 0, sizeof(history_moves));
 
     Line negamax_line;
     negamax_line.length = 0;
