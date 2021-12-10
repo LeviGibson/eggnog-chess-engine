@@ -622,6 +622,19 @@ int make_move(int move, int flag, int zobristUpdate, Board *board){
     return 1;
 }
 
+void remove_illigal_moves(moveList *moves, Board *board){
+    copy_board();
+    for (int i = 0; i < moves->count; ++i) {
+        if (make_move(moves->moves[i], all_moves, 1, board)) {
+            take_back();
+        } else {
+            memcpy(&moves->moves[i], &moves->moves[i+1], (256*4) - (i*4));
+            moves->count--;
+            i--;
+        }
+    }
+}
+
 int piece_at(int square, Board *board){
     for (int i = 0; i < 12; ++i) {
         if (board->bitboards[i] & 1ULL << square)

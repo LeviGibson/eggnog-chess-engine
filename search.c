@@ -1,5 +1,4 @@
 #include "search.h"
-#include "board.h"
 #include "nnue/propogate.h"
 #include "timeman.h"
 #include "transposition.h"
@@ -10,7 +9,6 @@
 #include <stdio.h>
 #include <pthread.h>
 
-#define NO_LMR
 #define aspwindow (1700)
 #define no_move (-15)
 
@@ -159,7 +157,7 @@ U64 pastPawnMasks[2][64] = {
          0x0ULL, 0x0ULL, 0x0ULL, 0x0ULL,}
 };
 
-static inline int score_move(int move, int hashmove, Board *board){
+int score_move(int move, int hashmove, Board *board){
 
     if (found_pv && !board->helperThread){
         if (move == board->pv_line.moves[board->ply]){
@@ -260,14 +258,44 @@ static inline int score_move(int move, int hashmove, Board *board){
         }
 
         if (getpiece(move) == N){
+            if (pawn_mask[white][gettarget(move)] & BP)
+                return -100;
             return count_bits(knight_mask[gettarget(move)] & (board->occupancies[black] - BP - BN)) * 30;
         }
 
         if (getpiece(move) == n){
+            if (pawn_mask[black][gettarget(move)] & WP)
+                return -100;
             return count_bits(knight_mask[gettarget(move)] & (board->occupancies[white] - WP - WN)) * 30;
         }
 
+        //info score cp 22 depth 9 seldepth 21 nodes 676327 qnodes 346080 tbhits 0 time 817 pv c2c4 c7c5 b1c3 g8f6 g1f3 e7e6 e2e3 d7d5 d2d4
+        //info score cp 22 depth 9 seldepth 21 nodes 675640 qnodes 345716 tbhits 0 time 800 pv c2c4 c7c5 b1c3 g8f6 g1f3 e7e6 e2e3 d7d5 d2d4
+        //info score cp 22 depth 9 seldepth 21 nodes 675640 qnodes 345716 tbhits 0 time 803 pv c2c4 c7c5 b1c3 g8f6 g1f3 e7e6 e2e3 d7d5 d2d4
+
+        //info score cp -28 depth 8 seldepth 25 nodes 872950 qnodes 712268 tbhits 0 time 1486 pv e2a6 b4c3 d2c3 e6d5 e5g4 h3g2 f3g2 e8f8
+        //info score cp -28 depth 8 seldepth 25 nodes 871558 qnodes 710868 tbhits 0 time 1512 pv e2a6 b4c3 d2c3 e6d5 e5g4 h3g2 f3g2 e8f8
+        //info score cp -28 depth 8 seldepth 25 nodes 868305 qnodes 707748 tbhits 0 time 1507 pv e2a6 b4c3 d2c3 e6d5 e5g4 h3g2 f3g2 e8f8
+        //info score cp -28 depth 8 seldepth 25 nodes 866236 qnodes 705684 tbhits 0 time 1503 pv e2a6 b4c3 d2c3 e6d5 e5g4 h3g2 f3g2 e8f8
+        //info score cp -28 depth 8 seldepth 25 nodes 866258 qnodes 705715 tbhits 0 time 1474 pv e2a6 b4c3 d2c3 e6d5 e5g4 h3g2 f3g2 e8f8
+
+        if (getpiece(move) == B){
+            if (is_move_direct_check(move, board))
+                return 10;
+            if (pawn_mask[white][gettarget(move)] & BP)
+                return -100;
+        }
+
+        if (getpiece(move) == b){
+            if (is_move_direct_check(move, board))
+                return 10;
+            if (pawn_mask[black][gettarget(move)] & WP)
+                return -100;
+        }
+
         if (getpiece(move) == R){
+            if (pawn_mask[white][gettarget(move)] & BP)
+                return -100;
             if (filemasks[getsource(move)] & board->bitboards[P]) {
                 if (!(filemasks[gettarget(move)] & board->bitboards[P])) {
                     return 15;
@@ -276,6 +304,8 @@ static inline int score_move(int move, int hashmove, Board *board){
         }
 
         if (getpiece(move) == r){
+            if (pawn_mask[black][gettarget(move)] & WP)
+                return -100;
             if (filemasks[getsource(move)] & board->bitboards[p]) {
                 if (!(filemasks[gettarget(move)] & board->bitboards[p])) {
                     return 15;
@@ -286,10 +316,14 @@ static inline int score_move(int move, int hashmove, Board *board){
         if (getpiece(move) == Q){
             if (is_move_direct_check(move, board))
                 return 50;
+            if (pawn_mask[white][gettarget(move)] & BP)
+                return -100;
             return count_bits(king_mask[bsf(BK)] & get_queen_attacks(gettarget(move), board->occupancies[both]));
         }
 
         if (getpiece(move) == q){
+            if (pawn_mask[black][gettarget(move)] & WP)
+                return -100;
             if (is_move_direct_check(move, board))
                 return 50;
             return count_bits(king_mask[bsf(WK)] & get_queen_attacks(gettarget(move), board->occupancies[both]));
@@ -309,8 +343,8 @@ static inline void sort_moves(moveList *move_list, int hashmove, Board *board){
     for (int i = 0; i < move_list->count; i++) {
         scores[i] = score_move(move_list->moves[i], hashmove, board);
     }
-
-    int zerosFound = partition_zero_scores(move_list, scores);
+    int zerosFound = 0;
+//    zerosFound = partition_zero_scores(move_list, scores);
     quickSort(scores, 0, (int )(move_list->count) - 1 - zerosFound, move_list);
 }
 
@@ -674,18 +708,6 @@ static inline int negamax(int depth, int alpha, int beta, Line *pline, Board *bo
 
 }
 
-void remove_illigal_moves(moveList *moves, Board *board){
-    copy_board();
-    for (int i = 0; i < moves->count; ++i) {
-        if (make_move(moves->moves[i], all_moves, 1, board)) {
-            take_back();
-        } else {
-            memcpy(&moves->moves[i], &moves->moves[i+1], (256*4) - (i*4));
-            moves->count--;
-            i--;
-        }
-    }
-}
 
 typedef struct NegamaxArgs NegamaxArgs;
 struct NegamaxArgs{
@@ -813,6 +835,10 @@ void *search_position(void *arg){
             pthread_create(&threads[i].pthread, NULL, (void *(*)(void *)) negamax_thread, &threads[i].args);
         }
     }
+
+#ifdef NO_LMR
+    printf("info string This build is without Late Move Reduction, and should be used for debugging purposes only.\n");
+#endif
 
     for (int currentDepth = 1; currentDepth <= depth; currentDepth++){
 

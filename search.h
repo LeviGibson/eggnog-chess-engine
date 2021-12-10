@@ -2,18 +2,14 @@
 #define MBBCHESS_SEARCH_H
 
 #define max_ply 64
+#include "board.h"
 
 //macro "max" is defined in minwindef.h when compiling with mingw
 #ifndef max
 #define max(x, y) (y) > (x) ? (y) : (x)
 #endif
 
-typedef struct tagLINE {
-   int length;              // Number of moves in the line.
-   int moves[64];  // The line.
-
-}   Line;
-
+int score_move(int move, int hashmove, Board *board);
 void *search_position(void *arg);
 int stop;
 

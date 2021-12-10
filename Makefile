@@ -35,7 +35,7 @@ gdb:
 	gcc $(COMMONFLAGS) -DAVX2 -mavx2 $(FILES) $(NNUEFILES) -g
 	mv ./a.out ./bin/a.out
 prof:
-	gcc -pg $(FILES) $(NNUEFILES) -o $(FILE)-prof
+	gcc -pg -DAVX2 -mavx2 -pthread -O3 $(FILES) $(NNUEFILES) -o $(FILE)-prof
 win_avx2:
 	x86_64-w64-mingw32-gcc -o $(FILE)-avx2.exe $(FILES) $(NNUEFILES) -mavx2 -DAVX2 $(COMMONFLAGS) $(WINFLAGS)
 win_avx:

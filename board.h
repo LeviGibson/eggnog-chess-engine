@@ -10,7 +10,7 @@ typedef struct Board Board;
 #include <string.h>
 #include "bitboard.h"
 #include "nnue/propogate.h"
-#include "search.h"
+
 
 #define start_position "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
 #define kiwipete "r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq -"
@@ -39,6 +39,12 @@ typedef struct {
     int moves[256];
     U32 count;
 } moveList;
+
+typedef struct tagLINE {
+    int length;              // Number of moves in the line.
+    int moves[64];  // The line.
+
+}   Line;
 
 struct Board{
     U64 zobrist_history[101];
@@ -156,6 +162,7 @@ struct Board{
 //    prevmove = prevmove_copy;\
 //    zobrist_history_length = zobrist_history_length_copy                 \
 
+void remove_illigal_moves(moveList *moves, Board *board);
 void print_move(int move);
 
 U64 generate_zobrist_key(Board *board);

@@ -7,5 +7,6 @@
 
 void init_move_table();
 int get_move_score(int prevmove, int move);
+//void moveorder_test(int numGames);
 
 #endif //EGGNOG_CHESS_ENGINE_MOVEORDER_H

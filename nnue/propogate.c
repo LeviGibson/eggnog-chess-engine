@@ -139,7 +139,7 @@ void clamp_accumulator(int16_t *acc){
     }
 }
 
-void propogate_neuron(const short a, const int8_t *b, int *restrict c) {
+static inline void propogate_neuron(const short a, const int8_t *b, int *restrict c) {
 
 #ifdef AVX2
     __m256i va = _mm256_set1_epi32(a);
@@ -166,11 +166,10 @@ void propogate_l1(NnueData *data) {
     clamp_accumulator(tmp_accum);
 
     for (int i = 0; i < 512; ++i) {
-        if (!tmp_accum[i])
-            continue;
-
-        int offset = 32 * i;
-        propogate_neuron(tmp_accum[i], &l1_weights[offset], data->l1);
+        if (tmp_accum[i]) {
+            int offset = 32 * i;
+            propogate_neuron(tmp_accum[i], &l1_weights[offset], data->l1);
+        }
     }
 
     clamp_layer(data->l1);
