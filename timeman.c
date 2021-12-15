@@ -20,8 +20,8 @@ void communicate() {
 int choose_movetime(int wtime, int btime, int side) {
 
     if (side == white) {
-        return max((wtime / 15) - moveOverhead, 15);
+        return max((wtime / 30) - moveOverhead, 15);
     } else {
-        return max((btime / 15) - moveOverhead, 15);
+        return max((btime / 30) - moveOverhead, 15);
     }
 }

@@ -269,16 +269,6 @@ int score_move(int move, int hashmove, Board *board){
             return count_bits(knight_mask[gettarget(move)] & (board->occupancies[white] - WP - WN)) * 30;
         }
 
-        //info score cp 22 depth 9 seldepth 21 nodes 676327 qnodes 346080 tbhits 0 time 817 pv c2c4 c7c5 b1c3 g8f6 g1f3 e7e6 e2e3 d7d5 d2d4
-        //info score cp 22 depth 9 seldepth 21 nodes 675640 qnodes 345716 tbhits 0 time 800 pv c2c4 c7c5 b1c3 g8f6 g1f3 e7e6 e2e3 d7d5 d2d4
-        //info score cp 22 depth 9 seldepth 21 nodes 675640 qnodes 345716 tbhits 0 time 803 pv c2c4 c7c5 b1c3 g8f6 g1f3 e7e6 e2e3 d7d5 d2d4
-
-        //info score cp -28 depth 8 seldepth 25 nodes 872950 qnodes 712268 tbhits 0 time 1486 pv e2a6 b4c3 d2c3 e6d5 e5g4 h3g2 f3g2 e8f8
-        //info score cp -28 depth 8 seldepth 25 nodes 871558 qnodes 710868 tbhits 0 time 1512 pv e2a6 b4c3 d2c3 e6d5 e5g4 h3g2 f3g2 e8f8
-        //info score cp -28 depth 8 seldepth 25 nodes 868305 qnodes 707748 tbhits 0 time 1507 pv e2a6 b4c3 d2c3 e6d5 e5g4 h3g2 f3g2 e8f8
-        //info score cp -28 depth 8 seldepth 25 nodes 866236 qnodes 705684 tbhits 0 time 1503 pv e2a6 b4c3 d2c3 e6d5 e5g4 h3g2 f3g2 e8f8
-        //info score cp -28 depth 8 seldepth 25 nodes 866258 qnodes 705715 tbhits 0 time 1474 pv e2a6 b4c3 d2c3 e6d5 e5g4 h3g2 f3g2 e8f8
-
         if (getpiece(move) == B){
             if (is_move_direct_check(move, board))
                 return 10;
@@ -891,8 +881,12 @@ void *search_position(void *arg){
         memset(&negamax_line, 0, sizeof negamax_line);
 
         //TIME MANAGMENT
-        if (board.pv_line.moves[0] == prevBestMove && dynamicTimeManagment) {
-            moveTime -= (moveTime / 6);
+        if (dynamicTimeManagment) {
+            if (board.pv_line.moves[0] == prevBestMove) {
+                moveTime -= (moveTime / 6);
+            } else {
+                moveTime += (moveTime / 6);
+            }
         }
 
         prevBestMove = board.pv_line.moves[0];
