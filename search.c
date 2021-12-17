@@ -39,6 +39,7 @@ const int mvv_lva[12][12] = {
         100, 200, 300, 400, 500, 600,  100, 200, 300, 400, 500, 600
 };
 
+int historyCount;
 int killer_moves[max_ply][2];
 float history_moves[12][64][64];
 
@@ -319,9 +320,12 @@ int score_move(int move, int hashmove, Board *board){
             return count_bits(king_mask[bsf(WK)] & get_queen_attacks(gettarget(move), board->occupancies[both]));
         }
 
+        if (historyCount == 0)
+            return 0;
 
-        int score = (int )(history_moves[getpiece(move)][getsource(move)][gettarget(move)] / 1000);
-        return score;
+        float score = (history_moves[getpiece(move)][getsource(move)][gettarget(move)] / (float )historyCount);
+        score *= 1000;
+        return (int)score;
     }
 }
 
@@ -674,6 +678,7 @@ static inline int negamax(int depth, int alpha, int beta, Line *pline, Board *bo
                     killer_moves[board->ply][0] = move;
 
                     history_moves[getpiece(move)][getsource(move)][gettarget(move)] += (float)(depth*depth);
+                    historyCount += depth*depth;
                 }
 
                 RecordHash(depth, beta, bestMove, hashfBETA, staticeval, pline, board);
@@ -780,6 +785,7 @@ void *search_position(void *arg){
     qnodes = 0;
     tbHits = 0;
     selDepth = 0;
+    historyCount = 0;
 
     memset(killer_moves, 0, sizeof(killer_moves));
     memset(history_moves, 0, sizeof(history_moves));
