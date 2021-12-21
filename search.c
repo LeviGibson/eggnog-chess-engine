@@ -45,6 +45,13 @@ float history_moves[12][64][64];
 
 int follow_pv, found_pv;
 
+typedef struct MoveEval MoveEval;
+
+struct MoveEval{
+    int move;
+    int eval;
+};
+
 static inline void swap(int* a, int* b)
 {
     int t = *a;
@@ -616,7 +623,7 @@ static inline int negamax(int depth, int alpha, int beta, Line *pline, Board *bo
 
     int legalMoveCount = 0;
     int move;
-    int bestMove = no_move;
+    MoveEval best = {.move = no_move, .eval = -10000000};
 
     for (int moveId = 0; moveId < legalMoves.count; moveId++) {
         move = legalMoves.moves[moveId];
@@ -664,20 +671,23 @@ static inline int negamax(int depth, int alpha, int beta, Line *pline, Board *bo
 
             take_back();
 
-            if (eval > alpha) {
+            if (eval > best.eval) {
 
-                alpha = eval;
+                best.move = move;
+                best.eval = eval;
 
-                bestMove = move;
-                hashf = hashfEXACT;
+                if (eval > alpha) {
 
-                pline->moves[0] = move;
-                memcpy(pline->moves + 1, line.moves, line.length * 4);
-                pline->length = line.length + 1;
+                    alpha = eval;
+                    hashf = hashfEXACT;
 
-            }
+                    pline->moves[0] = move;
+                    memcpy(pline->moves + 1, line.moves, line.length * 4);
+                    pline->length = line.length + 1;
 
-            if (eval >= beta) {
+                }
+
+                if (eval >= beta) {
 
 //                if (legalMoveCount > 10 && depth > 2){
 //                    print_fen(board);
@@ -686,19 +696,21 @@ static inline int negamax(int depth, int alpha, int beta, Line *pline, Board *bo
 //                    printf("\n%d\n\n", board->ply);
 //                }
 
-                if (!getcapture(move)) {
-                    if (!board->helperThread) {
-                        killer_moves[board->ply][1] = killer_moves[board->ply][0];
-                        killer_moves[board->ply][0] = move;
+                    if (!getcapture(move)) {
+                        if (!board->helperThread) {
+                            killer_moves[board->ply][1] = killer_moves[board->ply][0];
+                            killer_moves[board->ply][0] = move;
+                        }
+
+                        history_moves[getpiece(move)][getsource(move)][gettarget(move)] += (float) (depth * depth *
+                                                                                                    legalMoveCount);
+                        historyCount += depth * depth * legalMoveCount;
                     }
 
-                    history_moves[getpiece(move)][getsource(move)][gettarget(move)] += (float)(depth*depth*legalMoveCount);
-                    historyCount += depth*depth*legalMoveCount;
+                    RecordHash(depth, beta, best.move, hashfBETA, staticeval, pline, board);
+
+                    return beta;
                 }
-
-                RecordHash(depth, beta, bestMove, hashfBETA, staticeval, pline, board);
-
-                return beta;
             }
         }
 
@@ -713,7 +725,7 @@ static inline int negamax(int depth, int alpha, int beta, Line *pline, Board *bo
         }
     }
 
-    RecordHash(depth, alpha, bestMove, hashf, staticeval, pline, board);
+    RecordHash(depth, alpha, best.move, hashf, staticeval, pline, board);
     return alpha;
 
 }
