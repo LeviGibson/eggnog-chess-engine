@@ -165,6 +165,17 @@ U64 pastPawnMasks[2][64] = {
          0x0ULL, 0x0ULL, 0x0ULL, 0x0ULL,}
 };
 
+int pawnpst[64] = {
+        0,  0,  0,  0,  0,  0,  0,  0,
+        50, 50, 50, 50, 50, 50, 50, 50,
+        10, 10, 20, 30, 30, 20, 10, 10,
+        5,  5, 10, 25, 25, 10,  5,  5,
+        0,  0,  0, 20, 20,  0,  0,  0,
+        5, 12,-10,  0,  0,-10, 12,  5,
+        5, 10, 10,-20,-20, 10, 10,  5,
+        0,  0,  0,  0,  0,  0,  0,  0
+};
+
 int score_move(int move, int hashmove, Board *board){
 
     if (found_pv && !board->helperThread){
@@ -203,21 +214,23 @@ int score_move(int move, int hashmove, Board *board){
             return(700);
         }
 
+        int movescore = -1000;
+
         if (board->prevmove != 0) {
             int score = get_move_score(board->prevmove, move);
 
             //this seems stupid and it is
             //but not really because of the function partition_zero_scores()
             if (score > 100)
-                return score;
+                movescore = max(movescore, score);
 
         }
 
         if (getpromoted(move))
-            return 80;
+            movescore = max(movescore, 80);
 
         if (getcastle(move))
-            return 50;
+            movescore = max(movescore, 50);
 
         if (getpiece(move) == P){
             U64 attack_mask = pawn_mask[white][gettarget(move)];
@@ -230,16 +243,15 @@ int score_move(int move, int hashmove, Board *board){
             attacked_pieces &= attack_mask;
 
             if (count_bits(attacked_pieces) == 2)
-                return 100;
+                movescore = max(movescore, 100);
 
             if (attacked_pieces)
-                return 40;
+                movescore = max(movescore, 40);
 
             if (!(pastPawnMasks[white][gettarget(move)] & board->bitboards[p]))
-                return 30;
+                movescore = max(movescore, 30);
 
-            if (getdouble(move))
-                return 10;
+            movescore = max(movescore, pawnpst[gettarget(move)] - pawnpst[getsource(move)]);
         }
 
         if (getpiece(move) == p){
@@ -253,23 +265,22 @@ int score_move(int move, int hashmove, Board *board){
             attacked_pieces &= attack_mask;
 
             if (count_bits(attacked_pieces) == 2)
-                return 100;
+                movescore = max(movescore, 100);
 
             if (attacked_pieces)
-                return 40;
+                movescore = max(movescore, 40);
 
             if (!(pastPawnMasks[black][gettarget(move)] & board->bitboards[P]))
-                return 30;
+                movescore = max(movescore, 30);
 
-            if (getdouble(move))
-                return 10;
+            movescore = max(movescore, pawnpst[gettarget(move)^56] - pawnpst[getsource(move)^56]);
         }
 
         if (getpiece(move) == N){
             if (pawn_mask[white][gettarget(move)] & BP)
                 return -100;
             if (pawn_mask[white][getsource(move)] & BP)
-                return 200;
+                movescore = max(movescore, 200);
             return count_bits(knight_mask[gettarget(move)] & (board->occupancies[black] - BP - BN)) * 30;
         }
 
@@ -277,36 +288,36 @@ int score_move(int move, int hashmove, Board *board){
             if (pawn_mask[black][gettarget(move)] & WP)
                 return -100;
             if (pawn_mask[black][getsource(move)] & WP)
-                return 200;
-            return count_bits(knight_mask[gettarget(move)] & (board->occupancies[white] - WP - WN)) * 30;
+                movescore = max(movescore, 200);
+            movescore = max(movescore, count_bits(knight_mask[gettarget(move)] & (board->occupancies[white] - WP - WN)) * 30);
         }
 
         if (getpiece(move) == B){
             if (is_move_direct_check(move, board))
-                return 10;
+                movescore = max(movescore, 10);
             if (pawn_mask[white][gettarget(move)] & BP)
                 return -100;
             if (pawn_mask[white][getsource(move)] & BP)
-                return 200;
+                movescore = max(movescore, 200);
         }
 
         if (getpiece(move) == b){
             if (is_move_direct_check(move, board))
-                return 10;
+                movescore = max(movescore, 10);
             if (pawn_mask[black][gettarget(move)] & WP)
                 return -100;
             if (pawn_mask[black][getsource(move)] & WP)
-                return 200;
+                movescore = max(movescore, 200);
         }
 
         if (getpiece(move) == R){
             if (pawn_mask[white][gettarget(move)] & BP)
                 return -100;
             if (pawn_mask[white][getsource(move)] & BP)
-                return 200;
+                movescore = max(movescore, 200);
             if (filemasks[getsource(move)] & board->bitboards[P]) {
                 if (!(filemasks[gettarget(move)] & board->bitboards[P])) {
-                    return 15;
+                    movescore = max(movescore, 15);
                 }
             }
         }
@@ -315,10 +326,10 @@ int score_move(int move, int hashmove, Board *board){
             if (pawn_mask[black][gettarget(move)] & WP)
                 return -100;
             if (pawn_mask[black][getsource(move)] & WP)
-                return 200;
+                movescore = max(movescore, 200);
             if (filemasks[getsource(move)] & board->bitboards[p]) {
                 if (!(filemasks[gettarget(move)] & board->bitboards[p])) {
-                    return 15;
+                    movescore = max(movescore, 15);
                 }
             }
         }
@@ -327,9 +338,9 @@ int score_move(int move, int hashmove, Board *board){
             if (pawn_mask[white][gettarget(move)] & BP)
                 return -100;
             if (pawn_mask[white][getsource(move)] & BP)
-                return 200;
+                movescore = max(movescore, 200);
             if (is_move_direct_check(move, board))
-                return 50;
+                movescore = max(movescore, 50);
             return count_bits(king_mask[bsf(BK)] & get_queen_attacks(gettarget(move), board->occupancies[both]));
         }
 
@@ -337,9 +348,9 @@ int score_move(int move, int hashmove, Board *board){
             if (pawn_mask[black][gettarget(move)] & WP)
                 return -100;
             if (pawn_mask[black][getsource(move)] & WP)
-                return 200;
+                movescore = max(movescore, 200);
             if (is_move_direct_check(move, board))
-                return 50;
+                movescore = max(movescore, 50);
             return count_bits(king_mask[bsf(WK)] & get_queen_attacks(gettarget(move), board->occupancies[both]));
         }
 
@@ -348,7 +359,8 @@ int score_move(int move, int hashmove, Board *board){
 
         float score = (history_moves[getpiece(move)][getsource(move)][gettarget(move)] / (float )historyCount);
         score *= 1000;
-        return (int)score;
+        movescore = max(movescore, (int)score);
+        return movescore;
     }
 }
 
@@ -550,7 +562,9 @@ static inline int negamax(int depth, int alpha, int beta, Line *pline, Board *bo
         }
     }
 
-    found_pv = 0;
+    if (!board->helperThread)
+        found_pv = 0;
+
     int pvnode = beta - alpha > 1;
 
     Line line;
