@@ -5,22 +5,45 @@
 #include <stdio.h>
 #include "moveOrder.h"
 #include "search.h"
-#include "Fathom/tbprobe.h"
-#include "syzygy.h"
+#include "moveOrderData.h"
 
-int commonMoveTable[64][64][64];
+float floatbb_min(const float *x){
+    float min = 10000000;
+    for (int i = 0; i < 64; ++i) {
+        if (x[i] < min)
+            min = x[i];
+    }
+
+    return min;
+}
+
+float floatbb_max(const float *x){
+    float max = -10000000;
+    for (int i = 0; i < 64; ++i) {
+        if (x[i] > max)
+            max = x[i];
+    }
+
+    return max;
+}
 
 void init_move_table(){
-    //avoid compiler warning
-    unsigned long tmp;
 
-    FILE *fd = fopen("moveTable", "rb");
-    tmp = fread((void*)&commonMoveTable, 4, 64*64*64, fd);
+    memset(moveOrderWorthSearching, 0, sizeof(moveOrderWorthSearching));
+
+    for (int piece = 0; piece < 12; ++piece) {
+        for (int square = 0; square < 64; ++square) {
+            for (int bb = 0; bb < 12; ++bb) {
+                float range = floatbb_max(moveOrderData[piece][square][bb]) - floatbb_min(moveOrderData[piece][square][bb]);
+
+                if (range > 2000.) {
+                    moveOrderWorthSearching[piece][square][bb] = 1;
+                }
+            }
+        }
+    }
 }
 
-int get_move_score(int f_prevmove, int move){
-    return commonMoveTable[getsource(f_prevmove)][gettarget(f_prevmove)][gettarget(move)];
-}
 //
 //int game(){
 //    Board b;

@@ -26,8 +26,7 @@ build for all CPUs:
 ## Run
 eggnog-chess-engine uses the UCI protocol. It must be run with a GUI such as [Arena](http://www.playwitharena.de/).
 
-If you move the executable (bin/eggnog-chess-engine-xxx) to a different folder, be sure to move these files as well:
+If you move the executable (bin/eggnog-chess-engine-xxx) to a different folder, be sure to move this file as well:
 
     bin/defualt-nn.nnue
-    bin/moveTable
 

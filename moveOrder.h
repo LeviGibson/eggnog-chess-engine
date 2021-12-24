@@ -5,8 +5,10 @@
 #ifndef EGGNOG_CHESS_ENGINE_MOVEORDER_H
 #define EGGNOG_CHESS_ENGINE_MOVEORDER_H
 
+float floatbb_min(const float *x);
+float floatbb_max(const float *x);
+
 void init_move_table();
-int get_move_score(int prevmove, int move);
 //void moveorder_test(int numGames);
 
 #endif //EGGNOG_CHESS_ENGINE_MOVEORDER_H

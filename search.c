@@ -4,8 +4,8 @@
 #include "transposition.h"
 #include "Fathom/tbprobe.h"
 #include "syzygy.h"
-#include "moveOrder.h"
 #include "uci.h"
+#include "moveOrderData.h"
 #include <stdio.h>
 #include <pthread.h>
 
@@ -91,43 +91,6 @@ void quickSort(int arr[], int low, int high, moveList *movearr)
     }
 }
 
-int partition_zero_scores(moveList *movearr, int scorearr[]){
-    int zerosFound = 0;
-
-    for (int moveId = 0; moveId < (movearr->count - zerosFound); moveId++) {
-        if (scorearr[moveId] == 0){
-
-            unsigned swappingToIndex = movearr->count - 1 - zerosFound;
-
-            swap(&movearr->moves[moveId], &movearr->moves[swappingToIndex]);
-            swap(&scorearr[moveId], &scorearr[swappingToIndex]);
-
-            zerosFound++;
-            moveId--;
-
-        }
-    }
-    return zerosFound;
-}
-
-U64 filemasks[64] = {
-        0x101010101010101ULL, 0x202020202020202ULL, 0x404040404040404ULL, 0x808080808080808ULL,
-        0x1010101010101010ULL, 0x2020202020202020ULL, 0x4040404040404040ULL, 0x8080808080808080ULL,
-        0x101010101010101ULL, 0x202020202020202ULL, 0x404040404040404ULL, 0x808080808080808ULL,
-        0x1010101010101010ULL, 0x2020202020202020ULL, 0x4040404040404040ULL, 0x8080808080808080ULL,
-        0x101010101010101ULL, 0x202020202020202ULL, 0x404040404040404ULL, 0x808080808080808ULL,
-        0x1010101010101010ULL, 0x2020202020202020ULL, 0x4040404040404040ULL, 0x8080808080808080ULL,
-        0x101010101010101ULL, 0x202020202020202ULL, 0x404040404040404ULL, 0x808080808080808ULL,
-        0x1010101010101010ULL, 0x2020202020202020ULL, 0x4040404040404040ULL, 0x8080808080808080ULL,
-        0x101010101010101ULL, 0x202020202020202ULL, 0x404040404040404ULL, 0x808080808080808ULL,
-        0x1010101010101010ULL, 0x2020202020202020ULL, 0x4040404040404040ULL, 0x8080808080808080ULL,
-        0x101010101010101ULL, 0x202020202020202ULL, 0x404040404040404ULL, 0x808080808080808ULL,
-        0x1010101010101010ULL, 0x2020202020202020ULL, 0x4040404040404040ULL, 0x8080808080808080ULL,
-        0x101010101010101ULL, 0x202020202020202ULL, 0x404040404040404ULL, 0x808080808080808ULL,
-        0x1010101010101010ULL, 0x2020202020202020ULL, 0x4040404040404040ULL, 0x8080808080808080ULL,
-        0x101010101010101ULL, 0x202020202020202ULL, 0x404040404040404ULL, 0x808080808080808ULL,
-        0x1010101010101010ULL, 0x2020202020202020ULL, 0x4040404040404040ULL, 0x8080808080808080ULL,
-};
 
 U64 pastPawnMasks[2][64] = {
         {0x0ULL, 0x0ULL, 0x0ULL, 0x0ULL,
@@ -165,16 +128,6 @@ U64 pastPawnMasks[2][64] = {
          0x0ULL, 0x0ULL, 0x0ULL, 0x0ULL,}
 };
 
-int pawnpst[64] = {
-        0,  0,  0,  0,  0,  0,  0,  0,
-        50, 50, 50, 50, 50, 50, 50, 50,
-        10, 10, 20, 30, 30, 20, 10, 10,
-        5,  5, 10, 25, 25, 10,  5,  5,
-        0,  0,  0, 20, 20,  0,  0,  0,
-        5, 12,-10,  0,  0,-10, 12,  5,
-        5, 10, 10,-20,-20, 10, 10,  5,
-        0,  0,  0,  0,  0,  0,  0,  0
-};
 
 int score_move(int move, int hashmove, Board *board){
 
@@ -214,153 +167,36 @@ int score_move(int move, int hashmove, Board *board){
             return(700);
         }
 
-        int movescore = -1000;
+        float score = 0;
 
-        if (board->prevmove != 0) {
-            int score = get_move_score(board->prevmove, move);
+        int piece = getpiece(move);
+        int target = gettarget(move);
 
-            //this seems stupid and it is
-            //but not really because of the function partition_zero_scores()
-            if (score > 100)
-                movescore = max(movescore, score);
+        float *dataPart = &moveOrderData[piece][target][0][0];
+        char *wspart = &moveOrderWorthSearching[piece][target][0];
 
-        }
+        for (int bb = 0; bb < 12; bb++){
+            if (wspart[bb]) {
 
-        if (getpromoted(move))
-            movescore = max(movescore, 80);
+                float *bbPart = &dataPart[bb * 64];
+                U64 bitboard = board->bitboards[bb];
+                while (bitboard) {
+                    int bit = bsf(bitboard);
 
-        if (getcastle(move))
-            movescore = max(movescore, 50);
+                    score += bbPart[bit];
 
-        if (getpiece(move) == P){
-            U64 attack_mask = pawn_mask[white][gettarget(move)];
-
-            U64 attacked_pieces = BN | BR;
-
-            if (pawn_mask[black][gettarget(move)] & WP)
-                attacked_pieces |= BB | BQ;
-
-            attacked_pieces &= attack_mask;
-
-            if (count_bits(attacked_pieces) == 2)
-                movescore = max(movescore, 100);
-
-            if (attacked_pieces)
-                movescore = max(movescore, 40);
-
-            if (!(pastPawnMasks[white][gettarget(move)] & board->bitboards[p]))
-                movescore = max(movescore, 30);
-
-            movescore = max(movescore, pawnpst[gettarget(move)] - pawnpst[getsource(move)]);
-        }
-
-        if (getpiece(move) == p){
-            U64 attack_mask = pawn_mask[black][gettarget(move)];
-
-            U64 attacked_pieces = (WN | BR);
-
-            if (pawn_mask[white][gettarget(move)] & board->bitboards[p])
-                attacked_pieces |= (BB | BQ);
-
-            attacked_pieces &= attack_mask;
-
-            if (count_bits(attacked_pieces) == 2)
-                movescore = max(movescore, 100);
-
-            if (attacked_pieces)
-                movescore = max(movescore, 40);
-
-            if (!(pastPawnMasks[black][gettarget(move)] & board->bitboards[P]))
-                movescore = max(movescore, 30);
-
-            movescore = max(movescore, pawnpst[gettarget(move)^56] - pawnpst[getsource(move)^56]);
-        }
-
-        if (getpiece(move) == N){
-            if (pawn_mask[white][gettarget(move)] & BP)
-                return -100;
-            if (pawn_mask[white][getsource(move)] & BP)
-                movescore = max(movescore, 200);
-            return count_bits(knight_mask[gettarget(move)] & (board->occupancies[black] - BP - BN)) * 30;
-        }
-
-        if (getpiece(move) == n){
-            if (pawn_mask[black][gettarget(move)] & WP)
-                return -100;
-            if (pawn_mask[black][getsource(move)] & WP)
-                movescore = max(movescore, 200);
-            movescore = max(movescore, count_bits(knight_mask[gettarget(move)] & (board->occupancies[white] - WP - WN)) * 30);
-        }
-
-        if (getpiece(move) == B){
-            if (is_move_direct_check(move, board))
-                movescore = max(movescore, 10);
-            if (pawn_mask[white][gettarget(move)] & BP)
-                return -100;
-            if (pawn_mask[white][getsource(move)] & BP)
-                movescore = max(movescore, 200);
-        }
-
-        if (getpiece(move) == b){
-            if (is_move_direct_check(move, board))
-                movescore = max(movescore, 10);
-            if (pawn_mask[black][gettarget(move)] & WP)
-                return -100;
-            if (pawn_mask[black][getsource(move)] & WP)
-                movescore = max(movescore, 200);
-        }
-
-        if (getpiece(move) == R){
-            if (pawn_mask[white][gettarget(move)] & BP)
-                return -100;
-            if (pawn_mask[white][getsource(move)] & BP)
-                movescore = max(movescore, 200);
-            if (filemasks[getsource(move)] & board->bitboards[P]) {
-                if (!(filemasks[gettarget(move)] & board->bitboards[P])) {
-                    movescore = max(movescore, 15);
+                    pop_bit(bitboard, bit);
                 }
             }
         }
 
-        if (getpiece(move) == r){
-            if (pawn_mask[black][gettarget(move)] & WP)
-                return -100;
-            if (pawn_mask[black][getsource(move)] & WP)
-                movescore = max(movescore, 200);
-            if (filemasks[getsource(move)] & board->bitboards[p]) {
-                if (!(filemasks[gettarget(move)] & board->bitboards[p])) {
-                    movescore = max(movescore, 15);
-                }
-            }
+        score /= 100;
+        if (historyCount > 0) {
+            float historyscore = (history_moves[getpiece(move)][getsource(move)][gettarget(move)] / (float) historyCount) * 2000;
+            score += historyscore;
         }
 
-        if (getpiece(move) == Q){
-            if (pawn_mask[white][gettarget(move)] & BP)
-                return -100;
-            if (pawn_mask[white][getsource(move)] & BP)
-                movescore = max(movescore, 200);
-            if (is_move_direct_check(move, board))
-                movescore = max(movescore, 50);
-            return count_bits(king_mask[bsf(BK)] & get_queen_attacks(gettarget(move), board->occupancies[both]));
-        }
-
-        if (getpiece(move) == q){
-            if (pawn_mask[black][gettarget(move)] & WP)
-                return -100;
-            if (pawn_mask[black][getsource(move)] & WP)
-                movescore = max(movescore, 200);
-            if (is_move_direct_check(move, board))
-                movescore = max(movescore, 50);
-            return count_bits(king_mask[bsf(WK)] & get_queen_attacks(gettarget(move), board->occupancies[both]));
-        }
-
-        if (historyCount == 0)
-            return 0;
-
-        float score = (history_moves[getpiece(move)][getsource(move)][gettarget(move)] / (float )historyCount);
-        score *= 1000;
-        movescore = max(movescore, (int)score);
-        return movescore;
+        return (int)score;
     }
 }
 
@@ -375,6 +211,14 @@ static inline void sort_moves(moveList *move_list, int hashmove, Board *board){
     int zerosFound = 0;
 //    zerosFound = partition_zero_scores(move_list, scores);
     quickSort(scores, 0, (int )(move_list->count) - 1 - zerosFound, move_list);
+
+//    print_fen(board);
+//    printf("\n");
+//    for (int i = 0; i < move_list->count; i++){
+//        print_move(move_list->moves[i]);
+//        printf(" : %d\n", scores[i]);
+//    }
+//    printf("\n\n");
 }
 
 static inline int quiesce(int alpha, int beta, Board *board) {

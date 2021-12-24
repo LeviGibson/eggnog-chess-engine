@@ -8,7 +8,8 @@ FILES = main.c\
  timeman.c\
  transposition.c\
  moveOrder.c\
- Fathom/*.c
+ Fathom/*.c\
+ moveOrderData.c
 
 NNUEFILES = nnue/load.c nnue/propogate.c
 FILE = ./bin/eggnog-chess-engine
