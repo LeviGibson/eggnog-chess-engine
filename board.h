@@ -71,6 +71,8 @@ struct Board{
     int searchColor;
     Line pv_line;
 
+    int searchDepth;
+
     int helperThread;
 };
 

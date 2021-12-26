@@ -28,5 +28,5 @@ eggnog-chess-engine uses the UCI protocol. It must be run with a GUI such as [Ar
 
 If you move the executable (bin/eggnog-chess-engine-xxx) to a different folder, be sure to move this file as well:
 
-    bin/defualt-nn.nnue
+    bin/nn-eba324f53044.nnue
 
