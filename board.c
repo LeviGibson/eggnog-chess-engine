@@ -121,7 +121,7 @@ int is_threefold_repetition(Board *board){
     if (board->zobrist_history_length < 8)
         return 0;
 
-    if (board->zobrist_history_length >= 100){
+    if (board->zobrist_history_length >= 101){
         return 1;
     }
 
