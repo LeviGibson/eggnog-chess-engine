@@ -19,10 +19,10 @@
 
 typedef struct tagHASHE {
     U64 key;
-    int depth;
-    int flags;
+    unsigned char depth;
+    unsigned char flags;
     int value;
-    int best;
+    int best[4];
     int staticeval;
     int *line;
 }   HASHE;

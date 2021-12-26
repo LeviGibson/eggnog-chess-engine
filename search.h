@@ -9,7 +9,6 @@
 #define max(x, y) (y) > (x) ? (y) : (x)
 #endif
 
-int score_move(int move, int hashmove, Board *board);
 void *search_position(void *arg);
 int stop;
 

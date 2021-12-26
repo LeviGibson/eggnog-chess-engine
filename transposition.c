@@ -66,7 +66,8 @@ int ProbeHash(int depth, int alpha, int beta, int *move, int *staticeval, Line *
     lock(&ttLocks[index]);
 
     if (phashe->key == board->current_zobrist_key) {
-        *move = phashe->best;
+//        *move = phashe->best;
+        memcpy(move, phashe->best, sizeof(phashe->best));
         *staticeval = phashe->staticeval;
 
         if (phashe->depth >= depth) {
@@ -99,12 +100,18 @@ void RecordHash(int depth, int val, int best, int hashf, int staticeval, Line *p
 
         HASHE *phashe = &hash_table[index];
         phashe->key = board->current_zobrist_key;
-        phashe->best = best;
         phashe->value = val;
         phashe->staticeval = staticeval;
         phashe->flags = hashf;
         phashe->depth = depth;
         phashe->line = NULL;
+
+        if (phashe->best[0] != best){
+            phashe->best[3] = phashe->best[2];
+            phashe->best[2] = phashe->best[1];
+            phashe->best[1] = phashe->best[0];
+            phashe->best[0] = best;
+        }
 
         if (depth > 1 && pline != NULL) {
             lock(&lmcLock);
