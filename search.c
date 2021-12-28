@@ -128,6 +128,39 @@ U64 pastPawnMasks[2][64] = {
          0x0ULL, 0x0ULL, 0x0ULL, 0x0ULL,}
 };
 
+#if defined(AVX) || defined(AVX2)
+//taken from https://coderedirect.com/questions/143686/how-to-sum-m256-horizontally
+float sum8(__m256 x) {
+    const __m128 hiQuad = _mm256_extractf128_ps(x, 1);
+    const __m128 loQuad = _mm256_castps256_ps128(x);
+    const __m128 sumQuad = _mm_add_ps(loQuad, hiQuad);
+    const __m128 loDual = sumQuad;
+    const __m128 hiDual = _mm_movehl_ps(sumQuad, sumQuad);
+    const __m128 sumDual = _mm_add_ps(loDual, hiDual);
+    const __m128 lo = sumDual;
+    const __m128 hi = _mm_shuffle_ps(sumDual, sumDual, 0x1);
+    const __m128 sum = _mm_add_ss(lo, hi);
+    return _mm_cvtss_f32(sum);
+}
+
+//taken from https://stackoverflow.com/questions/48811369/how-to-use-bits-in-a-byte-to-set-dwords-in-ymm-register-without-avx2-inverse-o
+__m256 inverse_movemask_ps(unsigned bitmap) {
+    const __m256 exponent = _mm256_set1_ps(1.0f);
+    const __m256 bit_select = _mm256_castsi256_ps(
+            _mm256_set_epi32(
+                    0x3f800000 + (1<<7), 0x3f800000 + (1<<6),
+                    0x3f800000 + (1<<5), 0x3f800000 + (1<<4),
+                    0x3f800000 + (1<<3), 0x3f800000 + (1<<2),
+                    0x3f800000 + (1<<1), 0x3f800000 + (1<<0)
+            ));
+
+    __m256  bcast = _mm256_castsi256_ps(_mm256_set1_epi32(bitmap));
+    __m256  ored  = _mm256_or_ps(bcast, exponent);
+    __m256  isolated = _mm256_and_ps(ored, bit_select);
+    return _mm256_cmp_ps(isolated, bit_select, _CMP_EQ_OQ);
+}
+#endif
+
 float fastGetScoreFromMoveTable(U64 bitboard, const float *bbPart){
     float score = 0;
 
@@ -146,6 +179,26 @@ float fastGetScoreFromMoveTable(U64 bitboard, const float *bbPart){
 
 float getScoreFromMoveTable(U64 bitboard, const float *bbPart){
 
+#if defined(AVX) || defined(AVX2)
+    U64 ybb = ~bitboard;
+
+    float score = 0;
+
+    for (int i = 0; i < 64; i += 8) {
+        __m256i _mask_x = (__m256i) inverse_movemask_ps(bitboard >> i);
+        __m256i _mask_y = (__m256i) inverse_movemask_ps(ybb >> i);
+
+        __m256 _x = _mm256_maskload_ps(bbPart + i, _mask_x);
+        __m256 _y = _mm256_maskload_ps(bbPart + i, _mask_y);
+
+        score += sum8(_x);
+        score -= sum8(_y);
+    }
+
+    return score;
+
+#else
+
     float score = 0;
 
     for (int i = 0; i < 64; ++i) {
@@ -157,6 +210,9 @@ float getScoreFromMoveTable(U64 bitboard, const float *bbPart){
     }
 
     return score;
+
+#endif
+
 }
 
 
@@ -165,7 +221,7 @@ int score_move(int move, const int *hashmove, Board *board){
     if (found_pv && !board->helperThread){
         if (move == board->pv_line.moves[board->ply]){
             found_pv = 0;
-            return 20000;
+            return 200000;
         }
     }
 
@@ -173,7 +229,7 @@ int score_move(int move, const int *hashmove, Board *board){
         if (hashmove[i] == -15 || hashmove[i] == 0)
             break;
         if (hashmove[i] == move) {
-            return 10000 - i;
+            return 100000 - i;
         }
     }
 
@@ -193,13 +249,13 @@ int score_move(int move, const int *hashmove, Board *board){
             }
         }
 
-        return mvv_lva[getpiece(move)][target_piece] + 1000;
+        return mvv_lva[getpiece(move)][target_piece] + 10000;
     } else {
         if (move == killer_moves[board->ply][0]){
-            return(800);
+            return(8000);
         }
         if (move == killer_moves[board->ply][1]){
-            return(700);
+            return(7000);
         }
 
 	if (board->searchDepth == 0){ return 0; }
@@ -212,10 +268,18 @@ int score_move(int move, const int *hashmove, Board *board){
         float *dataPart = &moveOrderData[piece][target][0][0];
         char *wspart = &moveOrderWorthSearching[piece][target][0];
 
-        for (int bb = 0; bb < 12; bb++){
+        for (int bb = 0; bb < 14; bb++){
             if (wspart[bb] || board->ply < 4) {
+
                 float *bbPart = &dataPart[bb * 64];
-                U64 bitboard = board->bitboards[bb];
+                U64 bitboard;
+
+                //there are two other bitboards that represent what squares each side attacks
+                if (bb < 12)
+                    bitboard = board->bitboards[bb];
+                else
+                    bitboard = board->weaksquares[bb - 12];
+
                 if (board->ply < 5) {
                     score = getScoreFromMoveTable(bitboard, bbPart);
                 } else {
@@ -224,7 +288,8 @@ int score_move(int move, const int *hashmove, Board *board){
             }
         }
 
-        score /= 100;
+        score /= 550;
+
         if (historyCount > 0) {
             float historyscore = (history_moves[getpiece(move)][getsource(move)][gettarget(move)] / (float) historyCount) * 2000;
             score += historyscore;

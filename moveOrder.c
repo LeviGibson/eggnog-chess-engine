@@ -33,9 +33,8 @@ void init_move_table(){
 
     for (int piece = 0; piece < 12; ++piece) {
         for (int square = 0; square < 64; ++square) {
-            for (int bb = 0; bb < 12; ++bb) {
+            for (int bb = 0; bb < 14; ++bb) {
                 float range = floatbb_max(moveOrderData[piece][square][bb]) - floatbb_min(moveOrderData[piece][square][bb]);
-
                 if (range > 2000.) {
                     moveOrderWorthSearching[piece][square][bb] = 1;
                 }

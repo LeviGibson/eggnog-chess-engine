@@ -56,6 +56,7 @@ struct Board{
 
     U64 bitboards[12];
     U64 occupancies[3];
+    U64 weaksquares[2];
 
     U64 current_zobrist_key;
 
@@ -174,7 +175,7 @@ void init_zobrist_keys();
 int is_threefold_repetition(Board *board);
 
 void generate_moves(moveList *legalMoves, Board *board);
-int make_move(int move, int flag, int zobristUpdate, Board *board);
+int make_move(int move, int flag, int notquinode, Board *board);
 
 int is_square_attacked(int square, int testingSide, Board *board);
 int is_move_direct_check(int move, Board *board);

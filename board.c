@@ -493,7 +493,54 @@ const int castling_right_table[64] = {
         13, 15, 15, 15, 12, 15, 15, 14
 };
 
-int make_move(int move, int flag, int zobristUpdate, Board *board){
+void refresh_weak_squares(Board *board){
+    U64 *wb = &board->weaksquares[white];
+    U64 *bb = &board->weaksquares[black];
+
+    *wb = 0ULL;
+    *bb = 0ULL;
+
+    for (int pt = 0; pt < 12; ++pt) {
+
+        U64 bitboard = board->bitboards[pt];
+        if (!bitboard) continue;
+
+        int bitcount = count_bits(bitboard);
+
+        for (int i = 0; i < bitcount; ++i) {
+            int square = bsf(bitboard);
+
+            if (pt == P)
+                *wb |= pawn_mask[white][square];
+            if (pt == N)
+                *wb |= knight_mask[square];
+            if (pt == B)
+                *wb |= get_bishop_attacks(square, board->occupancies[both]);
+            if (pt == R)
+                *wb |= get_rook_attacks(square, board->occupancies[both]);
+            if (pt == K)
+                *wb |= king_mask[square];
+            if (pt == Q)
+                *wb |= get_bishop_attacks(square, board->occupancies[both]) | get_rook_attacks(square, board->occupancies[both]);
+            if (pt == p)
+                *bb |= pawn_mask[black][square];
+            if (pt == n)
+                *bb |= knight_mask[square];
+            if (pt == b)
+                *bb |= get_bishop_attacks(square, board->occupancies[both]);
+            if (pt == r)
+                *bb |= get_rook_attacks(square, board->occupancies[both]);
+            if (pt == k)
+                *bb |= king_mask[square];
+            if (pt == q)
+                *bb |= get_rook_attacks(square, board->occupancies[both]) | get_bishop_attacks(square, board->occupancies[both]);
+
+            pop_bit(bitboard, square);
+        }
+    }
+}
+
+int make_move(int move, int flag, int notquinode, Board *board){
 
     if (flag == all_moves){
         copy_board();
@@ -602,7 +649,7 @@ int make_move(int move, int flag, int zobristUpdate, Board *board){
         }
 
         //UPDATE ZOBRIST HISTORY
-        if (zobristUpdate) {
+        if (notquinode) {
             board->current_zobrist_key = update_zobrist_key(board);
             board->zobrist_history[board->zobrist_history_length] = board->current_zobrist_key;
             board->zobrist_history_length++;
@@ -610,12 +657,14 @@ int make_move(int move, int flag, int zobristUpdate, Board *board){
             board->current_zobrist_key = 0ULL;
     } else {
         if (getcapture(move) || is_move_direct_check(move, board) || getpromoted(move)){
-            return make_move(move, all_moves, zobristUpdate, board);
+            return make_move(move, all_moves, notquinode, board);
         } else {
             return 0;
         }
-
     }
+
+    if (notquinode)
+        refresh_weak_squares(board);
 
     board->prevmove = move;
 
@@ -936,4 +985,5 @@ void parse_fen(char *fen, Board *board)
     board->nnueUpdate = 1;
 
     refresh_accumulator(&board->currentNnue, board);
+    refresh_weak_squares(board);
 }

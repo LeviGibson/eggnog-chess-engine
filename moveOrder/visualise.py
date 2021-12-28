@@ -24,8 +24,8 @@ def show(ptype, dst):
 
     movetotals = moveAverages[ptype][dst]
 
-    for i in range(12):
+    for i in range(14):
         plt.imshow(movetotals[i].reshape(8,8,1), cmap='gray')
         plt.show()
 
-show(K, chess.D6)
+show(N, chess.F5)
