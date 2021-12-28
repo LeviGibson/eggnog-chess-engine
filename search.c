@@ -353,7 +353,6 @@ static inline int quiesce(int alpha, int beta, Board *board) {
     moveList legalMoves;
     legalMoves.count = 0;
 
-    //TODO wtf is this?
     U64 old_occupancies = board->occupancies[white] | board->occupancies[black];
     board->occupancies[both] = old_occupancies;
 
@@ -533,7 +532,7 @@ static inline int negamax(int depth, int alpha, int beta, Line *pline, Board *bo
 
     int eval;
     if (depth >= 3 && !in_check && board->ply
-        && board->occupancies[both] != (WK | BK | WP | BP | WN | BN)) {
+        && (WQ | WR) && (BQ | BR)){
         copy_board();
 
         board->side ^= 1;
@@ -591,7 +590,7 @@ static inline int negamax(int depth, int alpha, int beta, Line *pline, Board *bo
 
     int legalMoveCount = 0;
     int move;
-    MoveEval best = {.move = no_move, .eval = -10000000};
+    MoveEval best = {.move = no_move, .eval = -100000000};
 
     for (int moveId = 0; moveId < legalMoves.count; moveId++) {
         move = legalMoves.moves[moveId];
@@ -852,6 +851,8 @@ void *search_position(void *arg){
 
         //if the evaluation is outside of aspiration window bounds, reset alpha and beta and continue the search
         if ((nmRes >= beta) || (nmRes <= alpha)){
+            printf("info string aspiration research\n");
+
             board.ply = 0;
             selDepth = 0;
 
@@ -887,7 +888,7 @@ void *search_position(void *arg){
             if (board.pv_line.moves[0] == prevBestMove) {
                 moveTime -= (moveTime / 6);
             } else {
-                moveTime += (moveTime / 6);
+                moveTime += (moveTime / 8);
             }
         }
 
