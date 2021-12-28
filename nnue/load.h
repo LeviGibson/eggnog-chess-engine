@@ -8,7 +8,7 @@
 #define L3SIZE  32
 #define OUTSIZE 1
 
-#include <stdint-gcc.h>
+#include <stdint.h>
 #include <stdalign.h>
 
 //int16_t in_weights[INSIZE * KPSIZE ];

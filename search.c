@@ -9,12 +9,13 @@
 #include <stdio.h>
 #include <pthread.h>
 
-#define aspwindow (1700)
+#define DEF_ASPWINDOW (1700)
 #define no_move (-15)
 
 #define DEF_ALPHA (-5000000)
 #define DEF_BETA (5000000)
 
+int aspwindow = DEF_ASPWINDOW;
 int tbsearch = 0;
 
 int selDepth = 0;
@@ -780,6 +781,7 @@ void *search_position(void *arg){
     tbHits = 0;
     selDepth = 0;
     historyCount = 0;
+    aspwindow = DEF_ASPWINDOW;
 
     memset(killer_moves, 0, sizeof(killer_moves));
     memset(history_moves, 0, sizeof(history_moves));
@@ -851,13 +853,16 @@ void *search_position(void *arg){
 
         //if the evaluation is outside of aspiration window bounds, reset alpha and beta and continue the search
         if ((nmRes >= beta) || (nmRes <= alpha)){
-            printf("info string aspiration research\n");
-
             board.ply = 0;
             selDepth = 0;
 
             follow_pv = 1;
             found_pv = 0;
+
+            if (currentDepth > 2)
+                aspwindow *= 2;
+
+            printf("info string aspiration research. Window = %d\n", aspwindow/64);
 
             alpha = DEF_ALPHA;
             beta = DEF_BETA;
@@ -866,6 +871,8 @@ void *search_position(void *arg){
 
             nmRes = negamax(currentDepth, alpha, beta, &negamax_line, &board);
 
+        } else {
+            aspwindow -= (aspwindow/2);
         }
 
         //if time ran out during aspiration research, break.
@@ -889,6 +896,14 @@ void *search_position(void *arg){
                 moveTime -= (moveTime / 6);
             } else {
                 moveTime += (moveTime / 8);
+            }
+
+            if (abs(nmRes)/60 < 180) {
+                float floatingAspWindow = (float) aspwindow / 60;
+                float floatingMoveTime = (float) moveTime;
+
+                floatingMoveTime += floatingMoveTime * ((floatingAspWindow - 25) / 200);
+                moveTime = (int) floatingMoveTime;
             }
         }
 
