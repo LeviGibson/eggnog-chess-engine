@@ -1,5 +1,5 @@
 #include "search.h"
-#include "nnue/propogate.h"
+#include "nnue/nnue.h"
 #include "timeman.h"
 #include "transposition.h"
 #include "Fathom/tbprobe.h"
@@ -10,7 +10,7 @@
 #include <pthread.h>
 
 #define DEF_ASPWINDOW (1700)
-#define no_move (-15)
+#define NO_MOVE (-15)
 
 #define DEF_ALPHA (-5000000)
 #define DEF_BETA (5000000)
@@ -144,8 +144,11 @@ float sum8(__m256 x) {
     return _mm_cvtss_f32(sum);
 }
 
+//info score cp 24 depth 9 seldepth 21 nodes 1090335 qnodes 568126 tbhits 0 time 1496 pv e2e4 e7e6 d2d4 d7d5 b1d2 d5e4 d2e4 g8f6 e4f6
+
+
 //taken from https://stackoverflow.com/questions/48811369/how-to-use-bits-in-a-byte-to-set-dwords-in-ymm-register-without-avx2-inverse-o
-__m256 inverse_movemask_ps(unsigned bitmap) {
+__m256i inverse_movemask_ps(int bitmap) {
     const __m256 exponent = _mm256_set1_ps(1.0f);
     const __m256 bit_select = _mm256_castsi256_ps(
             _mm256_set_epi32(
@@ -158,11 +161,27 @@ __m256 inverse_movemask_ps(unsigned bitmap) {
     __m256  bcast = _mm256_castsi256_ps(_mm256_set1_epi32(bitmap));
     __m256  ored  = _mm256_or_ps(bcast, exponent);
     __m256  isolated = _mm256_and_ps(ored, bit_select);
-    return _mm256_cmp_ps(isolated, bit_select, _CMP_EQ_OQ);
+    return (__m256i)_mm256_cmp_ps(isolated, bit_select, _CMP_EQ_OQ);
 }
 #endif
 
 float fastGetScoreFromMoveTable(U64 bitboard, const float *bbPart){
+
+#if defined(AVX) || defined(AVX2)
+    float score = 0;
+
+    for (int i = 0; i < 64; i += 8) {
+        __m256i _mask_x = inverse_movemask_ps((int)(bitboard >> i));
+
+        __m256 _x = _mm256_maskload_ps(bbPart + i, _mask_x);
+
+        score += sum8(_x);
+    }
+
+    return score;
+
+#else
+
     float score = 0;
 
     int count = count_bits(bitboard);
@@ -176,6 +195,8 @@ float fastGetScoreFromMoveTable(U64 bitboard, const float *bbPart){
     }
 
     return score;
+
+#endif
 }
 
 float getScoreFromMoveTable(U64 bitboard, const float *bbPart){
@@ -186,8 +207,8 @@ float getScoreFromMoveTable(U64 bitboard, const float *bbPart){
     float score = 0;
 
     for (int i = 0; i < 64; i += 8) {
-        __m256i _mask_x = (__m256i) inverse_movemask_ps(bitboard >> i);
-        __m256i _mask_y = (__m256i) inverse_movemask_ps(ybb >> i);
+        __m256i _mask_x = inverse_movemask_ps((int)(bitboard >> i));
+        __m256i _mask_y = inverse_movemask_ps((int)(ybb >> i));
 
         __m256 _x = _mm256_maskload_ps(bbPart + i, _mask_x);
         __m256 _y = _mm256_maskload_ps(bbPart + i, _mask_y);
@@ -477,15 +498,14 @@ static inline int negamax(int depth, int alpha, int beta, Line *pline, Board *bo
     }
 
     //HASH TABLE PROBE
-    int staticeval = NO_EVAL;
-    int hash_move[4] = {no_move, no_move, no_move, no_move};
-    int hash_lookup = ProbeHash(depth, alpha, beta, hash_move, &staticeval, pline, board);
+    int hash_move[4] = {NO_MOVE, NO_MOVE, NO_MOVE, NO_MOVE};
+    int hash_lookup = ProbeHash(depth, alpha, beta, hash_move, pline, board);
+
     if ((hash_lookup) != valUNKNOWN && board->ply != 0) {
         return hash_lookup;
     }
 
-    if (staticeval == NO_EVAL)
-        staticeval = nnue_evaluate(board);
+    int staticeval = nnue_evaluate(board);
 
     //TB PROBE
     if (board->ply != 0) {
@@ -536,14 +556,14 @@ static inline int negamax(int depth, int alpha, int beta, Line *pline, Board *bo
         && (WQ | WR) && (BQ | BR)){
         copy_board();
 
-        board->side ^= 1;
+        make_null_move(board);
         board->enpessant = no_sq;
 
         eval = -ZwSearch(1 - beta, depth - 3, board);
 
         take_back();
         if (eval >= beta) {
-            RecordHash(depth - 2, beta, no_move, hashfBETA, staticeval, NULL, board);
+            RecordHash(depth - 2, beta, NO_MOVE, hashfBETA, NULL, board);
             return beta;
         }
     }
@@ -591,7 +611,7 @@ static inline int negamax(int depth, int alpha, int beta, Line *pline, Board *bo
 
     int legalMoveCount = 0;
     int move;
-    MoveEval best = {.move = no_move, .eval = -100000000};
+    MoveEval best = {.move = NO_MOVE, .eval = -100000000};
 
     for (int moveId = 0; moveId < legalMoves.count; moveId++) {
         move = legalMoves.moves[moveId];
@@ -675,7 +695,7 @@ static inline int negamax(int depth, int alpha, int beta, Line *pline, Board *bo
                         historyCount += depth * depth * legalMoveCount;
                     }
 
-                    RecordHash(depth, beta, best.move, hashfBETA, staticeval, pline, board);
+                    RecordHash(depth, beta, best.move, hashfBETA, pline, board);
 
                     return beta;
                 }
@@ -693,7 +713,7 @@ static inline int negamax(int depth, int alpha, int beta, Line *pline, Board *bo
         }
     }
 
-    RecordHash(depth, alpha, best.move, hashf, staticeval, pline, board);
+    RecordHash(depth, alpha, best.move, hashf, pline, board);
     return alpha;
 
 }
@@ -893,9 +913,9 @@ void *search_position(void *arg){
         //TIME MANAGMENT
         if (dynamicTimeManagment) {
             if (board.pv_line.moves[0] == prevBestMove) {
-                moveTime -= (moveTime / 6);
+                moveTime -= (moveTime / 8);
             } else {
-                moveTime += (moveTime / 8);
+                moveTime += (moveTime / 10);
             }
 
             if (abs(nmRes)/60 < 180) {

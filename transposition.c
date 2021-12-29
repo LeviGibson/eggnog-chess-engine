@@ -58,7 +58,7 @@ void recover_line(int depth, HASHE *phashe, Line *pline, int alpha, int *ret, Bo
     pline->length = *line;
 }
 
-int ProbeHash(int depth, int alpha, int beta, int *move, int *staticeval, Line *pline, Board *board){
+int ProbeHash(int depth, int alpha, int beta, int *move, Line *pline, Board *board){
     unsigned index = board->current_zobrist_key % tt_size;
     HASHE * phashe = &hash_table[index];
     int ret = valUNKNOWN;
@@ -66,9 +66,7 @@ int ProbeHash(int depth, int alpha, int beta, int *move, int *staticeval, Line *
     lock(&ttLocks[index]);
 
     if (phashe->key == board->current_zobrist_key) {
-//        *move = phashe->best;
         memcpy(move, phashe->best, sizeof(phashe->best));
-        *staticeval = phashe->staticeval;
 
         if (phashe->depth >= depth) {
 
@@ -92,7 +90,7 @@ int ProbeHash(int depth, int alpha, int beta, int *move, int *staticeval, Line *
     return ret;
 }
 
-void RecordHash(int depth, int val, int best, int hashf, int staticeval, Line *pline, Board *board){
+void RecordHash(int depth, int val, int best, int hashf, Line *pline, Board *board){
     if ((val != 0) && (val < 4500000) && (val > -450000)) {
         unsigned index = board->current_zobrist_key % tt_size;
 
@@ -101,7 +99,6 @@ void RecordHash(int depth, int val, int best, int hashf, int staticeval, Line *p
         HASHE *phashe = &hash_table[index];
         phashe->key = board->current_zobrist_key;
         phashe->value = val;
-        phashe->staticeval = staticeval;
         phashe->flags = hashf;
         phashe->depth = depth;
         phashe->line = NULL;

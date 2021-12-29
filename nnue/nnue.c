@@ -1,14 +1,83 @@
 //
 // Created by levigibson on 10/3/21.
 //
-#include "propogate.h"
+#include "nnue.h"
+#include "../transposition.h"
 #include <string.h>
 
 #ifdef AVX2
 #include <immintrin.h>
 #include <stdio.h>
-
 #endif
+
+typedef struct EvalHashEntry EvalHashEntry;
+
+struct EvalHashEntry{
+    U64 key;
+    int eval;
+};
+
+EvalHashEntry evalHashTable[tt_size];
+
+#define TRANSFORMERSTART ((3 * 4) + 181)
+
+alignas(64) int16_t in_weights[INSIZE * KPSIZE ];
+alignas(64) int8_t l1_weights[L1SIZE * L2SIZE ];
+alignas(64) int8_t l2_weights[L2SIZE * L3SIZE ];
+alignas(64) int8_t l3_weights[L3SIZE * OUTSIZE];
+
+alignas(64) int16_t in_biases[KPSIZE ];
+alignas(64) int32_t l1_biases[L2SIZE ];
+alignas(64) int32_t l2_biases[L3SIZE ];
+alignas(64) int32_t l3_biases[OUTSIZE];
+
+void transform_weight_indicies(int8_t arr[], unsigned dims){
+    int8_t tmpArr[dims*32];
+    memcpy(tmpArr, arr, sizeof tmpArr);
+
+    for (int r = 0; r < 32; ++r) {
+        for (int c = 0; c < dims; ++c) {
+            arr[(c * 32) + r] = tmpArr[(dims*r) + c];
+        }
+    }
+}
+
+int load_model(const char *path){
+    //avoid compiler warnings
+    unsigned long tmp;
+
+    FILE *fin = fopen(path, "rb");
+
+    //FEATURE TRANSFORMER
+    fseek(fin, TRANSFORMERSTART, SEEK_SET);
+    tmp = fread(in_biases, sizeof(int16_t), KPSIZE, fin);
+    tmp = fread(in_weights, sizeof(int16_t), INSIZE * KPSIZE, fin);
+
+    fseek(fin, 4, SEEK_CUR);
+
+    //Hidden Layer 1
+    tmp = fread(l1_biases, sizeof (l1_biases[0]), L2SIZE, fin);
+    tmp = fread(l1_weights, sizeof (l1_weights[0]), L1SIZE * L2SIZE, fin);
+    transform_weight_indicies(l1_weights, L1SIZE);
+
+    //Hidden Layer 2
+    tmp = fread(l2_biases, sizeof (l2_biases[0]), L3SIZE, fin);
+    tmp = fread(l2_weights, sizeof (l2_weights[0]), L2SIZE * L3SIZE, fin);
+    transform_weight_indicies(l2_weights, L2SIZE);
+
+    //Output Layer
+    tmp = fread(l3_biases, sizeof (l3_biases[0]), OUTSIZE, fin);
+
+    tmp = fread(l3_weights, sizeof (l3_weights[0]), L2SIZE * OUTSIZE, fin);
+
+    fclose(fin);
+
+    for (int i = 0; i < tt_size; ++i) {
+        evalHashTable[i].eval = NO_EVAL;
+    }
+
+    return 0;
+}
 
 int NnuePtypes[12] = {6, 5, 4, 3, 2, K, 12, 11, 10, 9, 8, k};
 
@@ -215,11 +284,21 @@ int materialScore(Board *board){
 }
 
 int nnue_evaluate(Board *board) {
+
+    unsigned hashIndex = board->current_zobrist_key % tt_size;
     NnueData *data = &board->currentNnue;
-    propogate_l1(data);
-    propogate_l2(data);
-    propogate_l3(data);
-    data->eval = (board->side == white) ? data->l3[0] : -data->l3[0];
+
+    if (evalHashTable[hashIndex].key == board->current_zobrist_key){
+        data->eval = evalHashTable[hashIndex].eval;
+    } else {
+        propogate_l1(data);
+        propogate_l2(data);
+        propogate_l3(data);
+        data->eval = (board->side == white) ? data->l3[0] : -data->l3[0];
+
+        evalHashTable[hashIndex].eval = data->eval;
+        evalHashTable[hashIndex].key = board->current_zobrist_key;
+    }
 
     //convert winning advantages into material rather than activity
     if (data->eval > (180*64) && (board->side == board->searchColor)){
@@ -253,11 +332,6 @@ void nnue_pop_bit(int ptype, int bit, Board *board){
 }
 
 void nnue_set_bit(int ptype, int bit, Board *board){
-//    if ((((board->bitboards[ptype]) & (1ULL << (bit))) != 0ULL)){
-//        print_board(board);
-//        printf("%d\n", ptype);
-//        print_bitboard(1ULL << bit);
-//    }
 
     set_bit(board->bitboards[ptype], bit);
 

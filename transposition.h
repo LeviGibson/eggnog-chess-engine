@@ -23,12 +23,11 @@ typedef struct tagHASHE {
     unsigned char flags;
     int value;
     int best[4];
-    int staticeval;
     int *line;
 }   HASHE;
 
-void RecordHash(int depth, int val, int best, int hashf, int staticeval, Line *pline, Board *board);
-int ProbeHash(int depth, int alpha, int beta, int *move, int *staticeval, Line *pline, Board *board);
+void RecordHash(int depth, int val, int best, int hashf, Line *pline, Board *board);
+int ProbeHash(int depth, int alpha, int beta, int *move, Line *pline, Board *board);
 
 void reset_hash_table();
 void init_transposition();

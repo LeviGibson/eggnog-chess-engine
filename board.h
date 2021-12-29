@@ -9,7 +9,7 @@ typedef struct Board Board;
 
 #include <string.h>
 #include "bitboard.h"
-#include "nnue/propogate.h"
+#include "nnue/nnue.h"
 
 
 #define start_position "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
@@ -168,6 +168,7 @@ struct Board{
 void remove_illigal_moves(moveList *moves, Board *board);
 void print_move(int move);
 
+void make_null_move(Board *board);
 U64 generate_zobrist_key(Board *board);
 U64 update_zobrist_key(Board *board);
 void init_zobrist_keys();

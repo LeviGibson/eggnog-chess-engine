@@ -3,7 +3,7 @@
 //
 
 #include "board.h"
-#include "nnue/propogate.h"
+#include "nnue/nnue.h"
 
 #include <stdio.h>
 
@@ -43,6 +43,13 @@ void init_zobrist_keys(){
 
 }
 
+void make_null_move(Board *board) {
+    board->side ^= 1;
+    board->zobrist_key_parts[12] = side_keys[board->side];
+    board->current_zobrist_key ^= side_keys[white];
+    board->current_zobrist_key ^= side_keys[black];
+}
+
 U64 update_zobrist_key(Board *board){
 
     U64 key = board->current_zobrist_key;
@@ -77,7 +84,6 @@ U64 update_zobrist_key(Board *board){
 
     board->zobrist_key_parts[12] = side_keys[board->side];
     board->zobrist_key_parts[13] = castle_keys[board->castle];
-    //memcpy(&zobrist_key_bitboards, &bitboards, sizeof bitboards);
 
     return key;
 }
@@ -649,7 +655,7 @@ int make_move(int move, int flag, int notquinode, Board *board){
         }
 
         //UPDATE ZOBRIST HISTORY
-        if (notquinode) {
+        if (1) {
             board->current_zobrist_key = update_zobrist_key(board);
             board->zobrist_history[board->zobrist_history_length] = board->current_zobrist_key;
             board->zobrist_history_length++;
