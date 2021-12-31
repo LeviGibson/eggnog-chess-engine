@@ -500,8 +500,8 @@ const int castling_right_table[64] = {
 };
 
 void refresh_weak_squares(Board *board){
-    U64 *wb = &board->weaksquares[white];
-    U64 *bb = &board->weaksquares[black];
+    U64 *wb = &board->unprotectedPieces[white];
+    U64 *bb = &board->unprotectedPieces[black];
 
     *wb = 0ULL;
     *bb = 0ULL;
@@ -544,6 +544,9 @@ void refresh_weak_squares(Board *board){
             pop_bit(bitboard, square);
         }
     }
+
+    *wb = (~*wb) & board->occupancies[white];
+    *bb = (~*bb) & board->occupancies[black];
 }
 
 int make_move(int move, int flag, int notquinode, Board *board){

@@ -28,4 +28,4 @@ def show(ptype, dst):
         plt.imshow(movetotals[i].reshape(8,8,1), cmap='gray')
         plt.show()
 
-show(N, chess.F5)
+show(N, chess.D5)

@@ -56,7 +56,7 @@ struct Board{
 
     U64 bitboards[12];
     U64 occupancies[3];
-    U64 weaksquares[2];
+    U64 unprotectedPieces[2];
 
     U64 current_zobrist_key;
 

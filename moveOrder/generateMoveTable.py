@@ -31,7 +31,7 @@ def piece_to_ordinal(piece : chess.Piece):
 
 if __name__ == '__main__':
 
-    for gameid in range(1000):
+    for gameid in range(100000):
         print(gameid)
         game = chess.pgn.read_game(infile)
         moves = game.mainline_moves()
@@ -39,14 +39,18 @@ if __name__ == '__main__':
         board = chess.Board()
 
         for move in moves:
+            if board.is_capture(move):
+                board.push(move)
+                continue
+
             pmap = board.piece_map()
             movedPiece = piece_to_ordinal(pmap[move.from_square])
 
-            for sq in range(64):
-                if board.is_attacked_by(chess.WHITE, sq):
+            for sq in pmap:
+                if pmap[sq].color == chess.WHITE and not board.is_attacked_by(chess.WHITE, sq):
                     moveAverages[movedPiece][w_pers[move.to_square]][WWS][w_pers[sq]] += 1
                     pieceAverages[WWS][w_pers[sq]] += 1
-                if board.is_attacked_by(chess.BLACK, sq):
+                if pmap[sq].color == chess.BLACK and not board.is_attacked_by(chess.BLACK, sq):
                     moveAverages[movedPiece][w_pers[move.to_square]][BWS][w_pers[sq]] += 1
                     pieceAverages[BWS][w_pers[sq]] += 1
 
@@ -93,7 +97,7 @@ if __name__ == '__main__':
     outfile = open("moveOrderData.c", 'w')
 
     outfile.write("#include \"moveOrderData.h\"\n")
-    outfile.write("float moveOrderData[12][64][12][64] = ")
+    outfile.write("float moveOrderData[12][64][14][64] = ")
 
     outfile.write(writearray(moveAverages))
 

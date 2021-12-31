@@ -300,7 +300,7 @@ int score_move(int move, const int *hashmove, Board *board){
                 if (bb < 12)
                     bitboard = board->bitboards[bb];
                 else
-                    bitboard = board->weaksquares[bb - 12];
+                    bitboard = board->unprotectedPieces[bb - 12];
 
                 if (board->ply < 5) {
                     score = getScoreFromMoveTable(bitboard, bbPart);
