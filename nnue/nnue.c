@@ -4,10 +4,10 @@
 #include "nnue.h"
 #include "../transposition.h"
 #include <string.h>
+#include <stdio.h>
 
 #ifdef AVX2
 #include <immintrin.h>
-#include <stdio.h>
 #endif
 
 typedef struct EvalHashEntry EvalHashEntry;
