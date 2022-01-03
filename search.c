@@ -303,9 +303,9 @@ int score_move(int move, const int *hashmove, Board *board){
                     bitboard = board->unprotectedPieces[bb - 12];
 
                 if (board->ply < 5) {
-                    score = getScoreFromMoveTable(bitboard, bbPart);
+                    score += getScoreFromMoveTable(bitboard, bbPart) / (bb >= 12 ? 1 : 12);
                 } else {
-                    score = fastGetScoreFromMoveTable(bitboard, bbPart);
+                    score += fastGetScoreFromMoveTable(bitboard, bbPart) / (bb >= 12 ? 1 : 12);;
                 }
             }
         }
