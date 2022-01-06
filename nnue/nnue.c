@@ -197,15 +197,31 @@ void refresh_accumulator(NnueData *data, Board *board) {
 
 void clamp_layer(int *layer){
     for (int i = 0; i < 32; ++i) {
+        layer[i] = clamp(layer[i], 0, 8128);
         layer[i] /= 64;
-        layer[i] = clamp(layer[i], 0, 127);
     }
 }
 
 void clamp_accumulator(int16_t *acc){
-    for (int i = 0; i < 512; ++i) {
-        acc[i] = CLIPPED_RELU(acc[i]);
+#if defined(AVX2)
+
+    __m256i _127 = _mm256_set1_epi16(127);
+    __m256i _0 = _mm256_set1_epi16(0);
+
+    for (int i = 0; i < 512; i += 16) {
+        __m256i _x = _mm256_load_si256((void*)&acc[i]);
+        _x = _mm256_min_epi16(_x, _127);
+        _x = _mm256_max_epi16(_x, _0);
+        _mm256_storeu_si256((__m256i*)&acc[i], _x);
     }
+
+#else
+
+    for (int i = 0; i < 512; ++i) {
+        acc[i] = clamp(acc[i], 0, 127);
+    }
+
+#endif
 }
 
 static inline void propogate_neuron(const short a, const int8_t *b, int *restrict c) {

@@ -291,7 +291,7 @@ int score_move(int move, const int *hashmove, Board *board){
         char *wspart = &moveOrderWorthSearching[piece][target][0];
 
         for (int bb = 0; bb < 14; bb++){
-            if (wspart[bb] || board->ply < 4) {
+            if (bb == P || bb == p || bb == 12 || bb == 13) {
 
                 float *bbPart = &dataPart[bb * 64];
                 U64 bitboard;
@@ -303,9 +303,9 @@ int score_move(int move, const int *hashmove, Board *board){
                     bitboard = board->unprotectedPieces[bb - 12];
 
                 if (board->ply < 5) {
-                    score += getScoreFromMoveTable(bitboard, bbPart) / (bb >= 12 ? 1 : 12);
+                    score += getScoreFromMoveTable(bitboard, bbPart);
                 } else {
-                    score += fastGetScoreFromMoveTable(bitboard, bbPart) / (bb >= 12 ? 1 : 12);;
+                    score += fastGetScoreFromMoveTable(bitboard, bbPart);
                 }
             }
         }
@@ -406,7 +406,7 @@ static inline int quiesce(int alpha, int beta, Board *board) {
 
 }
 
-static inline int ZwSearch(int beta, int depth, Board *board){
+int ZwSearch(int beta, int depth, Board *board){
     nodes++;
 
     if (nodes % 2048 == 0)
@@ -416,13 +416,13 @@ static inline int ZwSearch(int beta, int depth, Board *board){
         return 0;
     }
 
-    if (depth == 0)
+    if (depth <= 0)
         return quiesce(beta-1, beta, board);
+
+    int tmp[4] = {0,0,0,0};
 
     moveList legalMoves;
     legalMoves.count = 0;
-
-    int tmp[4] = {0,0,0,0};
 
     generate_moves(&legalMoves, board);
     sort_moves(&legalMoves, tmp, board);
@@ -430,11 +430,11 @@ static inline int ZwSearch(int beta, int depth, Board *board){
     copy_board();
 
     for (int moveId = 0; moveId < legalMoves.count; moveId++){
-        int move  = legalMoves.moves[moveId];
+        int move = legalMoves.moves[moveId];
 
         int score;
 
-        if (make_move(move, all_moves, 0, board)){
+        if (make_move(move, all_moves, 1, board)){
 
             score = -ZwSearch(-beta + 1, depth-1, board);
 
@@ -445,6 +445,7 @@ static inline int ZwSearch(int beta, int depth, Board *board){
             }
         }
     }
+
     return beta-1;
 }
 

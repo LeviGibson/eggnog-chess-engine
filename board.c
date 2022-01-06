@@ -658,12 +658,9 @@ int make_move(int move, int flag, int notquinode, Board *board){
         }
 
         //UPDATE ZOBRIST HISTORY
-        if (1) {
-            board->current_zobrist_key = update_zobrist_key(board);
-            board->zobrist_history[board->zobrist_history_length] = board->current_zobrist_key;
-            board->zobrist_history_length++;
-        } else
-            board->current_zobrist_key = 0ULL;
+        board->current_zobrist_key = update_zobrist_key(board);
+        board->zobrist_history[board->zobrist_history_length] = board->current_zobrist_key;
+        board->zobrist_history_length++;
     } else {
         if (getcapture(move) || is_move_direct_check(move, board) || getpromoted(move)){
             return make_move(move, all_moves, notquinode, board);
