@@ -1,54 +1,76 @@
-FILES = main.c\
- syzygy.c\
- bitboard.c\
- board.c\
- perft.c\
- uci.c\
- search.c\
- timeman.c\
- transposition.c\
- moveOrder.c\
- Fathom/*.c\
- moveOrderData.c\
- nnue/nnue.c
+OBJS = main.c.o\
+ syzygy.c.o\
+ bitboard.c.o\
+ board.c.o\
+ perft.c.o\
+ uci.c.o\
+ timeman.c.o\
+ transposition.c.o\
+ moveOrder.c.o\
+ Fathom/tbchess.c.o\
+ Fathom/tbprobe.c.o \
+ moveOrderData.c.o
 
+AVX2_OBJS = search.c.avx2.o \
+       nnue/nnue.c.avx2.o 
+AVX_OBJS = search.c.avx.o \
+       nnue/nnue.c.avx.o 
+SSE2_OBJS = search.c.sse2.o \
+       nnue/nnue.c.sse2.o 
+SSE_OBJS = search.c.sse.o \
+       nnue/nnue.c.sse.o 
+POPCNT_OBJS = search.c.popcnt.o \
+       nnue/nnue.c.popcnt.o 
+
+OS = linux
 FILE = ./bin/eggnog-chess-engine
-COMMONFLAGS = -O3 -pthread
-WINFLAGS = -l:libwinpthread.a
+COMMONFLAGS = -O3 -fcommon
+ifeq ($(OS), linux)
+EXECUTABLE_FILENAME =
+CC=gcc
+LINK_OPTS = -lpthread
+else
+EXECUTABLE_FILENAME =.exe
+CC=x86_64-w64-mingw32-gcc
+LINK_OPTS = -l:libwinpthread.a
+endif
+all: avx2 avx sse sse2 popcnt
+avx2: $(OBJS) $(AVX2_OBJS)
+	$(CC) $(OBJS) $(AVX2_OBJS) $(LINK_OPTS) -o $(FILE)-avx2-$(OS)$(EXECUTABLE_FILENAME)
+avx:  $(OBJS) $(AVX_OBJS)
+	$(CC) $(OBJS) $(AVX_OBJS) $(LINK_OPTS) -o $(FILE)-avx-$(OS)$(EXECUTABLE_FILENAME)
+sse: $(OBJS) $(SSE_OBJS)
+	$(CC) $(OBJS) $(SSE_OBJS) $(LINK_OPTS) -o $(FILE)-sse-$(OS)$(EXECUTABLE_FILENAME)
+sse2: $(OBJS) $(SSE2_OBJS)
+	$(CC) $(OBJS) $(SSE2_OBJS) $(LINK_OPTS) -o $(FILE)-sse2-$(OS)$(EXECUTABLE_FILENAME)
+popcnt: $(OBJS) $(POPCNT_OBJS)
+	$(CC) $(OBJS) $(POPCNT_OBJS) $(LINK_OPTS) -o $(FILE)-popcnt-$(OS)$(EXECUTABLE_FILENAME)
 
-all:
-	make avx2 && make avx && make sse && make sse2 && make popcnt
-release:
-	make avx2 && make avx && make sse && make sse2 && make popcnt && make win_avx2 && make win_avx && make win_sse && make win_sse2 && make win_popcnt
-avx2:
-	gcc $(COMMONFLAGS) -DAVX2 -mavx2 $(FILES) -o $(FILE)-avx2-linux
-avx:
-	gcc $(COMMONFLAGS) -DAVX -mavx $(FILES) -o $(FILE)-avx-linux
-sse:
-	gcc $(COMMONFLAGS) -DSSE -msse $(FILES) -o $(FILE)-sse-linux
-sse2:
-	gcc $(COMMONFLAGS) -DSSE2 -msse2 $(FILES) -o $(FILE)-sse2-linux
-popcnt:
-	gcc $(COMMONFLAGS) -DPOPCNT -mpopcnt $(FILES) -o $(FILE)-popcnt-linux
-win_avx2:
-	x86_64-w64-mingw32-gcc -o $(FILE)-avx2.exe $(FILES) -mavx2 -DAVX2 $(COMMONFLAGS) $(WINFLAGS)
-win_avx:
-	x86_64-w64-mingw32-gcc -o $(FILE)-avx.exe $(FILES) -mavx -DAVX $(COMMONFLAGS) $(WINFLAGS)
-win_sse:
-	x86_64-w64-mingw32-gcc -o $(FILE)-sse.exe $(FILES) -msse -DSSE $(COMMONFLAGS) $(WINFLAGS)
-win_sse2:
-	x86_64-w64-mingw32-gcc -o $(FILE)-sse2.exe $(FILES) -msse2 -DSSE2 $(COMMONFLAGS) $(WINFLAGS)
-win_popcnt:
-	x86_64-w64-mingw32-gcc -o $(FILE)-sse2.exe $(FILES) -mpopcnt -DPOPCNT $(COMMONFLAGS) $(WINFLAGS)
+%.c.o: %.c
+	$(CC) $< $(COMMONFLAGS) -c -o $@
+%.c.avx2.o: %.c
+	$(CC) $< $(COMMONFLAGS) -DAVX2 -mavx2 -c -o $@
+%.c.avx.o: %.c
+	$(CC) $< $(COMMONFLAGS) -DSSE -msse -c -o $@
+%.c.sse2.o: %.c
+	$(CC) $< $(COMMONFLAGS) -DSSE2 -msse2 -c -o $@
+%.c.sse.o: %.c
+	$(CC) $< $(COMMONFLAGS) -DAVX -mavx -c -o $@
+%.c.popcnt.o: %.c
+	$(CC) $< $(COMMONFLAGS) -DPOPCNT -mpopcnt -c -o $@
+mingw:
+	make OS=win
+mingwj:
+	make OS=win -j
 debug:
-	gcc $(FILES) -pthread -o $(FILE)-debug
+	$(CC) $(FILES) -pthread -o $(FILE)-debug
 gdb:
-	gcc $(COMMONFLAGS) -DAVX2 -mavx2 $(FILES) -g
+	$(CC) $(COMMONFLAGS) -DAVX2 -mavx2 $(FILES) -g
 	mv ./a.out ./bin/a.out
 prof:
-	gcc -pg -DAVX2 -mavx2 -pthread -O3 $(FILES) -o $(FILE)-prof
+	$(CC) -pg -DAVX2 -mavx2 -pthread -O3 $(FILES) -o $(FILE)-prof
 asm:
-	gcc $(FILES) $(NNUEFILES) -fverbose-asm -mavx2 -S
+	$(CC) $(FILES) $(NNUEFILES) -fverbose-asm -mavx2 -S
 clean:
 	rm -f *.gch
 	rm -f nnue/*.gch
@@ -56,3 +78,6 @@ clean:
 	rm -f ./bin/a.out
 	rm -f ./bin/eggnog-chess-engine*
 	rm -f *.s
+	rm -f $(OBJS)
+	rm -f $(AVX2_OBJS) $(AVX_OBJS) $(SSE2_OBJS) $(SSE_OBJS) $(POPCNT_OBJS)
+

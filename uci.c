@@ -175,7 +175,10 @@ void parse_go(char *command) {
         moveTime = choose_movetime(wtime, btime, UciBoard.side);
     }
 
-    pthread_create(&searchthread, NULL, search_position, &depth);
+    pthread_create(&searchthread, NULL, search_position, &depth);\
+    if(!searchthread){
+	printf("Failed to create searchthread");
+    }
 }
 
 void uci_loop() {
@@ -196,7 +199,9 @@ void uci_loop() {
             continue;
         } else {
             stop = 1;
-            pthread_join(searchthread, NULL);
+	    if(searchthread){
+            	pthread_join(searchthread, NULL);
+	    }
             stop = 0;
         }
 
