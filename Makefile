@@ -1,7 +1,6 @@
 OBJS = main.c.o\
  syzygy.c.o\
  bitboard.c.o\
- board.c.o\
  perft.c.o\
  uci.c.o\
  timeman.c.o\
@@ -12,15 +11,20 @@ OBJS = main.c.o\
  moveOrderData.c.o
 
 AVX2_OBJS = search.c.avx2.o \
-       nnue/nnue.c.avx2.o 
+       nnue/nnue.c.avx2.o \
+       board.c.avx2.o
 AVX_OBJS = search.c.avx.o \
-       nnue/nnue.c.avx.o 
+       nnue/nnue.c.avx.o \
+       board.c.avx.o
 SSE2_OBJS = search.c.sse2.o \
-       nnue/nnue.c.sse2.o 
+       nnue/nnue.c.sse2.o \
+       board.c.sse2.o
 SSE_OBJS = search.c.sse.o \
-       nnue/nnue.c.sse.o 
+       nnue/nnue.c.sse.o \
+       board.c.sse.o
 POPCNT_OBJS = search.c.popcnt.o \
-       nnue/nnue.c.popcnt.o 
+       nnue/nnue.c.popcnt.o \
+       board.c.popcnt.o
 
 OS = linux
 FILE = ./bin/eggnog-chess-engine
