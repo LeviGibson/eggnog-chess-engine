@@ -60,38 +60,18 @@ static inline void swap(int* a, int* b)
     *b = t;
 }
 
-static inline int partition (int arr[], int low, int high, moveList *movearr)
-{
-    int pivot = arr[high]; // pivot
-    int i = (low - 1); // Index of smaller element and indicates the right position of pivot found so far
-
-    for (int j = low; j <= high - 1; j++)
-    {
-        // If current element is smaller than the pivot
-        if (arr[j] > pivot)
-        {
-            i++; // increment index of smaller element
-            swap(&arr[i], &arr[j]);
-            swap(&(movearr->moves[i]), &(movearr->moves[j]));
+void insertion_sort(int *scores, moveList *movearr){
+    int i = 1;
+    while (i < movearr->count){
+        int j = i;
+        while (j > 0 && scores[j-1] < scores[j]) {
+            swap(&scores[j], &scores[j - 1]);
+            swap(&movearr->moves[j], &movearr->moves[j - 1]);
+            j--;
         }
-    }
-
-    swap(&arr[i + 1], &arr[high]);
-    swap(&(movearr->moves[i+1]), &(movearr->moves[high]));
-
-    return (i + 1);
-}
-
-void quickSort(int arr[], int low, int high, moveList *movearr)
-{
-    if (low < high)
-    {
-        int pi = partition(arr, low, high, movearr);
-        quickSort(arr, low, pi - 1, movearr);
-        quickSort(arr, pi + 1, high, movearr);
+        i++;
     }
 }
-
 
 U64 pastPawnMasks[2][64] = {
         {0x0ULL, 0x0ULL, 0x0ULL, 0x0ULL,
@@ -329,20 +309,18 @@ static inline void sort_moves(moveList *move_list, int *hashmove, Board *board){
     for (int i = 0; i < move_list->count; i++) {
         scores[i] = score_move(move_list->moves[i], hashmove, board);
     }
-    int zerosFound = 0;
-    quickSort(scores, 0, (int )(move_list->count) - 1 - zerosFound, move_list);
 
-    /**
-    if (board->ply == 0) {
-        print_fen(board);
-        printf("\n");
-        for (int i = 0; i < move_list->count; i++) {
-            print_move(move_list->moves[i]);
-            printf(" : %d\n", scores[i]);
-        }
-        printf("\n\n");
-    }
-     **/
+    insertion_sort(scores, move_list);
+
+//    if (board->ply == 0) {
+//        print_fen(board);
+//        printf("\n");
+//        for (int i = 0; i < move_list->count; i++) {
+//            print_move(move_list->moves[i]);
+//            printf(" : %d\n", scores[i]);
+//        }
+//        printf("\n\n");
+//    }
 }
 
 static inline int quiesce(int alpha, int beta, Board *board) {

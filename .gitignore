@@ -5,14 +5,4 @@ bin/eggnog-chess-engine*
 moveOrder/data.pgn
 moveOrder/__pycache__
 moveOrder/.idea
-
-#bin/eggnog-chess-engine-avx.exe
-#bin/eggnog-chess-engine-avx2.exe
-#bin/eggnog-chess-engine-avx2-linux
-#bin/eggnog-chess-engine-avx-linux
-#bin/eggnog-chess-engine-prof
-#bin/eggnog-chess-engine-debug
-#bin/eggnog-chess-engine-sse.exe
-#bin/eggnog-chess-engine-sse2.exe
-#bin/eggnog-chess-engine-sse2-linux
-#bin/eggnog-chess-engine-sse-linux
+*.o
