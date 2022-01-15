@@ -16,7 +16,7 @@ static inline void perft_driver(int depth, Board *board){
     return;
   }
 
-  moveList legalMoves;
+  MoveList legalMoves;
   legalMoves.count = 0;
 
   generate_moves(&legalMoves, board);
@@ -38,7 +38,7 @@ void perft_test(int depth, Board *board){
 
   int startingTime = get_time_ms();
 
-  moveList legalMoves;
+  MoveList legalMoves;
   legalMoves.count = 0;
 
   generate_moves(&legalMoves, board);

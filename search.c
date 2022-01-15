@@ -60,12 +60,12 @@ static inline void swap(int* a, int* b)
     *b = t;
 }
 
-void insertion_sort(int *scores, moveList *movearr){
+void insertion_sort(MoveList *movearr){
     int i = 1;
     while (i < movearr->count){
         int j = i;
-        while (j > 0 && scores[j-1] < scores[j]) {
-            swap(&scores[j], &scores[j - 1]);
+        while (j > 0 && movearr->scores[j-1] < movearr->scores[j]) {
+            swap(&movearr->scores[j], &movearr->scores[j - 1]);
             swap(&movearr->moves[j], &movearr->moves[j - 1]);
             j--;
         }
@@ -302,15 +302,12 @@ int score_move(int move, const int *hashmove, Board *board){
 }
 
 
-static inline void sort_moves(moveList *move_list, int *hashmove, Board *board){
-
-    int scores[move_list->count];
-
+static inline void sort_moves(MoveList *move_list, int *hashmove, Board *board){
     for (int i = 0; i < move_list->count; i++) {
-        scores[i] = score_move(move_list->moves[i], hashmove, board);
+        move_list->scores[i] = score_move(move_list->moves[i], hashmove, board);
     }
 
-    insertion_sort(scores, move_list);
+    insertion_sort(move_list);
 
 //    if (board->ply == 0) {
 //        print_fen(board);
@@ -350,7 +347,7 @@ static inline int quiesce(int alpha, int beta, Board *board) {
         alpha = stand_pat;
     }
 
-    moveList legalMoves;
+    MoveList legalMoves;
     legalMoves.count = 0;
 
     U64 old_occupancies = board->occupancies[white] | board->occupancies[black];
@@ -399,7 +396,7 @@ int ZwSearch(int beta, int depth, Board *board){
 
     int tmp[4] = {0,0,0,0};
 
-    moveList legalMoves;
+    MoveList legalMoves;
     legalMoves.count = 0;
 
     generate_moves(&legalMoves, board);
@@ -427,7 +424,7 @@ int ZwSearch(int beta, int depth, Board *board){
     return beta-1;
 }
 
-void find_pv(moveList *moves, Board *board){
+void find_pv(MoveList *moves, Board *board){
     if (board->helperThread)
         return;
 
@@ -457,13 +454,15 @@ static inline int negamax(int depth, int alpha, int beta, Line *pline, Board *bo
     if (in_check)
         depth++;
 
+    int isPastPawnPush = 0;
+
     if (board->occupancies[both] == (WK | BK | WP | BP)) {
         if (getpiece(board->prevmove) == P) {
             if (!(pastPawnMasks[white][gettarget(board->prevmove)] & board->bitboards[p]))
-                depth++;
+                isPastPawnPush = 1;
         } else if (getpiece(board->prevmove) == P) {
             if (!(pastPawnMasks[black][gettarget(board->prevmove)] & board->bitboards[P]))
-                depth++;
+                isPastPawnPush = 1;
         }
     }
 
@@ -575,7 +574,7 @@ static inline int negamax(int depth, int alpha, int beta, Line *pline, Board *bo
         }
     }
 
-    moveList legalMoves;
+    MoveList legalMoves;
     memset(&legalMoves, 0, sizeof legalMoves);
 
     generate_moves(&legalMoves, board);
@@ -599,14 +598,13 @@ static inline int negamax(int depth, int alpha, int beta, Line *pline, Board *bo
 
             legalMoveCount++;
 
-
             if (legalMoveCount == 0) {
                 eval = -negamax(depth - 1, -beta, -alpha, &line, board);
             } else {
                 //LMR
                 //NO_LMR test for debugging purposes.
 
-                if ((depth >= 3) && (legalMoveCount > 5) && (in_check == 0) && (getcapture(move) == 0) && (getpromoted(move) == 0)) {
+                if ((depth >= 3) && (legalMoves.scores[moveId] < 30) && (in_check == 0) && (getcapture(move) == 0) && (!isPastPawnPush)) {
 #ifndef NO_LMR
                     eval = -negamax(depth - 2, -alpha - 1, -alpha, &line, board);
 #else
@@ -809,7 +807,7 @@ void *search_position(void *arg){
     int tmp[4] = {0,0,0,0};
     reset_hash_table();
 
-    moveList legalMoves;
+    MoveList legalMoves;
     generate_moves(&legalMoves, &board);
     remove_illigal_moves(&legalMoves, &board);
     sort_moves(&legalMoves, tmp, &board);

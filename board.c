@@ -154,7 +154,7 @@ int is_threefold_repetition(Board *board){
 
 }
 
-static inline void generate_knight_moves(moveList *legalMoves, Board *board){
+static inline void generate_knight_moves(MoveList *legalMoves, Board *board){
     int ptype = ((board->side == white) ? N : n);
     U64 bitboard = board->bitboards[ptype];
 
@@ -184,7 +184,7 @@ static inline void generate_knight_moves(moveList *legalMoves, Board *board){
     }
 }
 
-static inline void generate_pawn_moves(moveList *legalMoves, Board *board){
+static inline void generate_pawn_moves(MoveList *legalMoves, Board *board){
     int ptype = ((board->side == white) ? P : p);
     U64 bitboard = board->bitboards[ptype];
 
@@ -297,7 +297,7 @@ static inline void generate_pawn_moves(moveList *legalMoves, Board *board){
     }
 }
 
-static inline void generate_bishop_moves(moveList *legalMoves, Board *board){
+static inline void generate_bishop_moves(MoveList *legalMoves, Board *board){
     int ptype = ((board->side == white) ? B : b);
     U64 bitboard = board->bitboards[ptype];
 
@@ -326,7 +326,7 @@ static inline void generate_bishop_moves(moveList *legalMoves, Board *board){
     }
 }
 
-static inline void generate_rook_moves(moveList *legalMoves, Board *board){
+static inline void generate_rook_moves(MoveList *legalMoves, Board *board){
     int ptype = ((board->side == white) ? R : r);
     U64 bitboard = board->bitboards[ptype];
 
@@ -356,7 +356,7 @@ static inline void generate_rook_moves(moveList *legalMoves, Board *board){
     }
 }
 
-static inline void generate_queen_moves(moveList *legalMoves, Board *board){
+static inline void generate_queen_moves(MoveList *legalMoves, Board *board){
     int ptype = ((board->side == white) ? Q : q);
     U64 bitboard = board->bitboards[ptype];
 
@@ -385,7 +385,7 @@ static inline void generate_queen_moves(moveList *legalMoves, Board *board){
     }
 }
 
-static inline void generate_king_moves(moveList *legalMoves, Board *board){
+static inline void generate_king_moves(MoveList *legalMoves, Board *board){
     int ptype = ((board->side == white) ? K : k);
     U64 bitboard = board->bitboards[ptype];
 
@@ -477,7 +477,7 @@ static inline void update_occupancies(Board *board){
     board->occupancies[both] = (board->occupancies[black] | board->occupancies[white]);
 }
 
-void generate_moves(moveList *legalMoves, Board *board){
+void generate_moves(MoveList *legalMoves, Board *board){
     legalMoves->count = 0;
 
     generate_knight_moves(legalMoves, board);
@@ -677,7 +677,7 @@ int make_move(int move, int flag, int notquinode, Board *board){
     return 1;
 }
 
-void remove_illigal_moves(moveList *moves, Board *board){
+void remove_illigal_moves(MoveList *moves, Board *board){
     copy_board();
     for (int i = 0; i < moves->count; ++i) {
         if (make_move(moves->moves[i], all_moves, 1, board)) {

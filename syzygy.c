@@ -9,7 +9,7 @@
 
 int parse_tb_move(unsigned from, unsigned to, Board *board){
 
-    moveList legalMoves;
+    MoveList legalMoves;
     memset(&legalMoves, 0, sizeof legalMoves);
     generate_moves(&legalMoves, board);
 

@@ -47,7 +47,7 @@ void change_to_correct_directory(char *argv){
 
 int parse_move(char *move_string) {
 
-    moveList legalMoves;
+    MoveList legalMoves;
     legalMoves.count = 0;
     generate_moves(&legalMoves, &UciBoard);
 

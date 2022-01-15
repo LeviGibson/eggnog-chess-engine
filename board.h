@@ -37,8 +37,9 @@ enum {all_moves, only_captures};
 
 typedef struct {
     int moves[256];
+    int scores[256];
     U32 count;
-} moveList;
+} MoveList;
 
 typedef struct tagLINE {
     int length;              // Number of moves in the line.
@@ -165,7 +166,7 @@ struct Board{
 //    prevmove = prevmove_copy;\
 //    zobrist_history_length = zobrist_history_length_copy                 \
 
-void remove_illigal_moves(moveList *moves, Board *board);
+void remove_illigal_moves(MoveList *moves, Board *board);
 void print_move(int move);
 
 void make_null_move(Board *board);
@@ -175,7 +176,7 @@ void init_zobrist_keys();
 
 int is_threefold_repetition(Board *board);
 
-void generate_moves(moveList *legalMoves, Board *board);
+void generate_moves(MoveList *legalMoves, Board *board);
 int make_move(int move, int flag, int notquinode, Board *board);
 
 int is_square_attacked(int square, int testingSide, Board *board);
