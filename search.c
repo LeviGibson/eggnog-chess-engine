@@ -265,13 +265,13 @@ int score_move(int move, const int *hashmove, Board *board){
         int piece = getpiece(move);
         int target = gettarget(move);
 
-        float *dataPart = &moveOrderData[piece][target][0][0];
+        const float *dataPart = &moveOrderData[piece][target][0][0];
         char *wspart = &moveOrderWorthSearching[piece][target][0];
 
         for (int bb = 0; bb < 14; bb++){
             if (bb == P || bb == p || bb == 12 || bb == 13 || wspart[bb]) {
 
-                float *bbPart = &dataPart[bb * 64];
+                const float *bbPart = &dataPart[bb * 64];
                 U64 bitboard;
 
                 //there are two other bitboards that represent what squares each side attacks
@@ -318,7 +318,9 @@ static inline void sort_moves(MoveList *move_list, int *hashmove, Board *board){
 //    }
 }
 
-static inline int quiesce(int alpha, int beta, Board *board) {
+static inline int quiesce(int alpha, int beta, Thread *thread) {
+    Board *board = &thread->board;
+
     if (board->ply > selDepth){
         selDepth = board->ply;
     }
@@ -366,7 +368,7 @@ static inline int quiesce(int alpha, int beta, Board *board) {
         int move = legalMoves.moves[moveId];
 
         if (make_move(move, only_captures, 0, board)){
-            int score = -quiesce(-beta, -alpha, board);
+            int score = -quiesce(-beta, -alpha, thread);
 
             take_back();
 
@@ -396,7 +398,7 @@ int ZwSearch(int beta, int depth, Thread *thread){
     Board *board = &thread->board;
 
     if (depth <= 0) {
-        int qui = quiesce(beta - 1, beta, board);
+        int qui = quiesce(beta - 1, beta, thread);
         return qui;
     }
 
@@ -417,7 +419,7 @@ int ZwSearch(int beta, int depth, Thread *thread){
 
         if (make_move(move, all_moves, 1, board)){
 
-            score = -ZwSearch(-beta + 1, depth-1, board);
+            score = -ZwSearch(-beta + 1, depth-1, thread);
 
             take_back();
 
@@ -534,7 +536,7 @@ static inline int negamax(int depth, int alpha, int beta, Line *pline, Thread *t
 
     if (depth <= 0) {
         pline->length = 0;
-        return quiesce(alpha, beta, board);
+        return quiesce(alpha, beta, thread);
     }
 
     int eval;
@@ -567,13 +569,13 @@ static inline int negamax(int depth, int alpha, int beta, Line *pline, Thread *t
         if (value < beta) {
             int new_value;
             if (depth == 1) {
-                new_value = quiesce(alpha, beta, board);
+                new_value = quiesce(alpha, beta, thread);
                 pline->length = 0;
                 return max(value, new_value);
             }
             value += (175 * 64);
             if (value < beta && depth <= 3) {
-                new_value = quiesce(alpha, beta, board);
+                new_value = quiesce(alpha, beta, thread);
                 if (new_value < beta) {
                     pline->length = 0;
                     return max(new_value, value);
@@ -607,14 +609,14 @@ static inline int negamax(int depth, int alpha, int beta, Line *pline, Thread *t
             legalMoveCount++;
 
             if (legalMoveCount == 0) {
-                eval = -negamax(depth - 1, -beta, -alpha, &line, board);
+                eval = -negamax(depth - 1, -beta, -alpha, &line, thread);
             } else {
                 //LMR
                 //NO_LMR test for debugging purposes.
 
                 if ((depth >= 3) && (legalMoves.scores[moveId] < 30) && (in_check == 0) && (getcapture(move) == 0) && (!isPastPawnPush)) {
 #ifndef NO_LMR
-                    eval = -negamax(depth - 2, -alpha - 1, -alpha, &line, board);
+                    eval = -negamax(depth - 2, -alpha - 1, -alpha, &line, thread);
 #else
                     eval = alpha + 1;
 #endif
@@ -634,9 +636,9 @@ static inline int negamax(int depth, int alpha, int beta, Line *pline, Thread *t
 //                        }
 //                    }
 
-                    eval = -negamax(depth - 1, -alpha - 1, -alpha, &line, board);
+                    eval = -negamax(depth - 1, -alpha - 1, -alpha, &line, thread);
                     if ((eval > alpha) && (eval < beta)) {
-                        eval = -negamax(depth - 1, -beta, -alpha, &line, board);
+                        eval = -negamax(depth - 1, -beta, -alpha, &line, thread);
                     }
                 }
             }
@@ -852,7 +854,7 @@ void *search_position(void *arg){
 
         depthTime[currentDepth] = (float )get_time_ms();
 
-        int nmRes = negamax(currentDepth, alpha, beta, &negamax_line, board);
+        int nmRes = negamax(currentDepth, alpha, beta, &negamax_line, &thread);
 
         if (stop) {
             break;
@@ -876,7 +878,7 @@ void *search_position(void *arg){
 
             memset(&negamax_line, 0, sizeof negamax_line);
 
-            nmRes = negamax(currentDepth, alpha, beta, &negamax_line, board);
+            nmRes = negamax(currentDepth, alpha, beta, &negamax_line, &thread);
 
         } else {
             aspwindow -= (aspwindow/2);
