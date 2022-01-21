@@ -124,8 +124,6 @@ float sum8(__m256 x) {
     return _mm_cvtss_f32(sum);
 }
 
-//info score cp 24 depth 9 seldepth 21 nodes 1090335 qnodes 568126 tbhits 0 time 1496 pv e2e4 e7e6 d2d4 d7d5 b1d2 d5e4 d2e4 g8f6 e4f6
-
 
 //taken from https://stackoverflow.com/questions/48811369/how-to-use-bits-in-a-byte-to-set-dwords-in-ymm-register-without-avx2-inverse-o
 __m256i inverse_movemask_ps(int bitmap) {

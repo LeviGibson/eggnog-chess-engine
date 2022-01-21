@@ -97,7 +97,7 @@ if __name__ == '__main__':
     outfile = open("moveOrderData.c", 'w')
 
     outfile.write("#include \"moveOrderData.h\"\n")
-    outfile.write("float moveOrderData[12][64][14][64] = ")
+    outfile.write("const float moveOrderData[12][64][14][64] = ")
 
     outfile.write(writearray(moveAverages))
 
