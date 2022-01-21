@@ -271,7 +271,7 @@ int score_move(int move, const int *hashmove, Board *board){
         char *wspart = &moveOrderWorthSearching[piece][target][0];
 
         for (int bb = 0; bb < 14; bb++){
-            if (bb == P || bb == p || bb == 12 || bb == 13) {
+            if (bb == P || bb == p || bb == 12 || bb == 13 || wspart[bb]) {
 
                 float *bbPart = &dataPart[bb * 64];
                 U64 bitboard;
@@ -325,6 +325,10 @@ static inline int quiesce(int alpha, int beta, Board *board) {
         selDepth = board->ply;
     }
 
+//    if (board->ply > board->quiply){
+//        board->quiply = board->ply;
+//    }
+
     board->searchDepth = 0;
 
     if (nodes % 2048 == 0)
@@ -377,11 +381,11 @@ static inline int quiesce(int alpha, int beta, Board *board) {
         }
     }
 
-    return alpha;
 
+    return alpha;
 }
 
-int ZwSearch(int beta, int depth, Board *board){
+int ZwSearch(int beta, int depth, Thread *thread){
     nodes++;
 
     if (nodes % 2048 == 0)
@@ -391,8 +395,12 @@ int ZwSearch(int beta, int depth, Board *board){
         return 0;
     }
 
-    if (depth <= 0)
-        return quiesce(beta-1, beta, board);
+    Board *board = &thread->board;
+
+    if (depth <= 0) {
+        int qui = quiesce(beta - 1, beta, board);
+        return qui;
+    }
 
     int tmp[4] = {0,0,0,0};
 
@@ -437,7 +445,7 @@ void find_pv(MoveList *moves, Board *board){
     }
 }
 
-static inline int negamax(int depth, int alpha, int beta, Line *pline, Board *board) {
+static inline int negamax(int depth, int alpha, int beta, Line *pline, Thread *thread) {
     //general maintenence
     nodes++;
 
@@ -447,6 +455,8 @@ static inline int negamax(int depth, int alpha, int beta, Line *pline, Board *bo
     if (stop) {
         return 0;
     }
+
+    Board *board = &thread->board;
 
     //do check extensions before probing hash table
     int in_check = is_square_attacked(bsf((board->side == white) ? board->bitboards[K] : board->bitboards[k]), (board->side ^ 1), board);
@@ -537,7 +547,7 @@ static inline int negamax(int depth, int alpha, int beta, Line *pline, Board *bo
         make_null_move(board);
         board->enpessant = no_sq;
 
-        eval = -ZwSearch(1 - beta, depth - 3, board);
+        eval = -ZwSearch(1 - beta, depth - 3, thread);
 
         take_back();
         if (eval >= beta) {
@@ -699,11 +709,11 @@ static inline int negamax(int depth, int alpha, int beta, Line *pline, Board *bo
 typedef struct NegamaxArgs NegamaxArgs;
 struct NegamaxArgs{
     Line *pline;
-    Board board;
+    Thread thread;
 };
 
-typedef struct Thread Thread;
-struct Thread{
+typedef struct HelperThread HelperThread;
+struct HelperThread{
     pthread_t pthread;
     Line line;
     NegamaxArgs args;
@@ -714,9 +724,9 @@ void negamax_thread(void *args){
     for (int i = 0; i < max_ply; ++i) {
         memset(nargs->pline, 0, sizeof (Line));
 
-        int eval = negamax(i, DEF_ALPHA, DEF_BETA, nargs->pline, &nargs->board);
+        int eval = negamax(i, DEF_ALPHA, DEF_BETA, nargs->pline, &nargs->thread);
 
-        memcpy(&nargs->board.pv_line, &nargs->pline, sizeof(Line));
+        memcpy(&nargs->thread.board.pv_line, &nargs->pline, sizeof(Line));
 
         if (stop)
             return;
@@ -751,13 +761,15 @@ int willMakeNextDepth(int curd, const float *times){
 void *search_position(void *arg){
     //Table bases
 
-    Board board;
-    memcpy(&board, &UciBoard, sizeof(Board));
+    Thread thread;
+    Board *board = &thread.board;
+
+    memcpy(board, &UciBoard, sizeof(Board));
 
     int depth = *(int*)arg;
 
-    if (get_wdl(&board) != TB_RESULT_FAILED) {
-        int move = get_root_move(&board);
+    if (get_wdl(board) != TB_RESULT_FAILED) {
+        int move = get_root_move(board);
 
         //this is shit code but thats okay its not my fault :)
         if (move != 0) {
@@ -808,19 +820,19 @@ void *search_position(void *arg){
     reset_hash_table();
 
     MoveList legalMoves;
-    generate_moves(&legalMoves, &board);
-    remove_illigal_moves(&legalMoves, &board);
-    sort_moves(&legalMoves, tmp, &board);
+    generate_moves(&legalMoves, board);
+    remove_illigal_moves(&legalMoves, board);
+    sort_moves(&legalMoves, tmp, board);
     int numThreads = threadCount < legalMoves.count ? (int) threadCount : (int) legalMoves.count;
-    Thread threads[numThreads];
+    HelperThread threads[numThreads];
 
     if (threadCount > 1) {
 
         memset(&threads, 0, sizeof threads);
 
         for (int i = 0; i < numThreads; ++i) {
-            threads[i].args = (struct NegamaxArgs) {.pline = &threads[i].line, .board = board};
-            make_move(legalMoves.moves[i], all_moves, 1, &threads[i].args.board);
+            threads[i].args = (struct NegamaxArgs) {.pline = &threads[i].line, .thread.board = *board};
+            make_move(legalMoves.moves[i], all_moves, 1, &threads[i].args.thread.board);
 
             pthread_create(&threads[i].pthread, NULL, (void *(*)(void *)) negamax_thread, &threads[i].args);
         }
@@ -832,7 +844,7 @@ void *search_position(void *arg){
 
     for (int currentDepth = 1; currentDepth <= depth; currentDepth++){
 
-        board.ply = 0;
+        board->ply = 0;
 
         follow_pv = 1;
         found_pv = 0;
@@ -842,7 +854,7 @@ void *search_position(void *arg){
 
         depthTime[currentDepth] = (float )get_time_ms();
 
-        int nmRes = negamax(currentDepth, alpha, beta, &negamax_line, &board);
+        int nmRes = negamax(currentDepth, alpha, beta, &negamax_line, board);
 
         if (stop) {
             break;
@@ -850,7 +862,7 @@ void *search_position(void *arg){
 
         //if the evaluation is outside of aspiration window bounds, reset alpha and beta and continue the search
         if ((nmRes >= beta) || (nmRes <= alpha)){
-            board.ply = 0;
+            board->ply = 0;
             selDepth = 0;
 
             follow_pv = 1;
@@ -866,7 +878,7 @@ void *search_position(void *arg){
 
             memset(&negamax_line, 0, sizeof negamax_line);
 
-            nmRes = negamax(currentDepth, alpha, beta, &negamax_line, &board);
+            nmRes = negamax(currentDepth, alpha, beta, &negamax_line, board);
 
         } else {
             aspwindow -= (aspwindow/2);
@@ -884,12 +896,12 @@ void *search_position(void *arg){
         alpha = nmRes - aspwindow;
         beta = nmRes + aspwindow;
 
-        memcpy(&board.pv_line, &negamax_line, sizeof negamax_line);
+        memcpy(&board->pv_line, &negamax_line, sizeof negamax_line);
         memset(&negamax_line, 0, sizeof negamax_line);
 
         //TIME MANAGMENT
         if (dynamicTimeManagment) {
-            if (board.pv_line.moves[0] == prevBestMove) {
+            if (board->pv_line.moves[0] == prevBestMove) {
                 moveTime -= (moveTime / 8);
             } else {
                 moveTime += (moveTime / 10);
@@ -904,16 +916,16 @@ void *search_position(void *arg){
             }
         }
 
-        prevBestMove = board.pv_line.moves[0];
+        prevBestMove = board->pv_line.moves[0];
 
         printf("info score %s %d depth %d seldepth %d nodes %ld qnodes %ld tbhits %ld time %d pv ",
                (abs(eval) > 4000000) ? "mate" : "cp" , (abs(eval) > 4000000) ? (4900000 - abs(eval)) * (eval / abs(eval)) : eval/64,
                currentDepth, selDepth, nodes, qnodes, tbHits, (get_time_ms() - startingTime));
 
         for (int i = 0; i < currentDepth; i++){
-            if (board.pv_line.moves[i] == 0)
+            if (board->pv_line.moves[i] == 0)
                 break;
-            print_move(board.pv_line.moves[i]);
+            print_move(board->pv_line.moves[i]);
             printf(" ");
         }
 
@@ -940,7 +952,7 @@ void *search_position(void *arg){
     tbsearch = 0;
 
     printf("bestmove ");
-    print_move(board.pv_line.moves[0]);
+    print_move(board->pv_line.moves[0]);
     printf("\n");
 
 }

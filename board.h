@@ -78,6 +78,11 @@ struct Board{
     int helperThread;
 };
 
+typedef struct {
+    Board board;
+    int quiply;
+}Thread;
+
 //MOVE ENCODING____________
 /**
  Moves are encoded in integers like this
