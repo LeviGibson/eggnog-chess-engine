@@ -294,6 +294,12 @@ int score_move(int move, const int *hashmove, Thread *thread){
             }
         }
 
+        if (getpiece(move) == P && !(pastPawnMasks[white][gettarget(move)] & BP))
+            score += .5 * abs(score);
+
+        if (getpiece(move) == p && !(pastPawnMasks[black][gettarget(move)] & WP))
+            score += .5 * abs(score);
+
         score /= 550;
 
         if (historyCount > 0) {
@@ -330,10 +336,6 @@ static inline int quiesce(int alpha, int beta, Thread *thread) {
     if (board->ply > selDepth){
         selDepth = board->ply;
     }
-
-//    if (board->ply > board->quiply){
-//        board->quiply = board->ply;
-//    }
 
     board->searchDepth = 0;
 
