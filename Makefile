@@ -8,7 +8,7 @@ OBJS = main.c.o\
  moveOrder.c.o\
  Fathom/tbchess.c.o\
  Fathom/tbprobe.c.o \
- moveOrderData.c.o
+ moveOrder/moveOrderData.c.o
 
 AVX2_OBJS = search.c.avx2.o \
        nnue/nnue.c.avx2.o \
@@ -76,12 +76,8 @@ prof:
 asm:
 	$(CC) $(FILES) $(NNUEFILES) -fverbose-asm -mavx2 -S
 clean:
-	rm -f *.gch
-	rm -f nnue/*.gch
-	rm -f Fathom/*.gch
 	rm -f ./bin/a.out
 	rm -f ./bin/eggnog-chess-engine*
 	rm -f *.s
-	rm -f $(OBJS)
+	rm -f *.o nnue/*.o Fathom/*.o
 	rm -f $(AVX2_OBJS) $(AVX_OBJS) $(SSE2_OBJS) $(SSE_OBJS) $(POPCNT_OBJS)
-

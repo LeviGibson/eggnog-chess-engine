@@ -5,7 +5,7 @@
 #include <stdio.h>
 #include "moveOrder.h"
 #include "search.h"
-#include "moveOrderData.h"
+#include "moveOrder/moveOrderData.h"
 
 float floatbb_min(const float *x){
     float min = 10000000;
@@ -31,16 +31,19 @@ void init_move_table(){
 
     memset(moveOrderWorthSearching, 0, sizeof(moveOrderWorthSearching));
 
-    for (int piece = 0; piece < 12; ++piece) {
-        for (int square = 0; square < 64; ++square) {
-            for (int bb = 0; bb < 14; ++bb) {
-                float range = floatbb_max(moveOrderData[piece][square][bb]) - floatbb_min(moveOrderData[piece][square][bb]);
-                if (range > 2000.) {
-                    moveOrderWorthSearching[piece][square][bb] = 1;
+    for (int nump = 0; nump < 15; ++nump) {
+        for (int piece = 0; piece < 12; ++piece) {
+            for (int square = 0; square < 64; ++square) {
+                for (int bb = 0; bb < 14; ++bb) {
+                    float range = floatbb_max(moveOrderData[nump][piece][square][bb]) - floatbb_min(moveOrderData[nump][piece][square][bb]);
+                    if (range > 2000.) {
+                        moveOrderWorthSearching[nump][piece][square][bb] = 1;
+                    }
                 }
             }
         }
     }
+
 }
 
 //

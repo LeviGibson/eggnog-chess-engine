@@ -5,6 +5,13 @@ import numpy as np
 WWS = 12
 BWS = 13
 
+def count_set_bits(n):
+    count = 0
+    while (n):
+        count += n & 1
+        n >>= 1
+    return count
+
 w_pers = [
     56, 57, 58, 59, 60, 61, 62, 63,
     48, 49, 50, 51, 52, 53, 54, 55,
@@ -21,10 +28,10 @@ w_pers = [
 infile = open("data.pgn")
 
 pieceSampleCount = 0
-pieceAverages = np.zeros((14, 64))
+pieceAverages = np.zeros((15, 14, 64))
 
-moveSampleCount = np.zeros((12, 64))
-moveAverages = np.zeros((12, 64, 14, 64))
+moveSampleCount = np.zeros((15, 12, 64))
+moveAverages = np.zeros((15, 12, 64, 14, 64))
 
 def piece_to_ordinal(piece : chess.Piece):
     return (piece.piece_type-1) + (6*(not piece.color))
@@ -39,6 +46,9 @@ if __name__ == '__main__':
         board = chess.Board()
 
         for move in moves:
+            piececount = count_set_bits(board.rooks | board.knights | board.bishops | board.queens)
+            piececount = min(14, piececount)
+
             if board.is_capture(move):
                 board.push(move)
                 continue
@@ -48,31 +58,32 @@ if __name__ == '__main__':
 
             for sq in pmap:
                 if pmap[sq].color == chess.WHITE and not board.is_attacked_by(chess.WHITE, sq):
-                    moveAverages[movedPiece][w_pers[move.to_square]][WWS][w_pers[sq]] += 1
-                    pieceAverages[WWS][w_pers[sq]] += 1
+                    moveAverages[piececount][movedPiece][w_pers[move.to_square]][WWS][w_pers[sq]] += 1
+                    pieceAverages[piececount][WWS][w_pers[sq]] += 1
                 if pmap[sq].color == chess.BLACK and not board.is_attacked_by(chess.BLACK, sq):
-                    moveAverages[movedPiece][w_pers[move.to_square]][BWS][w_pers[sq]] += 1
-                    pieceAverages[BWS][w_pers[sq]] += 1
+                    moveAverages[piececount][movedPiece][w_pers[move.to_square]][BWS][w_pers[sq]] += 1
+                    pieceAverages[piececount][BWS][w_pers[sq]] += 1
 
             for id in pmap:
                 piece = piece_to_ordinal(pmap[id])
                 id = w_pers[id]
 
-                moveAverages[movedPiece][w_pers[move.to_square]][piece][id] += 1
-                pieceAverages[piece][id] += 1
+                moveAverages[piececount][movedPiece][w_pers[move.to_square]][piece][id] += 1
+                pieceAverages[piececount][piece][id] += 1
 
-                moveSampleCount[movedPiece][w_pers[move.to_square]] += 1
+                moveSampleCount[piececount][movedPiece][w_pers[move.to_square]] += 1
                 pieceSampleCount += 1
 
             board.push(move)
 
-    for p in range(12):
-        for s in range(64):
-            if moveSampleCount[p][s] == 0:
-                moveAverages[p][s] *= 0
-                continue
-            moveAverages[p][s] /= moveSampleCount[p][s]
-            moveAverages[p][s] -= (pieceAverages / pieceSampleCount)
+    for c in range(15):
+        for p in range(12):
+            for s in range(64):
+                if moveSampleCount[c][p][s] == 0:
+                    moveAverages[c][p][s] *= 0
+                    continue
+                moveAverages[c][p][s] /= moveSampleCount[c][p][s]
+                moveAverages[c][p][s] -= (pieceAverages[c] / pieceSampleCount)
 
     moveAverages *= 100000
 
@@ -97,7 +108,7 @@ if __name__ == '__main__':
     outfile = open("moveOrderData.c", 'w')
 
     outfile.write("#include \"moveOrderData.h\"\n")
-    outfile.write("const float moveOrderData[12][64][14][64] = ")
+    outfile.write("const float moveOrderData[15][12][64][14][64] = ")
 
     outfile.write(writearray(moveAverages))
 

@@ -5,7 +5,7 @@
 #include "Fathom/tbprobe.h"
 #include "syzygy.h"
 #include "uci.h"
-#include "moveOrderData.h"
+#include "moveOrder/moveOrderData.h"
 #include <stdio.h>
 #include <pthread.h>
 
@@ -264,8 +264,15 @@ int score_move(int move, const int *hashmove, Thread *thread){
         int piece = getpiece(move);
         int target = gettarget(move);
 
-        const float *dataPart = &moveOrderData[piece][target][0][0];
-        char *wspart = &moveOrderWorthSearching[piece][target][0];
+        int pieceCount = count_bits(WB | WN | WR | WQ | BB | BN | BR | BQ);
+
+        //for those who attempt to break this engine, take this :)
+        if (pieceCount > 14)
+            pieceCount = 14;
+        //ha!
+
+        const float *dataPart = &moveOrderData[pieceCount][piece][target][0][0];
+        char *wspart = &moveOrderWorthSearching[pieceCount][piece][target][0];
 
         for (int bb = 0; bb < 14; bb++){
             if (bb == P || bb == p || bb == 12 || bb == 13 || wspart[bb]) {

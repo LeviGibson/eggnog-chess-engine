@@ -22,10 +22,10 @@ print(moveAverages)
 def show(ptype, dst):
     dst = w_pers[dst]
 
-    movetotals = moveAverages[ptype][dst]
+    movetotals = moveAverages[0][ptype][dst]
 
     for i in range(14):
         plt.imshow(movetotals[i].reshape(8,8,1), cmap='gray')
         plt.show()
 
-show(N, chess.D5)
+show(P, chess.H5)
