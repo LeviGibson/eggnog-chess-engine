@@ -44,7 +44,7 @@ There are two more "types of pieces" in this array, which represent the undefend
 
 This helps with tactics.
 
-This table is precompiled: `moveOrderData.c.linux.o` and `moveOrderData.c.win.o`
+This table is precompiled: `moveOrderData.c.linux.o` and `moveOrderData.c.win.o` and `moveOrderData.c.mac.o`
 
 If you want to compile it yourself, you can download the C file [here](https://drive.google.com/file/d/1jTiHDq4BLt-bLkvjkR5gUyJp2_f8uNXF/view?usp=sharing)
 
