@@ -1,4 +1,4 @@
-OBJS = main.c.o\
+BASEOBJS = main.c.o\
  syzygy.c.o\
  bitboard.c.o\
  perft.c.o\
@@ -7,8 +7,7 @@ OBJS = main.c.o\
  transposition.c.o\
  moveOrder.c.o\
  Fathom/tbchess.c.o\
- Fathom/tbprobe.c.o \
- moveOrder/moveOrderData.c.o
+ Fathom/tbprobe.c.o
 
 AVX2_OBJS = search.c.avx2.o \
        nnue/nnue.c.avx2.o \
@@ -33,10 +32,12 @@ ifeq ($(OS), linux)
 EXECUTABLE_FILENAME =
 CC=gcc
 LINK_OPTS = -lpthread
+OBJS = $(BASEOBJS) moveOrder/moveOrderData.c.linux.o
 else
 EXECUTABLE_FILENAME =.exe
 CC=x86_64-w64-mingw32-gcc
 LINK_OPTS = -l:libwinpthread.a
+OBJS = $(BASEOBJS) moveOrder/moveOrderData.c.win.o
 endif
 all: avx2 avx sse sse2 popcnt
 avx2: $(OBJS) $(AVX2_OBJS)
