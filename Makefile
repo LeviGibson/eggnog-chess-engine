@@ -1,4 +1,4 @@
-BASEOBJS = main.c.o\
+OBJS = main.c.o\
  syzygy.c.o\
  bitboard.c.o\
  perft.c.o\
@@ -28,28 +28,40 @@ POPCNT_OBJS = search.c.popcnt.o \
 OS = linux
 FILE = ./bin/eggnog-chess-engine
 COMMONFLAGS = -O3 -fcommon
+
 ifeq ($(OS), linux)
+
 EXECUTABLE_FILENAME =
 CC=gcc
 LINK_OPTS = -lpthread
-OBJS = $(BASEOBJS) moveOrder/moveOrderData.c.linux.o
+PRECOMPILED_OBJS = moveOrder/moveOrderData.c.linux.o
+
+else ifeq ($(OS), mac)
+
+EXECUTABLE_FILENAME =.dmg
+CC=gcc
+LINK_OPTS = -lpthread
+PRECOMPILED_OBJS = moveOrder/moveOrderData.c.mac.o
+
 else
 EXECUTABLE_FILENAME =.exe
 CC=x86_64-w64-mingw32-gcc
 LINK_OPTS = -l:libwinpthread.a
-OBJS = $(BASEOBJS) moveOrder/moveOrderData.c.win.o
+PRECOMPILED_OBJS = moveOrder/moveOrderData.c.win.o
 endif
+
+
 all: avx2 avx sse sse2 popcnt
 avx2: $(OBJS) $(AVX2_OBJS)
-	$(CC) $(OBJS) $(AVX2_OBJS) $(LINK_OPTS) -o $(FILE)-avx2-$(OS)$(EXECUTABLE_FILENAME)
+	$(CC) $(OBJS) $(AVX2_OBJS) $(PRECOMPILED_OBJS) $(LINK_OPTS) -o $(FILE)-avx2-$(OS)$(EXECUTABLE_FILENAME)
 avx:  $(OBJS) $(AVX_OBJS)
-	$(CC) $(OBJS) $(AVX_OBJS) $(LINK_OPTS) -o $(FILE)-avx-$(OS)$(EXECUTABLE_FILENAME)
+	$(CC) $(OBJS) $(AVX_OBJS) $(PRECOMPILED_OBJS) $(LINK_OPTS) -o $(FILE)-avx-$(OS)$(EXECUTABLE_FILENAME)
 sse: $(OBJS) $(SSE_OBJS)
-	$(CC) $(OBJS) $(SSE_OBJS) $(LINK_OPTS) -o $(FILE)-sse-$(OS)$(EXECUTABLE_FILENAME)
+	$(CC) $(OBJS) $(SSE_OBJS) $(PRECOMPILED_OBJS) $(LINK_OPTS) -o $(FILE)-sse-$(OS)$(EXECUTABLE_FILENAME)
 sse2: $(OBJS) $(SSE2_OBJS)
-	$(CC) $(OBJS) $(SSE2_OBJS) $(LINK_OPTS) -o $(FILE)-sse2-$(OS)$(EXECUTABLE_FILENAME)
+	$(CC) $(OBJS) $(SSE2_OBJS) $(PRECOMPILED_OBJS) $(LINK_OPTS) -o $(FILE)-sse2-$(OS)$(EXECUTABLE_FILENAME)
 popcnt: $(OBJS) $(POPCNT_OBJS)
-	$(CC) $(OBJS) $(POPCNT_OBJS) $(LINK_OPTS) -o $(FILE)-popcnt-$(OS)$(EXECUTABLE_FILENAME)
+	$(CC) $(OBJS) $(POPCNT_OBJS) $(PRECOMPILED_OBJS) $(LINK_OPTS) -o $(FILE)-popcnt-$(OS)$(EXECUTABLE_FILENAME)
 
 %.c.o: %.c
 	$(CC) $< $(COMMONFLAGS) -c -o $@
