@@ -71,7 +71,7 @@ struct Board{
     int castle;
     int prevmove;
     int searchColor;
-    Line pv_line;
+    Line prevPv;
 
     int searchDepth;
 
@@ -80,7 +80,8 @@ struct Board{
 
 typedef struct {
     Board board;
-    int quiply;
+    Line pv;
+    int follow_pv, found_pv;
 }Thread;
 
 //MOVE ENCODING____________
