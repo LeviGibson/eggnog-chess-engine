@@ -17,7 +17,7 @@ struct EvalHashEntry{
     int eval;
 };
 
-EvalHashEntry evalHashTable[tt_size];
+EvalHashEntry evalHashTable[tt_size * 4];
 
 #define TRANSFORMERSTART ((3 * 4) + 181)
 
@@ -301,7 +301,7 @@ int materialScore(Board *board){
 
 int nnue_evaluate(Board *board) {
 
-    unsigned hashIndex = board->current_zobrist_key % tt_size;
+    unsigned hashIndex = board->current_zobrist_key % (tt_size*4);
     NnueData *data = &board->currentNnue;
 
     if (evalHashTable[hashIndex].key == board->current_zobrist_key){

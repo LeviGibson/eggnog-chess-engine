@@ -9,6 +9,8 @@
 #include <stdio.h>
 #include <pthread.h>
 
+#define fabs(x) (((x) > 0) ? (x) : -(x))
+
 #define DEF_ASPWINDOW (1700)
 #define NO_MOVE (-15)
 
@@ -295,10 +297,10 @@ int score_move(int move, const int *hashmove, Thread *thread){
         }
 
         if (getpiece(move) == P && !(pastPawnMasks[white][gettarget(move)] & BP))
-            score += .5 * abs(score);
+            score += .5f * fabs(score);
 
         if (getpiece(move) == p && !(pastPawnMasks[black][gettarget(move)] & WP))
-            score += .5 * abs(score);
+            score += .5f * fabs(score);
 
         score /= 550;
 
