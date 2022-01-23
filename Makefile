@@ -9,6 +9,20 @@ OBJS = main.c.o\
  Fathom/tbchess.c.o\
  Fathom/tbprobe.c.o
 
+CFILES = main.c\
+ syzygy.c\
+ bitboard.c\
+ board.c\
+ perft.c\
+ uci.c\
+ search.c\
+ timeman.c\
+ transposition.c\
+ moveOrder.c\
+ Fathom/*.c\
+ moveOrder/moveOrderData.c.linux.o\
+ nnue/nnue.c
+
 AVX2_OBJS = search.c.avx2.o \
        nnue/nnue.c.avx2.o \
        board.c.avx2.o
@@ -82,12 +96,10 @@ mingwj:
 debug:
 	$(CC) $(FILES) -pthread -o $(FILE)-debug
 gdb:
-	$(CC) $(COMMONFLAGS) -DAVX2 -mavx2 $(FILES) -g
+	$(CC) $(COMMONFLAGS) -DAVX2 -mavx2 $(CFILES) -g
 	mv ./a.out ./bin/a.out
 prof:
-	$(CC) -pg -DAVX2 -mavx2 -pthread -O3 $(FILES) -o $(FILE)-prof
-asm:
-	$(CC) $(FILES) $(NNUEFILES) -fverbose-asm -mavx2 -S
+	$(CC) -pg -DAVX2 -mavx2 -pthread -O3 $(CFILES) -o $(FILE)-prof
 clean:
 	rm -f ./bin/a.out
 	rm -f ./bin/eggnog-chess-engine*
