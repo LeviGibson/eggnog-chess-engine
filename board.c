@@ -189,8 +189,10 @@ static inline void generate_pawn_moves(MoveList *legalMoves, Board *board){
     U64 bitboard = board->bitboards[ptype];
 
     U64 enemy_occupanices = (board->side == white) ? board->occupancies[black] : board->occupancies[white];
+    int enpoffset = board->side == white ? 8 : -8;
 
-    if (board->enpessant != no_sq)
+    //this deals with a weird bug in Arena GUI
+    if (board->enpessant != no_sq && (enemy_occupanices & (1ULL << (board->enpessant+enpoffset))))
         enemy_occupanices |= 1ULL << board->enpessant;
 
     while (bitboard){
@@ -677,16 +679,19 @@ int make_move(int move, int flag, int notquinode, Board *board){
     return 1;
 }
 
-void remove_illigal_moves(MoveList *moves, Board *board){
+void generate_only_legal_moves(MoveList *moves, Board *board){
+    memset(moves, 0, sizeof(MoveList));
+    MoveList tmp;
+    memset(&tmp, 0, sizeof (tmp));
+    generate_moves(&tmp, board);
+
     copy_board();
-    for (int i = 0; i < moves->count; ++i) {
-        if (make_move(moves->moves[i], all_moves, 1, board)) {
-            take_back();
-        } else {
-            memcpy(&moves->moves[i], &moves->moves[i+1], (256*4) - (i*4));
-            moves->count--;
-            i--;
+    for (int i = 0; i < tmp.count; ++i) {
+        if (make_move(tmp.moves[i], all_moves, 1, board)) {
+            moves->moves[moves->count] = tmp.moves[i];
+            moves->count++;
         }
+        take_back();
     }
 }
 
@@ -890,7 +895,7 @@ void print_fen(Board *board){
             printf("/");
     }
 
-    printf(board->side == white ? " w" : " b");
+    printf(board->side == white ? " w\n" : " b\n");
 }
 
 void parse_fen(char *fen, Board *board)
@@ -989,6 +994,7 @@ void parse_fen(char *fen, Board *board)
     board->current_zobrist_key = generate_zobrist_key(board);
     board->helperThread = 0;
     board->nnueUpdate = 1;
+    board->depthAdjuster = 0;
 
     refresh_accumulator(&board->currentNnue, board);
     refresh_weak_squares(board);

@@ -331,6 +331,9 @@ int nnue_evaluate(Board *board) {
 }
 
 void nnue_pop_bit(int ptype, int bit, Board *board){
+//    print_bitboard(1ULL << bit);
+//    print_bitboard(board->bitboards[ptype]);
+//    print_fen(board);
 
     pop_bit(board->bitboards[ptype], bit);
 

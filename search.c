@@ -473,6 +473,20 @@ static inline int search(int depth, int alpha, int beta, Line *pline, Thread *th
     if (in_check)
         depth++;
 
+    depth += (int)board->depthAdjuster;
+    board->depthAdjuster -= (float)(int)board->depthAdjuster;
+//    if (board->depthAdjuster >= 1) {
+//        while (board->depthAdjuster >= 1) {
+//            depth++;
+//            board->depthAdjuster--;
+//        }
+//    } else if (board->depthAdjuster <= -1){
+//        while (board->depthAdjuster <= -1) {
+//            depth--;
+//            board->depthAdjuster++;
+//        }
+//    }
+
     int isPastPawnPush = 0;
 
     if (board->occupancies[both] == (WK | BK | WP | BP)) {
@@ -536,6 +550,9 @@ static inline int search(int depth, int alpha, int beta, Line *pline, Thread *th
     thread->found_pv = 0;
 
     int pvnode = beta - alpha > 1;
+    if (!pvnode) {
+        board->depthAdjuster -= .125f;
+    }
 
     Line line;
     line.length = 0;
@@ -619,8 +636,6 @@ static inline int search(int depth, int alpha, int beta, Line *pline, Thread *th
             if (legalMoveCount == 0) {
                 eval = -search(depth - 1, -beta, -alpha, &line, thread);
             } else {
-                //LMR
-                //NO_LMR test for debugging purposes.
 
                 if ((depth >= 3) && (legalMoves.scores[moveId] < 30) && (in_check == 0) && (getcapture(move) == 0) && (!isPastPawnPush)) {
 #ifndef NO_LMR
@@ -632,18 +647,7 @@ static inline int search(int depth, int alpha, int beta, Line *pline, Thread *th
                     eval = alpha + 1;
                 }
 
-                //PV search
                 if (eval > alpha) {
-//                    if ((depth >= 3) && (legalMoveCount > 5) && (in_check == 0) && (get_move_capture(move) == 0) && (get_move_promoted(move) == 0))
-//                    {
-//                        if (legalMoveCount > 10 && depth > 4) {
-//                            print_fen(board);
-//                            printf("\n%d\n", legalMoveCount);
-//                            print_move(move);
-//                            printf("\n%d\n\n", depth);
-//                        }
-//                    }
-
                     eval = -search(depth - 1, -alpha - 1, -alpha, &line, thread);
                     if ((eval > alpha) && (eval < beta)) {
                         eval = -search(depth - 1, -beta, -alpha, &line, thread);
@@ -769,10 +773,6 @@ int willMakeNextDepth(int curd, const float *times){
     return (timepred < (timeleft * 2)) ? 1 : 0;
 }
 
-void print_pv_indicies(Line *line){
-
-}
-
 void *search_position(void *arg){
     //Table bases
 
@@ -830,7 +830,7 @@ void *search_position(void *arg){
 
     MoveList legalMoves;
     generate_moves(&legalMoves, board);
-    remove_illigal_moves(&legalMoves, board);
+    generate_only_legal_moves(&legalMoves, board);
     sort_moves(&legalMoves, tmp, &thread);
     int numThreads = threadCount < legalMoves.count ? (int) threadCount : (int) legalMoves.count;
     HelperThread threads[numThreads];
@@ -857,6 +857,7 @@ void *search_position(void *arg){
 
         thread.follow_pv = 1;
         thread.found_pv = 0;
+        thread.board.depthAdjuster = 0;
 
         if (dynamicTimeManagment && !willMakeNextDepth(currentDepth, depthTime))
             break;
@@ -931,7 +932,7 @@ void *search_position(void *arg){
                (abs(eval) > 4000000) ? "mate" : "cp" , (abs(eval) > 4000000) ? (4900000 - abs(eval)) * (eval / abs(eval)) : eval/64,
                currentDepth, selDepth, nodes, qnodes, tbHits, (get_time_ms() - startingTime));
 
-        for (int i = 0; i < currentDepth; i++){
+        for (int i = 0; i < max_ply; i++){
             if (board->prevPv.moves[i] == 0)
                 break;
             print_move(board->prevPv.moves[i]);

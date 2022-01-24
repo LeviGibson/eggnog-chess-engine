@@ -73,6 +73,7 @@ struct Board{
     int searchColor;
     Line prevPv;
 
+    float depthAdjuster;
     int searchDepth;
 
     int helperThread;
@@ -172,7 +173,7 @@ typedef struct {
 //    prevmove = prevmove_copy;\
 //    zobrist_history_length = zobrist_history_length_copy                 \
 
-void remove_illigal_moves(MoveList *moves, Board *board);
+void generate_only_legal_moves(MoveList *moves, Board *board);
 void print_move(int move);
 
 void make_null_move(Board *board);
