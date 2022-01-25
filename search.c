@@ -215,7 +215,9 @@ float getScoreFromMoveTable(U64 bitboard, const float *bbPart){
 
 }
 
-
+//Board is included in Thread *thread
+//returns the score of a move, integer.
+//int *hashmove is  the best move stored in the hash table (from a previous depth)
 int score_move(int move, const int *hashmove, Thread *thread){
     Board *board = &thread->board;
 
@@ -314,6 +316,9 @@ int score_move(int move, const int *hashmove, Thread *thread){
 }
 
 
+//sorts a list of moves
+//int *hashmove is the move stored in the transposition table from a previous depth
+//pretty much ignore this function it's very boring. The main function is the function above (score_move)
 static inline void sort_moves(MoveList *move_list, int *hashmove, Thread *thread){
     for (int i = 0; i < move_list->count; i++) {
         move_list->scores[i] = score_move(move_list->moves[i], hashmove, thread);
@@ -454,6 +459,8 @@ void find_pv(MoveList *moves, Thread *thread){
     }
 }
 
+//the main search function
+//don't call this directly. Call search_position().
 static inline int search(int depth, int alpha, int beta, Line *pline, Thread *thread) {
     //general maintenence
     nodes++;
@@ -473,22 +480,14 @@ static inline int search(int depth, int alpha, int beta, Line *pline, Thread *th
     if (in_check)
         depth++;
 
+    //depthAdjuster is a float that is added to and subtracted from in parent nodes
+    //if it is greater than 1, reset it, then add one to the depth
+    //if it is less than 1, reset it and subtract one from the depth
     depth += (int)board->depthAdjuster;
     board->depthAdjuster -= (float)(int)board->depthAdjuster;
-//    if (board->depthAdjuster >= 1) {
-//        while (board->depthAdjuster >= 1) {
-//            depth++;
-//            board->depthAdjuster--;
-//        }
-//    } else if (board->depthAdjuster <= -1){
-//        while (board->depthAdjuster <= -1) {
-//            depth--;
-//            board->depthAdjuster++;
-//        }
-//    }
 
+    //find weather this node's move is a past pawn push. If it is, there is not late move reduction.
     int isPastPawnPush = 0;
-
     if (board->occupancies[both] == (WK | BK | WP | BP)) {
         if (getpiece(board->prevmove) == P) {
             if (!(pastPawnMasks[white][gettarget(board->prevmove)] & board->bitboards[p]))
@@ -499,26 +498,34 @@ static inline int search(int depth, int alpha, int beta, Line *pline, Thread *th
         }
     }
 
+    //value for move ordering.
     board->searchDepth = depth;
 
+    //board->zobrist_history_search_index is a value for threefold-repetition detection during the search.
+    //If all the repititions are during the search, then we can return 0 if there are only 2 repetitions/s
     if (board->ply == 0)
         board->zobrist_history_search_index = board->zobrist_history_length;
 
+    //self explanitory
     if (is_threefold_repetition(board)) {
         return 0;
     }
 
-    //HASH TABLE PROBE
+
+    //hash table probe
+    //hash_move[4] is the best moves from previous depths stored in the transposition table.
     int hash_move[4] = {NO_MOVE, NO_MOVE, NO_MOVE, NO_MOVE};
     int hash_lookup = ProbeHash(depth, alpha, beta, hash_move, pline, board);
 
+    //return hash lookup if it meets the parameters (in function ProbeHash)
     if ((hash_lookup) != valUNKNOWN && board->ply != 0) {
         return hash_lookup;
     }
+    int hashf = hashfALPHA;
 
     int staticeval = nnue_evaluate(board);
 
-    //TB PROBE
+    //probing the syzygy table bases
     if (board->ply != 0) {
         U32 tbres = get_wdl(board);
 
@@ -547,6 +554,7 @@ static inline int search(int depth, int alpha, int beta, Line *pline, Thread *th
         }
     }
 
+    //is this a pv node? idk. This code finds that out.
     thread->found_pv = 0;
 
     int pvnode = beta - alpha > 1;
@@ -554,16 +562,16 @@ static inline int search(int depth, int alpha, int beta, Line *pline, Thread *th
         board->depthAdjuster -= .125f;
     }
 
+    //storing the principle variation
     Line line;
     line.length = 0;
-
-    int hashf = hashfALPHA;
 
     if (depth <= 0) {
         pline->length = 0;
         return quiesce(alpha, beta, thread);
     }
 
+    //Null Move Pruning
     int eval;
     if (depth >= 3 && !in_check && board->ply
         && (WQ | WR) && (BQ | BR)){
@@ -582,12 +590,14 @@ static inline int search(int depth, int alpha, int beta, Line *pline, Thread *th
     }
 
 
+    //Static Null Move Pruning / Evaluation pruning
     if (!pvnode && !in_check && depth < 3) {
         if ((staticeval - (100 * 64 * depth)) > beta){
             return beta;
         }
     }
 
+    //Razoring
     if (!pvnode && !in_check && depth <= 3) {
 
         int value = staticeval + (125 * 64);
@@ -609,16 +619,15 @@ static inline int search(int depth, int alpha, int beta, Line *pline, Thread *th
         }
     }
 
+    //Generating and sorting the legal moves    
     MoveList legalMoves;
     memset(&legalMoves, 0, sizeof legalMoves);
-
     generate_moves(&legalMoves, board);
-
     if (thread->follow_pv) {
         find_pv(&legalMoves, thread);
     }
-
     sort_moves(&legalMoves, hash_move, thread);
+
 
     copy_board();
 
@@ -626,17 +635,20 @@ static inline int search(int depth, int alpha, int beta, Line *pline, Thread *th
     int move;
     MoveEval best = {.move = NO_MOVE, .eval = -100000000};
 
+    //Looping over all the legal moves
     for (int moveId = 0; moveId < legalMoves.count; moveId++) {
         move = legalMoves.moves[moveId];
 
+        //The illigal moves (moving pinned pieces mostly) are not removed during the move generation, they are removed here.
         if (make_move(move, all_moves, 1, board)) {
 
             legalMoveCount++;
 
             if (legalMoveCount == 0) {
+                //Pv Search
                 eval = -search(depth - 1, -beta, -alpha, &line, thread);
             } else {
-
+                //Late Move Reduction
                 if ((depth >= 3) && (legalMoves.scores[moveId] < 30) && (in_check == 0) && (getcapture(move) == 0) && (!isPastPawnPush)) {
 #ifndef NO_LMR
                     eval = -search(depth - 2, -alpha - 1, -alpha, &line, thread);
@@ -647,6 +659,7 @@ static inline int search(int depth, int alpha, int beta, Line *pline, Thread *th
                     eval = alpha + 1;
                 }
 
+                //If the reduced search produced good results (greater than alpha), research with regular depth, than with full window.
                 if (eval > alpha) {
                     eval = -search(depth - 1, -alpha - 1, -alpha, &line, thread);
                     if ((eval > alpha) && (eval < beta)) {
@@ -658,6 +671,7 @@ static inline int search(int depth, int alpha, int beta, Line *pline, Thread *th
 
             take_back();
 
+            //best.eval is the best move found so far (different from alpha, because best.eval does not inherit values from parent nodes.)
             if (eval > best.eval) {
 
                 best.move = move;
@@ -674,23 +688,17 @@ static inline int search(int depth, int alpha, int beta, Line *pline, Thread *th
 
                 }
 
+                //beta cutoff
                 if (eval >= beta) {
-
-//                if (legalMoveCount > 10 && depth > 2){
-//                    print_fen(board);
-//                    printf("\n%d\n", legalMoveCount);
-//                    print_move(move);
-//                    printf("\n%d\n\n", board->ply);
-//                }
-
                     if (!getcapture(move)) {
+                        //killer move heuristic
                         if (!board->helperThread) {
                             killer_moves[board->ply][1] = killer_moves[board->ply][0];
                             killer_moves[board->ply][0] = move;
                         }
 
-                        history_moves[getpiece(move)][getsource(move)][gettarget(move)] += (float) (depth * depth *
-                                                                                                    legalMoveCount);
+                        //history move heuristic
+                        history_moves[getpiece(move)][getsource(move)][gettarget(move)] += (float) (depth * depth * legalMoveCount);
                         historyCount += depth * depth * legalMoveCount;
                     }
 
@@ -717,7 +725,7 @@ static inline int search(int depth, int alpha, int beta, Line *pline, Thread *th
 
 }
 
-
+//idk theads are weird
 typedef struct NegamaxArgs NegamaxArgs;
 struct NegamaxArgs{
     Line *pline;
@@ -731,10 +739,9 @@ struct HelperThread{
     NegamaxArgs args;
 };
 
+//helper thread function (populates the transposition table to help the main search)
 void negamax_thread(void *args){
     NegamaxArgs *nargs = args;
-//    memset(&nargs->thread.board.prevPv, 0, sizeof(Line));
-//    memset(&nargs->thread.pv, 0, sizeof(Line));
 
     for (int i = 0; i < max_ply; ++i) {
         memset(nargs->pline, 0, sizeof (Line));
@@ -748,6 +755,10 @@ void negamax_thread(void *args){
     }
 }
 
+//This function predicts how long it will take to make it to the next depth (iterative deepening)
+//if the time is not within the time limit, stop searching
+//if the time is, then keep searching
+//if the actual time exeeds the predicted time, then there's probably a change in PV, so it's worth searching
 int willMakeNextDepth(int curd, const float *times){
 
     if (curd < 4)
@@ -773,6 +784,7 @@ int willMakeNextDepth(int curd, const float *times){
     return (timepred < (timeleft * 2)) ? 1 : 0;
 }
 
+//the main interface function for the search.
 void *search_position(void *arg){
     //Table bases
 
