@@ -71,6 +71,7 @@ struct Board{
     int castle;
     int prevmove;
     int searchColor;
+    int pvnode;
     Line prevPv;
 
     float depthAdjuster;

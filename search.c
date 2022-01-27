@@ -279,7 +279,7 @@ int score_move(int move, const int *hashmove, Thread *thread){
         char *wspart = &moveOrderWorthSearching[pieceCount][piece][target][0];
 
         for (int bb = 0; bb < 14; bb++){
-            if (bb == P || bb == p || bb == 12 || bb == 13 || wspart[bb]) {
+            if (bb == P || bb == p || bb == 12 || bb == 13 || wspart[bb] || board->pvnode) {
 
                 const float *bbPart = &dataPart[bb * 64];
                 U64 bitboard;
@@ -557,8 +557,8 @@ static inline int search(int depth, int alpha, int beta, Line *pline, Thread *th
     //is this a pv node? idk. This code finds that out.
     thread->found_pv = 0;
 
-    int pvnode = beta - alpha > 1;
-    if (!pvnode) {
+    board->pvnode = beta - alpha > 1;
+    if (!board->pvnode) {
         board->depthAdjuster -= .125f;
     }
 
@@ -591,14 +591,14 @@ static inline int search(int depth, int alpha, int beta, Line *pline, Thread *th
 
 
     //Static Null Move Pruning / Evaluation pruning
-    if (!pvnode && !in_check && depth < 3) {
+    if (!board->pvnode && !in_check && depth < 3) {
         if ((staticeval - (100 * 64 * depth)) > beta){
             return beta;
         }
     }
 
     //Razoring
-    if (!pvnode && !in_check && depth <= 3) {
+    if (!board->pvnode && !in_check && depth <= 3) {
 
         int value = staticeval + (125 * 64);
         if (value < beta) {
