@@ -28,6 +28,8 @@ float floatbb_max(const float *x){
 }
 
 void init_move_table(){
+    FILE *file = fopen("moveOrderData.bin", "r");
+    fread((void*)&moveOrderData[0][0][0][0][0], sizeof(float ), 15*12*64*14*64, file);
 
     memset(moveOrderWorthSearching, 0, sizeof(moveOrderWorthSearching));
 

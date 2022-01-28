@@ -5,6 +5,7 @@ bin/eggnog-chess-engine*
 moveOrder/data.pgn
 moveOrder/__pycache__
 moveOrder/.idea
+moveOrder/analyed.pgn
 /*.o
 nnue/*.o
 Fathom/*.o
