@@ -37,7 +37,7 @@ float score_move(int movePiece, int moveTarget, int pieceCount, Board *board){
     return score;
 }
 
-int movescore = score_move(N, G5, 14, board)
+int movescore = score_move(N, g5, 14, board)
 ```
 
 There are two more "types of pieces" in this array, which represent the undefended pieces of black and white.
