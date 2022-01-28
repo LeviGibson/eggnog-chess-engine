@@ -252,6 +252,14 @@ int score_move(int move, const int *hashmove, Thread *thread){
             }
         }
 
+        if (board->side == white){
+            if ((getpiece(move) != P) && (pawn_mask[white][gettarget(move)] & BP))
+                return 10000;
+        } else {
+            if ((getpiece(move) != p) && (pawn_mask[black][gettarget(move)] & WP))
+                return 10000;
+        }
+
         return mvv_lva[getpiece(move)][target_piece] + 10000;
     } else {
         if (move == killer_moves[board->ply][0]){
@@ -325,16 +333,6 @@ static inline void sort_moves(MoveList *move_list, int *hashmove, Thread *thread
     }
 
     insertion_sort(move_list);
-
-//    if (board->ply == 0) {
-//        print_fen(board);
-//        printf("\n");
-//        for (int i = 0; i < move_list->count; i++) {
-//            print_move(move_list->moves[i]);
-//            printf(" : %d\n", scores[i]);
-//        }
-//        printf("\n\n");
-//    }
 }
 
 static inline int quiesce(int alpha, int beta, Thread *thread) {
