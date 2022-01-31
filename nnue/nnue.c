@@ -2,7 +2,6 @@
 // Created by levigibson on 10/3/21.
 //
 #include "nnue.h"
-#include "../transposition.h"
 #include <string.h>
 #include <stdio.h>
 
@@ -17,7 +16,7 @@ struct EvalHashEntry{
     int eval;
 };
 
-EvalHashEntry evalHashTable[tt_size * 4];
+EvalHashEntry evalHashTable[8000000];
 
 #define TRANSFORMERSTART ((3 * 4) + 181)
 

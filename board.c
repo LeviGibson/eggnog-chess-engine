@@ -3,7 +3,6 @@
 //
 
 #include "board.h"
-#include "nnue/nnue.h"
 
 #include <stdio.h>
 
