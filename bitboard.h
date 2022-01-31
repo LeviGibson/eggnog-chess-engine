@@ -26,6 +26,9 @@ enum {
     a1, b1, c1, d1, e1, f1, g1, h1, no_sq
 };
 
+#define NO_EVAL 9999999
+#define tt_size 2000000ULL
+#define tt_linesize (tt_size * 6)
 
 //BIT MACROS_____________
 #define get_bit(bitboard, square)((bitboard) & (1ULL << (square)))

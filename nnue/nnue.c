@@ -16,7 +16,7 @@ struct EvalHashEntry{
     int eval;
 };
 
-EvalHashEntry evalHashTable[8000000];
+EvalHashEntry evalHashTable[tt_size * 4];
 
 #define TRANSFORMERSTART ((3 * 4) + 181)
 

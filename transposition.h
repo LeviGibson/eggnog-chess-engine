@@ -13,9 +13,7 @@
 #define hashfALPHA   1
 #define hashfBETA    2
 #define valUNKNOWN -1
-#define NO_EVAL 9999999
-#define tt_size 2000000ULL
-#define tt_linesize (tt_size * 6)
+
 
 typedef struct tagHASHE {
     U64 key;
