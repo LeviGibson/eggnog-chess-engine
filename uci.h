@@ -5,6 +5,7 @@
 
 int uci_move_sequence_length;
 int dynamicTimeManagment;
+int historyMoveDivisor;
 
 Board UciBoard;
 int threadCount;

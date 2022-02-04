@@ -14,6 +14,7 @@
 pthread_t searchthread;
 int dynamicTimeManagment = 0;
 int moveOverhead = 0;
+int historyMoveDivisor = 1400;
 
 void change_to_correct_directory(char *argv){
     int lastslash = 0;
@@ -127,7 +128,6 @@ void parse_position(char *command) {
     UciBoard.searchColor = UciBoard.side;
 }
 
-//go wtime 300000 btime 300000
 int depth;
 
 int threadCount = 1;
@@ -229,6 +229,7 @@ void uci_loop() {
             printf("option name SyzygyPath type string default <empty>\n");
             printf("option name Threads type spin default 1 min 1 max 512\n");
             printf("option name Move Overhead type spin default 0 min 0 max 5000\n");
+            printf("option name Tune type spin default 0 min 0 max 10000\n");
             printf("uciok\n");
         }
 
@@ -238,6 +239,10 @@ void uci_loop() {
 
         if (strncmp(input, "setoption name Move Overhead value", 34) == 0) {
             moveOverhead = atoi(input + 35);
+        }
+
+        if (strncmp(input, "setoption name Tune value", 25) == 0){
+//            historyMoveDivisor = atoi(input + 26);
         }
 
         if (strncmp(input, "setoption name SyzygyPath value", 31) == 0) {

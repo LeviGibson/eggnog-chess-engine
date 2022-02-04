@@ -315,7 +315,7 @@ int score_move(int move, const int *hashmove, Thread *thread){
         score /= 550;
 
         if (historyCount > 0) {
-            float historyscore = (history_moves[getpiece(move)][getsource(move)][gettarget(move)] / (float) historyCount) * 2000;
+            float historyscore = (history_moves[getpiece(move)][getsource(move)][gettarget(move)] / (float) historyCount) * historyMoveDivisor;
             score += historyscore;
         }
 
