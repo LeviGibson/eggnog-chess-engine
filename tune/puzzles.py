@@ -8,7 +8,7 @@ def run(value : int):
     #download this large file with `wget https://database.lichess.org/lichess_db_puzzle.csv.bz2`
     puzzleFile = open("lichess_db_puzzle.csv", 'r')
 
-    engine = chess.engine.SimpleEngine.popen_uci("/home/levigibson/Pictures/programming/C/eggnog-chess-engine/bin/eggnog-chess-engine-avx2-linux")
+    engine = chess.engine.SimpleEngine.popen_uci("../bin/eggnog-chess-engine-avx2-linux")
     engine.configure({"Tune" : value})
 
     board = chess.Board()
@@ -37,16 +37,6 @@ def run(value : int):
         total += 1
         if str(result.move) == command[2].split(' ')[1]:
             correct += 1
-        else:
-            out = board.fen() + ',' + str(result.move) + ',' + ' '.join(command[2].split(' ')[1:-1]) + '\n'
-            # logFile.write(out)
-            # print(out)
-
-
-        #print(result.move)
-        # print(str(correct) + '/' + str(total))
-        # print(correct/total)
-        # print()
 
     engine.quit()
 
