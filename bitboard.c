@@ -428,7 +428,7 @@ const U64 bishop_magic_numbers[64] = {
         0x4010011029020020ULL
 };
 
-const int rook_relevent_occupancy_count[64] = {
+const int rook_relevant_occupancy_count[64] = {
         12, 11, 11, 11, 11, 11, 11, 12,
         11, 10, 10, 10, 10, 10, 10, 11,
         11, 10, 10, 10, 10, 10, 10, 11,
@@ -439,7 +439,7 @@ const int rook_relevent_occupancy_count[64] = {
         12, 11, 11, 11, 11, 11, 11, 12
 };
 
-const int bishop_relevent_occupancy_count[64] = {
+const int bishop_relevant_occupancy_count[64] = {
         6, 5, 5, 5, 5, 5, 5, 6,
         5, 5, 5, 5, 5, 5, 5, 5,
         5, 5, 7, 7, 7, 7, 5, 5,
@@ -624,7 +624,7 @@ void init_rook_magics(){
         int indexLimit = 1 << count_bits(rook_relevant_occupancies[square]);
         for (int index = 0; index < indexLimit; index++){
             U64 occupancies = set_occupancy(index, rook_relevant_occupancies[square]);
-            int magic_index = (int)((rook_magic_numbers[square] * occupancies) >> (64-rook_relevent_occupancy_count[square]));
+            int magic_index = (int)((rook_magic_numbers[square] * occupancies) >> (64 - rook_relevant_occupancy_count[square]));
             rook_attacks[square][magic_index] = rook_attacks_on_the_fly(square, occupancies);
         }
     }
@@ -635,7 +635,7 @@ void init_bishop_magics(){
         int indexLimit = 1 << count_bits(bishop_relevant_occupancies[square]);
         for (int index = 0; index < indexLimit; index++){
             U64 occupancies = set_occupancy(index, bishop_relevant_occupancies[square]);
-            int magic_index = (int)((bishop_magic_numbers[square] * occupancies) >> (64-bishop_relevent_occupancy_count[square]));
+            int magic_index = (int)((bishop_magic_numbers[square] * occupancies) >> (64 - bishop_relevant_occupancy_count[square]));
             bishop_attacks[square][magic_index] = bishop_attacks_on_the_fly(square, occupancies);
         }
     }

@@ -61,21 +61,21 @@ U64 set_occupancy(int index, U64 mask);
 
 void init_bitboards();
 
-const U64 knight_mask[64];
-const U64 pawn_mask[2][64];
-const U64 king_mask[64];
+const extern U64 knight_mask[64];
+const extern U64 pawn_mask[2][64];
+const extern U64 king_mask[64];
 
-const int rook_relevent_occupancy_count[64];
-const int bishop_relevent_occupancy_count[64];
+const extern int rook_relevant_occupancy_count[64];
+const extern int bishop_relevant_occupancy_count[64];
 
 U64 rook_attacks[64][4096];
 U64 bishop_attacks[64][512];
 
-const U64 rook_magic_numbers[64];
-const U64 bishop_magic_numbers[64];
+const extern U64 rook_magic_numbers[64];
+const extern U64 bishop_magic_numbers[64];
 
-#define get_rook_attacks(square, occupancies) rook_attacks[square][((rook_magic_numbers[square] * ((occupancies) & rook_relevant_occupancies[square])) >> (64-rook_relevent_occupancy_count[square]))]
-#define get_bishop_attacks(square, occupancies) bishop_attacks[square][((bishop_magic_numbers[square] * ((occupancies) & bishop_relevant_occupancies[square])) >> (64-bishop_relevent_occupancy_count[square]))]
+#define get_rook_attacks(square, occupancies) rook_attacks[square][((rook_magic_numbers[square] * ((occupancies) & rook_relevant_occupancies[square])) >> (64-rook_relevant_occupancy_count[square]))]
+#define get_bishop_attacks(square, occupancies) bishop_attacks[square][((bishop_magic_numbers[square] * ((occupancies) & bishop_relevant_occupancies[square])) >> (64-bishop_relevant_occupancy_count[square]))]
 
 #define get_queen_attacks(square, occupancies) (get_rook_attacks((square), (occupancies)) | get_bishop_attacks((square), (occupancies)))
 
