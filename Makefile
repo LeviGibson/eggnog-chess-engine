@@ -20,7 +20,6 @@ CFILES = main.c\
  transposition.c\
  moveOrder.c\
  Fathom/*.c\
- moveOrder/moveOrderData.c.linux.o\
  nnue/nnue.c
 
 AVX2_OBJS = search.c.avx2.o \

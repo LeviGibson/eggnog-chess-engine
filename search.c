@@ -53,8 +53,7 @@ struct MoveEval{
     int eval;
 };
 
-static inline void swap(int* a, int* b)
-{
+static inline void swap(int* a, int* b) {
     int t = *a;
     *a = *b;
     *b = t;
@@ -315,7 +314,7 @@ int score_move(int move, const int *hashmove, Thread *thread){
         score /= 550;
 
         if (historyCount > 0) {
-            float historyscore = (history_moves[getpiece(move)][getsource(move)][gettarget(move)] / (float) historyCount) * historyMoveDivisor;
+            float historyscore = (history_moves[getpiece(move)][getsource(move)][gettarget(move)] / (float) historyCount) * (float)historyMoveDivisor;
             score += historyscore;
         }
 
@@ -333,6 +332,16 @@ static inline void sort_moves(MoveList *move_list, int *hashmove, Thread *thread
     }
 
     insertion_sort(move_list);
+
+//    if (thread->board.searchDepth == 0) return;
+//    print_fen(&thread->board);
+//    printf("\n");
+//     for (int i = 0; i < move_list->count; i++) {
+//         print_move(move_list->moves[i]);
+//         printf(" : %d\n", move_list->scores[i]);
+//     }
+//
+//     printf("\n");
 }
 
 static inline int quiesce(int alpha, int beta, Thread *thread) {
@@ -647,7 +656,7 @@ static inline int search(int depth, int alpha, int beta, Line *pline, Thread *th
                 eval = -search(depth - 1, -beta, -alpha, &line, thread);
             } else {
                 //Late Move Reduction
-                if ((depth >= 3) && (legalMoves.scores[moveId] < 30) && (in_check == 0) && (getcapture(move) == 0) && (!isPastPawnPush)) {
+                if ((depth >= 3) && (in_check == 0) && (getcapture(move) == 0) && (!isPastPawnPush)) {
 #ifndef NO_LMR
                     eval = -search(depth - 2, -alpha - 1, -alpha, &line, thread);
 #else

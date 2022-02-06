@@ -32,6 +32,11 @@ void init_move_table(){
     fread((void*)&moveOrderData[0][0][0][0][0], sizeof(float ), 15*12*64*14*64, file);
 
     memset(moveOrderWorthSearching, 0, sizeof(moveOrderWorthSearching));
+//
+//    float *c = &moveOrderData[0][0][0][0][0];
+//    for (int i = 0; i < 1000; ++i) {
+//        printf("%f\n", c[i]);
+//    }
 
     for (int nump = 0; nump < 15; ++nump) {
         for (int piece = 0; piece < 12; ++piece) {

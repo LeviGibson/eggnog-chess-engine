@@ -63,7 +63,7 @@ def save():
 
     moveAverages *= 100000
 
-    outfile = open("../bin/moveOrderData.bin", 'wb')
+    # outfile = open("../bin/moveOrderData.bin", 'wb')
 
     # outfile.write("#include \"moveOrderData.h\"\n")
     # outfile.write("const float moveOrderData[15][12][64][14][64] = ")
@@ -72,10 +72,10 @@ def save():
     #
     # outfile.write(";\n")
     # outfile.close()
-    outfile.write(bytes(moveAverages))
+    # outfile.write(bytes(moveAverages))
 
     np.savez_compressed("data", moveAverages)
-    infile.close()
+    # infile.close()
 
 def write_move(board : chess.Board, move : chess.Move):
     global moveAverages

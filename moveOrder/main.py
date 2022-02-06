@@ -33,7 +33,7 @@ for line in infile:
     gameId+=1
 
     if gameId % 100 == 0:print(gameId)
-    if gameId % 10000 == 0: generateMoveTable.save()
+    if gameId == 80000: break
 
     moves = read_evaluations(line)
 
@@ -41,7 +41,7 @@ for line in infile:
 
     for id, sMove in enumerate(moves):
         move = board.parse_san(clean_move(sMove))
-        if (board.piece_at(move.to_square) is None) and ("?" not in sMove):
+        if "?" not in sMove:
             generateMoveTable.write_move(board, move)
         board.push(move)
 
