@@ -17,7 +17,7 @@ def run(value : int):
     correct = 0
     index = 0
 
-    while index < 200:
+    while index < 100:
 
         command = puzzleFile.readline()
         # if 'kingsideAttack' not in command:continue
@@ -32,7 +32,7 @@ def run(value : int):
         board.set_fen(command[1])
         board.push_uci(command[2].split(' ')[0])
 
-        result = engine.play(board, chess.engine.Limit(time=.2))
+        result = engine.play(board, chess.engine.Limit(time=1))
 
         total += 1
         if str(result.move) == command[2].split(' ')[1]:

@@ -7,6 +7,7 @@
 
 float floatbb_min(const float *x);
 float floatbb_max(const float *x);
+void calculate_ws_table();
 
 void init_move_table();
 //void moveorder_test(int numGames);

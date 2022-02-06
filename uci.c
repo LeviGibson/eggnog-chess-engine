@@ -4,6 +4,7 @@
 #include "search.h"
 #include "timeman.h"
 #include "Fathom/tbprobe.h"
+#include "moveOrder.h"
 
 #include <string.h>
 #include <stdio.h>
@@ -242,7 +243,8 @@ void uci_loop() {
         }
 
         if (strncmp(input, "setoption name Tune value", 25) == 0){
-//            historyMoveDivisor = atoi(input + 26);
+        //    worthSearchingLimit = atoi(input + 26);
+        //    calculate_ws_table();
         }
 
         if (strncmp(input, "setoption name SyzygyPath value", 31) == 0) {

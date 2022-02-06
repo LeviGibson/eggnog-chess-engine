@@ -27,30 +27,28 @@ float floatbb_max(const float *x){
     return max;
 }
 
-void init_move_table(){
-    FILE *file = fopen("moveOrderData.bin", "r");
-    fread((void*)&moveOrderData[0][0][0][0][0], sizeof(float ), 15*12*64*14*64, file);
-
+void calculate_ws_table(){
     memset(moveOrderWorthSearching, 0, sizeof(moveOrderWorthSearching));
-//
-//    float *c = &moveOrderData[0][0][0][0][0];
-//    for (int i = 0; i < 1000; ++i) {
-//        printf("%f\n", c[i]);
-//    }
 
     for (int nump = 0; nump < 15; ++nump) {
         for (int piece = 0; piece < 12; ++piece) {
             for (int square = 0; square < 64; ++square) {
                 for (int bb = 0; bb < 14; ++bb) {
                     float range = floatbb_max(moveOrderData[nump][piece][square][bb]) - floatbb_min(moveOrderData[nump][piece][square][bb]);
-                    if (range > 2000.) {
+                    if (range > 1700) {
                         moveOrderWorthSearching[nump][piece][square][bb] = 1;
                     }
                 }
             }
         }
     }
+}
 
+void init_move_table(){
+    FILE *file = fopen("moveOrderData.bin", "r");
+    fread((void*)&moveOrderData[0][0][0][0][0], sizeof(float ), 15*12*64*14*64, file);
+
+    calculate_ws_table();
 }
 
 //

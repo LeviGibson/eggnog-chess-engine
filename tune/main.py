@@ -2,8 +2,8 @@ import puzzles
 
 scores = []
 
-testingvalue = 1000
-while testingvalue < 3000:
+testingvalue = 100
+while testingvalue < 5000:
     print(testingvalue)
     score = puzzles.run(testingvalue)
     scores.append(score)
