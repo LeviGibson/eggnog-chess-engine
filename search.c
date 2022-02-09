@@ -656,7 +656,7 @@ static inline int search(int depth, int alpha, int beta, Line *pline, Thread *th
                 eval = -search(depth - 1, -beta, -alpha, &line, thread);
             } else {
                 //Late Move Reduction
-                if ((depth >= 3) && (in_check == 0) && (getcapture(move) == 0) && (!isPastPawnPush)) {
+                if ((depth >= 3) && (legalMoves.scores[moveId] < 5000) && (in_check == 0) && (getcapture(move) == 0) && (!isPastPawnPush)) {
 #ifndef NO_LMR
                     eval = -search(depth - 2, -alpha - 1, -alpha, &line, thread);
 #else
