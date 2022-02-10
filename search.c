@@ -11,13 +11,13 @@
 
 #define fabs(x) (((x) > 0) ? (x) : -(x))
 
-#define DEF_ASPWINDOW (1700)
+int DEF_ASPWINDOW = 1760;
 #define NO_MOVE (-15)
 
 #define DEF_ALPHA (-5000000)
 #define DEF_BETA (5000000)
 
-int aspwindow = DEF_ASPWINDOW;
+int aspwindow;
 int tbsearch = 0;
 
 int selDepth = 0;

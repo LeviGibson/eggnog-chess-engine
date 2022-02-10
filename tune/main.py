@@ -2,11 +2,11 @@ import puzzles
 
 scores = []
 
-testingvalue = 15
-while testingvalue < 35:
+testingvalue = 10
+while testingvalue < 10000:
     print(testingvalue)
     score = puzzles.run(testingvalue)
     scores.append(score)
 
     print(scores)
-    testingvalue += 1
+    testingvalue += 50

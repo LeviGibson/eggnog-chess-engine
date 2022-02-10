@@ -1,7 +1,7 @@
 import chess.engine
 
 import logging
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=logging.CRITICAL)
 
 def run(value : int):
 
