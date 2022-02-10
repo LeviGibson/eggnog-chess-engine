@@ -816,6 +816,7 @@ void *search_position(void *arg){
 
     start_time();
 
+    board->quinode = 0;
     stop = 0;
     nodes = 0;
     qnodes = 0;
