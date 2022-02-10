@@ -11,3 +11,4 @@ nnue/*.o
 Fathom/*.o
 moveOrder/moveOrderData.c
 moveOrder/data.npz
+/tune/lichess_db_puzzle.csv

@@ -597,7 +597,7 @@ static inline int search(int depth, int alpha, int beta, Line *pline, Thread *th
 
     //Static Null Move Pruning / Evaluation pruning
     if (!board->pvnode && !in_check && depth < 3) {
-        if ((staticeval - (100 * 64 * depth)) > beta){
+        if ((staticeval - (23 * 64 * depth)) > beta){
             return beta;
         }
     }

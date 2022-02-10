@@ -16,6 +16,7 @@ pthread_t searchthread;
 int dynamicTimeManagment = 0;
 int moveOverhead = 0;
 int historyMoveDivisor = 1400;
+int tuneParameter = 1;
 
 void change_to_correct_directory(char *argv){
     int lastslash = 0;
@@ -243,8 +244,7 @@ void uci_loop() {
         }
 
         if (strncmp(input, "setoption name Tune value", 25) == 0){
-        //    worthSearchingLimit = atoi(input + 26);
-        //    calculate_ws_table();
+            tuneParameter = atoi(input + 26);
         }
 
         if (strncmp(input, "setoption name SyzygyPath value", 31) == 0) {
