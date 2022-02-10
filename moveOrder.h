@@ -5,6 +5,9 @@
 #ifndef EGGNOG_CHESS_ENGINE_MOVEORDER_H
 #define EGGNOG_CHESS_ENGINE_MOVEORDER_H
 
+float moveOrderData[15][12][64][14][64];
+char moveOrderWorthSearching[15][12][64][14];
+
 float floatbb_min(const float *x);
 float floatbb_max(const float *x);
 void calculate_ws_table();

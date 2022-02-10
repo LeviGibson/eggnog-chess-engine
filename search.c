@@ -5,7 +5,7 @@
 #include "Fathom/tbprobe.h"
 #include "syzygy.h"
 #include "uci.h"
-#include "moveOrder/moveOrderData.h"
+#include "moveOrder.h"
 #include <stdio.h>
 #include <pthread.h>
 
