@@ -45,7 +45,7 @@ void calculate_ws_table(){
 
 void init_move_table(){
     FILE *file = fopen("moveOrderData.bin", "r");
-    fread((void*)&moveOrderData[0][0][0][0][0], sizeof(float ), 15*12*64*14*64, file);
+    __attribute__((unused)) unsigned _ = fread((void*)&moveOrderData[0][0][0][0][0], sizeof(float ), 15*12*64*14*64, file);
 
     calculate_ws_table();
 }
