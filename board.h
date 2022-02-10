@@ -75,7 +75,7 @@ struct Board{
     Line prevPv;
 
     float depthAdjuster;
-    int searchDepth;
+    int quinode;
 
     int helperThread;
 };

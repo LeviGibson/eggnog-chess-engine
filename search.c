@@ -268,7 +268,7 @@ int score_move(int move, const int *hashmove, Thread *thread){
             return(7000);
         }
 
-	if (board->searchDepth == 0){ return 0; }
+	if (board->quinode){ return 0; }
 
         float score = 0;
 
@@ -351,8 +351,6 @@ static inline int quiesce(int alpha, int beta, Thread *thread) {
         selDepth = board->ply;
     }
 
-    board->searchDepth = 0;
-
     if (nodes % 2048 == 0)
         communicate();
 
@@ -380,6 +378,7 @@ static inline int quiesce(int alpha, int beta, Thread *thread) {
     board->occupancies[both] = old_occupancies;
 
     copy_board();
+    board->quinode = 1;
 
     int tmp[4] = {0,0,0,0};
 
@@ -506,7 +505,6 @@ static inline int search(int depth, int alpha, int beta, Line *pline, Thread *th
     }
 
     //value for move ordering.
-    board->searchDepth = depth;
 
     //board->zobrist_history_search_index is a value for threefold-repetition detection during the search.
     //If all the repititions are during the search, then we can return 0 if there are only 2 repetitions/s
