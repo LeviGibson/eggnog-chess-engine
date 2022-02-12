@@ -1,14 +1,3 @@
-OBJS = main.c.o\
- syzygy.c.o\
- bitboard.c.o\
- perft.c.o\
- uci.c.o\
- timeman.c.o\
- transposition.c.o\
- moveOrder.c.o\
- Fathom/tbchess.c.o\
- Fathom/tbprobe.c.o
-
 CFILES = main.c\
  syzygy.c\
  bitboard.c\
@@ -24,19 +13,72 @@ CFILES = main.c\
 
 AVX2_OBJS = search.c.avx2.o \
        nnue/nnue.c.avx2.o \
-       board.c.avx2.o
+       board.c.avx2.o \
+       main.c.avx2.o \
+       syzygy.c.avx2.o \
+       bitboard.c.avx2.o \
+       perft.c.avx2.o \
+       uci.c.avx2.o \
+       timeman.c.avx2.o \
+       transposition.c.avx2.o \
+       moveOrder.c.avx2.o \
+       Fathom/tbchess.c.avx2.o \
+       Fathom/tbprobe.c.avx2.o
+
 AVX_OBJS = search.c.avx.o \
        nnue/nnue.c.avx.o \
-       board.c.avx.o
+       board.c.avx.o \
+	   main.c.avx.o \
+	   syzygy.c.avx.o \
+	   bitboard.c.avx.o \
+	   perft.c.avx.o \
+	   uci.c.avx.o \
+	   timeman.c.avx.o \
+	   transposition.c.avx.o \
+	   moveOrder.c.avx.o \
+	   Fathom/tbchess.c.avx.o \
+	   Fathom/tbprobe.c.avx.o
+
 SSE2_OBJS = search.c.sse2.o \
        nnue/nnue.c.sse2.o \
-       board.c.sse2.o
+       board.c.sse2.o \
+       main.c.sse2.o \
+       syzygy.c.sse2.o \
+       bitboard.c.sse2.o \
+       perft.c.sse2.o \
+       uci.c.sse2.o \
+       timeman.c.sse2.o \
+       transposition.c.sse2.o \
+       moveOrder.c.sse2.o \
+       Fathom/tbchess.c.sse2.o \
+       Fathom/tbprobe.c.sse2.o
+
 SSE_OBJS = search.c.sse.o \
        nnue/nnue.c.sse.o \
-       board.c.sse.o
+       board.c.sse.o \
+	   main.c.sse.o \
+	   syzygy.c.sse.o \
+	   bitboard.c.sse.o \
+	   perft.c.sse.o \
+	   uci.c.sse.o \
+	   timeman.c.sse.o \
+	   transposition.c.sse.o \
+	   moveOrder.c.sse.o \
+	   Fathom/tbchess.c.sse.o \
+	   Fathom/tbprobe.c.sse.o
 POPCNT_OBJS = search.c.popcnt.o \
        nnue/nnue.c.popcnt.o \
-       board.c.popcnt.o
+       board.c.popcnt.o \
+	   main.c.popcnt.o \
+	   syzygy.c.popcnt.o \
+	   bitboard.c.popcnt.o \
+	   perft.c.popcnt.o \
+	   uci.c.popcnt.o \
+	   timeman.c.popcnt.o \
+	   transposition.c.popcnt.o \
+	   moveOrder.c.popcnt.o \
+	   Fathom/tbchess.c.popcnt.o \
+	   Fathom/tbprobe.c.popcnt.o
 
 OS = linux
 FILE = ./bin/eggnog-chess-engine
@@ -62,19 +104,17 @@ endif
 
 
 all: avx2 avx sse sse2 popcnt
-avx2: $(OBJS) $(AVX2_OBJS)
+avx2: $(AVX2_OBJS)
 	$(CC) $(OBJS) $(AVX2_OBJS) $(LINK_OPTS) -o $(FILE)-avx2-$(OS)$(EXECUTABLE_FILENAME)
-avx:  $(OBJS) $(AVX_OBJS)
+avx:  $(AVX_OBJS)
 	$(CC) $(OBJS) $(AVX_OBJS) $(LINK_OPTS) -o $(FILE)-avx-$(OS)$(EXECUTABLE_FILENAME)
-sse: $(OBJS) $(SSE_OBJS)
+sse: $(SSE_OBJS)
 	$(CC) $(OBJS) $(SSE_OBJS) $(LINK_OPTS) -o $(FILE)-sse-$(OS)$(EXECUTABLE_FILENAME)
-sse2: $(OBJS) $(SSE2_OBJS)
+sse2: $(SSE2_OBJS)
 	$(CC) $(OBJS) $(SSE2_OBJS) $(LINK_OPTS) -o $(FILE)-sse2-$(OS)$(EXECUTABLE_FILENAME)
-popcnt: $(OBJS) $(POPCNT_OBJS)
+popcnt: $(POPCNT_OBJS)
 	$(CC) $(OBJS) $(POPCNT_OBJS) $(LINK_OPTS) -o $(FILE)-popcnt-$(OS)$(EXECUTABLE_FILENAME)
 
-%.c.o: %.c
-	$(CC) $< $(COMMONFLAGS) -c -o $@
 %.c.avx2.o: %.c
 	$(CC) $< $(COMMONFLAGS) -DAVX2 -mavx2 -c -o $@
 %.c.avx.o: %.c
