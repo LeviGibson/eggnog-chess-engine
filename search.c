@@ -108,104 +108,43 @@ U64 pastPawnMasks[2][64] = {
          0x0ULL, 0x0ULL, 0x0ULL, 0x0ULL,}
 };
 
-#if defined(AVX) || defined(AVX2)
-//taken from https://coderedirect.com/questions/143686/how-to-sum-m256-horizontally
-float sum8(__m256 x) {
-    const __m128 hiQuad = _mm256_extractf128_ps(x, 1);
-    const __m128 loQuad = _mm256_castps256_ps128(x);
-    const __m128 sumQuad = _mm_add_ps(loQuad, hiQuad);
-    const __m128 loDual = sumQuad;
-    const __m128 hiDual = _mm_movehl_ps(sumQuad, sumQuad);
-    const __m128 sumDual = _mm_add_ps(loDual, hiDual);
-    const __m128 lo = sumDual;
-    const __m128 hi = _mm_shuffle_ps(sumDual, sumDual, 0x1);
-    const __m128 sum = _mm_add_ss(lo, hi);
-    return _mm_cvtss_f32(sum);
+uint16_t andmask[16] = {1, 1 << 1, 1 << 2, 1 << 3, 1 << 4, 1 << 5, 1 << 6, 1 << 7,
+                       1 << 8, 1 << 9, 1 << 10, 1 << 11, 1 << 12, 1 << 13, 1 << 14, 1 << 15};
+
+__m256i inverse_maskmove_epi16(U64 x){
+    __m256i _and = _mm256_loadu_si256((const __m256i_u *) andmask);
+    int16_t x16 = *(int16_t*)&x;
+    __m256i _mask = _mm256_set1_epi16(x16);
+    _mask = _mm256_and_si256(_mask, _and);
+    _mask = _mm256_cmpeq_epi16(_mask, _and);
+    return _mask;
 }
 
-
-//taken from https://stackoverflow.com/questions/48811369/how-to-use-bits-in-a-byte-to-set-dwords-in-ymm-register-without-avx2-inverse-o
-__m256i inverse_movemask_ps(int bitmap) {
-    const __m256 exponent = _mm256_set1_ps(1.0f);
-    const __m256 bit_select = _mm256_castsi256_ps(
-            _mm256_set_epi32(
-                    0x3f800000 + (1<<7), 0x3f800000 + (1<<6),
-                    0x3f800000 + (1<<5), 0x3f800000 + (1<<4),
-                    0x3f800000 + (1<<3), 0x3f800000 + (1<<2),
-                    0x3f800000 + (1<<1), 0x3f800000 + (1<<0)
-            ));
-
-    __m256  bcast = _mm256_castsi256_ps(_mm256_set1_epi32(bitmap));
-    __m256  ored  = _mm256_or_ps(bcast, exponent);
-    __m256  isolated = _mm256_and_ps(ored, bit_select);
-    return (__m256i)_mm256_cmp_ps(isolated, bit_select, _CMP_EQ_OQ);
-}
-#endif
-
-//int hadd(__m256i _a) {
-//    __m256i _zero = _mm256_set1_epi16(0);
-//
-//    __m256i _x = _mm256_hadd_epi16(_a, _zero);
-//    _x = _mm256_hadd_epi16(_x, _zero);
-//    _x = _mm256_hadd_epi16(_x, _zero);
-//
-//    return _mm256_extract_epi16(_x, 0) + _mm256_extract_epi16(_x, 4) + _mm256_extract_epi16(_x, 8) + _mm256_extract_epi16(_x, 12);
-//}
-
-int16_t fastGetScoreFromMoveTable(U64 bitboard, const int16_t *bbPart){
-
-//#if defined(AVX) || defined(AVX2)
-//    float score = 0;
-//
-//    for (int i = 0; i < 64; i += 8) {
-//        __m256i _mask_x = inverse_movemask_ps((int)(bitboard >> i));
-//
-//        __m256 _x = _mm256_maskload_ps(bbPart + i, _mask_x);
-//
-//        score += sum8(_x);
-//    }
-//
-//    return score;
-//
-//#else
-
-    int16_t score = 0;
-
-    int count = count_bits(bitboard);
-
-    for (int i = 0; i < count; ++i) {
-        int bit = bsf(bitboard);
-
-        score += bbPart[bit];
-
-        pop_bit(bitboard, bit);
-    }
-
-    return score;
-//
-//#endif
+int16_t hadd_epi16(__m256i x) {
+    const __m128i hiQuad = _mm256_extractf128_ps(x, 1);
+    const __m128i loQuad = _mm256_castps256_ps128(x);
+    const __m128i sumQuad = _mm_add_epi16(loQuad, hiQuad);
+    const __m128i hiDual = _mm_movehl_ps(sumQuad, sumQuad);
+    const __m128i sumDual = _mm_add_epi16(sumQuad, hiDual);
+    return _mm_extract_epi16(sumDual, 0) + _mm_extract_epi16(sumDual, 1) + _mm_extract_epi16(sumDual, 2) + _mm_extract_epi16(sumDual, 3);
 }
 
 int16_t getScoreFromMoveTable(U64 bitboard, const int16_t *bbPart){
 
-//#if 1 || defined(AVX) || defined(AVX2)
-//    U64 ybb = ~bitboard;
-//
-//    int16_t score = 0;
-//
-//    for (int i = 0; i < 64; i += 16) {
-//        __m256i _x = _mm256_loadu_si256((const __m256i_u *) &bbPart[i]);
-//        _x = _mm256_blend_epi16(_mm256_set1_epi16(0), _x, (int)(bitboard >> i));
-//        __m256i _y = _mm256_loadu_si256((const __m256i_u *) &bbPart[i]);
-//        _y = _mm256_blend_epi16(_mm256_set1_epi16(0), _y, (int)(ybb >> i));
-//
-//        score += hadd(_x);
-//        score -= hadd(_y);
-//    }
-//
-//    return score;
-//
-//#else
+#if 1 || defined(AVX) || defined(AVX2)
+    bitboard = ~bitboard;
+    int16_t score = 0;
+
+    for (int i = 0; i < 64; i += 16) {
+        __m256i _x = _mm256_loadu_si256((const __m256i_u *) &bbPart[i]);
+        _x = _mm256_xor_si256(_x, inverse_maskmove_epi16(bitboard >> i));
+
+        score += hadd_epi16(_x);
+    }
+
+    return score;
+
+#else
 
     int16_t score = 0;
 
@@ -219,7 +158,7 @@ int16_t getScoreFromMoveTable(U64 bitboard, const int16_t *bbPart){
 
     return score;
 
-//#endif
+#endif
 
 }
 
@@ -306,11 +245,7 @@ int score_move(int move, const int *hashmove, Thread *thread){
                 else
                     bitboard = board->unprotectedPieces[bb - 12];
 
-                if (board->ply < 5) {
-                    score += getScoreFromMoveTable(bitboard, bbPart);
-                } else {
-                    score += fastGetScoreFromMoveTable(bitboard, bbPart);
-                }
+                score += getScoreFromMoveTable(bitboard, bbPart);
             }
         }
 
