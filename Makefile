@@ -117,11 +117,11 @@ popcnt: $(POPCNT_OBJS)
 
 %.c.avx2.o: %.c
 	$(CC) $< $(COMMONFLAGS) -DAVX2 -mavx2 -c -o $@
-%.c.avx.o: %.c
+%.c.sse.o: %.c
 	$(CC) $< $(COMMONFLAGS) -DSSE -msse -c -o $@
 %.c.sse2.o: %.c
 	$(CC) $< $(COMMONFLAGS) -DSSE2 -msse2 -c -o $@
-%.c.sse.o: %.c
+%.c.avx.o: %.c
 	$(CC) $< $(COMMONFLAGS) -DAVX -mavx -c -o $@
 %.c.popcnt.o: %.c
 	$(CC) $< $(COMMONFLAGS) -DPOPCNT -mpopcnt -c -o $@
