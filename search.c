@@ -136,7 +136,7 @@ int16_t getScoreFromMoveTable(U64 bitboard, const int16_t *bbPart){
     int16_t score = 0;
 
     for (int i = 0; i < 64; i += 16) {
-        __m256i _x = _mm256_loadu_si256((const __m256i_u *) &bbPart[i]);
+        __m256i _x = _mm256_loadu_si256((const void *) &bbPart[i]);
         _x = _mm256_xor_si256(_x, inverse_maskmove_epi16(bitboard >> i));
 
         score += hadd_epi16(_x);
