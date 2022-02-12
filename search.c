@@ -108,6 +108,7 @@ U64 pastPawnMasks[2][64] = {
          0x0ULL, 0x0ULL, 0x0ULL, 0x0ULL,}
 };
 
+#ifdef AVX2
 uint16_t andmask[16] = {1, 1 << 1, 1 << 2, 1 << 3, 1 << 4, 1 << 5, 1 << 6, 1 << 7,
                        1 << 8, 1 << 9, 1 << 10, 1 << 11, 1 << 12, 1 << 13, 1 << 14, 1 << 15};
 
@@ -129,9 +130,11 @@ int16_t hadd_epi16(__m256i x) {
     return _mm_extract_epi16(sumDual, 0) + _mm_extract_epi16(sumDual, 1) + _mm_extract_epi16(sumDual, 2) + _mm_extract_epi16(sumDual, 3);
 }
 
+#endif
+
 int16_t getScoreFromMoveTable(U64 bitboard, const int16_t *bbPart){
 
-#if 1 || defined(AVX) || defined(AVX2)
+#ifdef AVX2
     bitboard = ~bitboard;
     int16_t score = 0;
 
