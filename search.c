@@ -112,7 +112,7 @@ uint16_t andmask[16] = {1, 1 << 1, 1 << 2, 1 << 3, 1 << 4, 1 << 5, 1 << 6, 1 << 
                        1 << 8, 1 << 9, 1 << 10, 1 << 11, 1 << 12, 1 << 13, 1 << 14, 1 << 15};
 
 __m256i inverse_maskmove_epi16(U64 x){
-    __m256i _and = _mm256_loadu_si256((const __m256i_u *) andmask);
+    __m256i _and = _mm256_loadu_si256((const void *) andmask);
     int16_t x16 = *(int16_t*)&x;
     __m256i _mask = _mm256_set1_epi16(x16);
     _mask = _mm256_and_si256(_mask, _and);
