@@ -45,7 +45,7 @@ COMMONFLAGS = -O3 -fcommon
 ifeq ($(OS), linux)
 
 EXECUTABLE_FILENAME =
-CC=gcc
+CC=clang
 LINK_OPTS = -lpthread
 
 else ifeq ($(OS), mac)

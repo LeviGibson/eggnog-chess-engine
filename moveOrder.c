@@ -6,8 +6,8 @@
 #include "moveOrder.h"
 #include "search.h"
 
-float floatbb_min(const float *x){
-    float min = 10000000;
+int16_t int16bb_min(const int16_t *x){
+    int16_t min = 30000;
     for (int i = 0; i < 64; ++i) {
         if (x[i] < min)
             min = x[i];
@@ -16,8 +16,8 @@ float floatbb_min(const float *x){
     return min;
 }
 
-float floatbb_max(const float *x){
-    float max = -10000000;
+int16_t int16bb_max(const int16_t *x){
+    int16_t max = -30000;
     for (int i = 0; i < 64; ++i) {
         if (x[i] > max)
             max = x[i];
@@ -33,7 +33,7 @@ void calculate_ws_table(){
         for (int piece = 0; piece < 12; ++piece) {
             for (int square = 0; square < 64; ++square) {
                 for (int bb = 0; bb < 14; ++bb) {
-                    float range = floatbb_max(moveOrderData[nump][piece][square][bb]) - floatbb_min(moveOrderData[nump][piece][square][bb]);
+                    int16_t range = int16bb_max(moveOrderData[nump][piece][square][bb]) - int16bb_min(moveOrderData[nump][piece][square][bb]);
                     if (range > 1700) {
                         moveOrderWorthSearching[nump][piece][square][bb] = 1;
                     }
@@ -45,7 +45,7 @@ void calculate_ws_table(){
 
 void init_move_table(){
     FILE *file = fopen("moveOrderData.bin", "r");
-    __attribute__((unused)) unsigned _ = fread((void*)&moveOrderData[0][0][0][0][0], sizeof(float ), 15*12*64*14*64, file);
+    __attribute__((unused)) unsigned _ = fread((void*)&moveOrderData[0][0][0][0][0], sizeof(int16_t ), 15*12*64*14*64, file);
 
     calculate_ws_table();
 }

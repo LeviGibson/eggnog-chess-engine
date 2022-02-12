@@ -142,24 +142,34 @@ __m256i inverse_movemask_ps(int bitmap) {
 }
 #endif
 
-float fastGetScoreFromMoveTable(U64 bitboard, const float *bbPart){
+//int hadd(__m256i _a) {
+//    __m256i _zero = _mm256_set1_epi16(0);
+//
+//    __m256i _x = _mm256_hadd_epi16(_a, _zero);
+//    _x = _mm256_hadd_epi16(_x, _zero);
+//    _x = _mm256_hadd_epi16(_x, _zero);
+//
+//    return _mm256_extract_epi16(_x, 0) + _mm256_extract_epi16(_x, 4) + _mm256_extract_epi16(_x, 8) + _mm256_extract_epi16(_x, 12);
+//}
 
-#if defined(AVX) || defined(AVX2)
-    float score = 0;
+int16_t fastGetScoreFromMoveTable(U64 bitboard, const int16_t *bbPart){
 
-    for (int i = 0; i < 64; i += 8) {
-        __m256i _mask_x = inverse_movemask_ps((int)(bitboard >> i));
+//#if defined(AVX) || defined(AVX2)
+//    float score = 0;
+//
+//    for (int i = 0; i < 64; i += 8) {
+//        __m256i _mask_x = inverse_movemask_ps((int)(bitboard >> i));
+//
+//        __m256 _x = _mm256_maskload_ps(bbPart + i, _mask_x);
+//
+//        score += sum8(_x);
+//    }
+//
+//    return score;
+//
+//#else
 
-        __m256 _x = _mm256_maskload_ps(bbPart + i, _mask_x);
-
-        score += sum8(_x);
-    }
-
-    return score;
-
-#else
-
-    float score = 0;
+    int16_t score = 0;
 
     int count = count_bits(bitboard);
 
@@ -172,33 +182,32 @@ float fastGetScoreFromMoveTable(U64 bitboard, const float *bbPart){
     }
 
     return score;
-
-#endif
+//
+//#endif
 }
 
-float getScoreFromMoveTable(U64 bitboard, const float *bbPart){
+int16_t getScoreFromMoveTable(U64 bitboard, const int16_t *bbPart){
 
-#if defined(AVX) || defined(AVX2)
-    U64 ybb = ~bitboard;
+//#if 1 || defined(AVX) || defined(AVX2)
+//    U64 ybb = ~bitboard;
+//
+//    int16_t score = 0;
+//
+//    for (int i = 0; i < 64; i += 16) {
+//        __m256i _x = _mm256_loadu_si256((const __m256i_u *) &bbPart[i]);
+//        _x = _mm256_blend_epi16(_mm256_set1_epi16(0), _x, (int)(bitboard >> i));
+//        __m256i _y = _mm256_loadu_si256((const __m256i_u *) &bbPart[i]);
+//        _y = _mm256_blend_epi16(_mm256_set1_epi16(0), _y, (int)(ybb >> i));
+//
+//        score += hadd(_x);
+//        score -= hadd(_y);
+//    }
+//
+//    return score;
+//
+//#else
 
-    float score = 0;
-
-    for (int i = 0; i < 64; i += 8) {
-        __m256i _mask_x = inverse_movemask_ps((int)(bitboard >> i));
-        __m256i _mask_y = inverse_movemask_ps((int)(ybb >> i));
-
-        __m256 _x = _mm256_maskload_ps(bbPart + i, _mask_x);
-        __m256 _y = _mm256_maskload_ps(bbPart + i, _mask_y);
-
-        score += sum8(_x);
-        score -= sum8(_y);
-    }
-
-    return score;
-
-#else
-
-    float score = 0;
+    int16_t score = 0;
 
     for (int i = 0; i < 64; ++i) {
         if (get_bit(bitboard, i)){
@@ -210,7 +219,7 @@ float getScoreFromMoveTable(U64 bitboard, const float *bbPart){
 
     return score;
 
-#endif
+//#endif
 
 }
 
@@ -270,7 +279,7 @@ int score_move(int move, const int *hashmove, Thread *thread){
 
 	if (board->quinode){ return 0; }
 
-        float score = 0;
+        int score = 0;
 
         int piece = getpiece(move);
         int target = gettarget(move);
@@ -282,13 +291,13 @@ int score_move(int move, const int *hashmove, Thread *thread){
             pieceCount = 14;
         //ha!
 
-        const float *dataPart = &moveOrderData[pieceCount][piece][target][0][0];
+        const int16_t *dataPart = &moveOrderData[pieceCount][piece][target][0][0];
         char *wspart = &moveOrderWorthSearching[pieceCount][piece][target][0];
 
         for (int bb = 0; bb < 14; bb++){
             if (bb == P || bb == p || bb == 12 || bb == 13 || wspart[bb] || board->pvnode) {
 
-                const float *bbPart = &dataPart[bb * 64];
+                const int16_t *bbPart = &dataPart[bb * 64];
                 U64 bitboard;
 
                 //there are two other bitboards that represent what squares each side attacks
@@ -306,16 +315,16 @@ int score_move(int move, const int *hashmove, Thread *thread){
         }
 
         if (getpiece(move) == P && !(pastPawnMasks[white][gettarget(move)] & BP))
-            score += .5f * fabs(score);
+            score += fabs(score)/2;
 
         if (getpiece(move) == p && !(pastPawnMasks[black][gettarget(move)] & WP))
-            score += .5f * fabs(score);
+            score += fabs(score)/2;
 
         score /= 550;
 
         if (historyCount > 0) {
             float historyscore = (history_moves[getpiece(move)][getsource(move)][gettarget(move)] / (float) historyCount) * (float)historyMoveDivisor;
-            score += historyscore;
+            score += (int )historyscore;
         }
 
         return (int)score;
