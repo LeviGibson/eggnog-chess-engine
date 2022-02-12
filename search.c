@@ -945,7 +945,7 @@ void *search_position(void *arg){
         //TIME MANAGMENT
         if (dynamicTimeManagment) {
             if (board->prevPv.moves[0] == prevBestMove) {
-                moveTime -= (moveTime / 8);
+                moveTime -= (moveTime / 12);
             } else {
                 moveTime += (moveTime / 10);
             }
@@ -998,4 +998,5 @@ void *search_position(void *arg){
     print_move(board->prevPv.moves[0]);
     printf("\n");
 
+    return NULL;
 }
