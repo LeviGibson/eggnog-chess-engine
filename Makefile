@@ -88,18 +88,18 @@ ifeq ($(OS), linux)
 
 EXECUTABLE_FILENAME =
 CC=clang
-LINK_OPTS = -lpthread
+LINK_OPTS = -lpthread -lm
 
 else ifeq ($(OS), mac)
 
 EXECUTABLE_FILENAME =.dmg
 CC=gcc
-LINK_OPTS = -lpthread
+LINK_OPTS = -lpthread -lm
 
 else
 EXECUTABLE_FILENAME =.exe
 CC=x86_64-w64-mingw32-gcc
-LINK_OPTS = -l:libwinpthread.a
+LINK_OPTS = -l:libwinpthread.a -lm
 endif
 
 

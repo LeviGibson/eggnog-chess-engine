@@ -28,6 +28,6 @@ void start_time();
 
 void communicate();
 
-int choose_movetime(int wtime, int btime, int side);
+int choose_movetime(int wtime, int btime, int winc, int binc, int side);
 
 #endif
