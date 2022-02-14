@@ -192,16 +192,16 @@ int16_t getScoreFromMoveTable(U64 bitboard, const int16_t *bbPart){
 
 #ifdef AVX2
     bitboard = ~bitboard;
-    int16_t score = 0;
+        __m256i score = _mm256_set1_epi16(0);
 
-    for (int i = 0; i < 64; i += 16) {
-        __m256i _x = _mm256_loadu_si256((const void *) &bbPart[i]);
-        _x = _mm256_xor_si256(_x, inverse_maskmove_epi16(bitboard >> i));
+        for (int i = 0; i < 64; i += 16) {
+            __m256i _x = _mm256_loadu_si256((const void *) &bbPart[i]);
+            _x = _mm256_xor_si256(_x, inverse_maskmove_epi16(bitboard >> i));
 
-        score += hadd_epi16(_x);
-    }
+            score = _mm256_add_epi16(_x, score);
+        }
 
-    return score;
+        return hadd_epi16(score);
 
 #elif defined(AVX)
     bitboard = ~bitboard;
@@ -214,7 +214,7 @@ int16_t getScoreFromMoveTable(U64 bitboard, const int16_t *bbPart){
         score += hadd_epi16(_x);
     }
 
-    return score*2;
+    return score;
 #else
 
     int16_t score = 0;
