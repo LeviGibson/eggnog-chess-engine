@@ -135,10 +135,10 @@ __m256i inverse_maskmove_epi16(U64 x){
 }
 
 int16_t hadd_epi16(__m256i x) {
-    const __m128i hiQuad = _mm256_extractf128_ps(x, 1);
-    const __m128i loQuad = _mm256_castps256_ps128(x);
+    const __m128i hiQuad = (__m128i)_mm256_extractf128_ps((__m256)x, 1);
+    const __m128i loQuad = (__m128i)_mm256_castps256_ps128((__m256)x);
     const __m128i sumQuad = _mm_add_epi16(loQuad, hiQuad);
-    const __m128i hiDual = _mm_movehl_ps(sumQuad, sumQuad);
+    const __m128i hiDual = (__m128i)_mm_movehl_ps((__m128)sumQuad, (__m128)sumQuad);
     const __m128i sumDual = _mm_add_epi16(sumQuad, hiDual);
     return _mm_extract_epi16(sumDual, 0) + _mm_extract_epi16(sumDual, 1) + _mm_extract_epi16(sumDual, 2) + _mm_extract_epi16(sumDual, 3);
 }
@@ -152,17 +152,17 @@ uint16_t andmask[16] = {1, 1 << 1, 1 << 2, 1 << 3, 1 << 4, 1 << 5, 1 << 6, 1 << 
 int bitshifts[16] = {0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15};
 
 __m256i cmpeq(__m256i x, __m256i y){
-    __m128i x2 = _mm256_extractf128_ps(x, 1);
-    __m128i x1 = _mm256_castps256_ps128(x);
+    __m128i x2 = (__m128i)_mm256_extractf128_ps((__m256)x, 1);
+    __m128i x1 = (__m128i)_mm256_castps256_ps128((__m256)x);
 
-    __m128i y2 = _mm256_extractf128_ps(y, 1);
-    __m128i y1 = _mm256_castps256_ps128(y);
+    __m128i y2 = (__m128i)_mm256_extractf128_ps((__m256)y, 1);
+    __m128i y1 = (__m128i)_mm256_castps256_ps128((__m256)y);
 
     x1 = _mm_cmpeq_epi16(x1, y1);
     x2 = _mm_cmpeq_epi16(x2, y2);
 
-    __m256i c = _mm256_castps128_ps256(x1);
-    c = _mm256_insertf128_ps(c, x2, 1);
+    __m256i c = (__m256i)_mm256_castps128_ps256((__m128)x1);
+    c = (__m256i)_mm256_insertf128_ps((__m256)c, (__m128)x2, 1);
 
     return c;
 }
@@ -178,10 +178,10 @@ __m256i inverse_maskmove_epi16(U64 x){
 }
 
 int16_t hadd_epi16(__m256i x) {
-    const __m128i hiQuad = _mm256_extractf128_ps(x, 1);
-    const __m128i loQuad = _mm256_castps256_ps128(x);
+    const __m128i hiQuad = (__m128i)_mm256_extractf128_ps((__m256)x, 1);
+    const __m128i loQuad = (__m128i)_mm256_castps256_ps128((__m256)x);
     const __m128i sumQuad = _mm_add_epi16(loQuad, hiQuad);
-    const __m128i hiDual = _mm_movehl_ps(sumQuad, sumQuad);
+    const __m128i hiDual = (__m128i)_mm_movehl_ps((__m128)sumQuad, (__m128)sumQuad);
     const __m128i sumDual = _mm_add_epi16(sumQuad, hiDual);
     return _mm_extract_epi16(sumDual, 0) + _mm_extract_epi16(sumDual, 1) + _mm_extract_epi16(sumDual, 2) + _mm_extract_epi16(sumDual, 3);
 }
