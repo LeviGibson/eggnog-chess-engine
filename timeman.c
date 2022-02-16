@@ -28,9 +28,9 @@ int choose_movetime(int i_wtime, int i_btime, int i_winc, int i_binc, int side) 
 
     if (side == white) {
         float time = (powf((wtime/1000), 1.2f) * 1000)/40;
-        return (int )(max(time, 15) - (float )moveOverhead + (winc / 2));
+        return (int )max((time - (float )moveOverhead + (winc / 2)), 75);
     } else {
         float time = (powf((btime/1000), 1.2f) * 1000)/40;
-        return (int )(max(time, 15) - (float )moveOverhead + (binc / 2));
+        return (int )max((time - (float )moveOverhead + (binc / 2)), 75);
     }
 }
