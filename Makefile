@@ -135,7 +135,7 @@ gdb:
 	$(CC) $(COMMONFLAGS) -DAVX2 -mavx2 $(CFILES) -g
 	mv ./a.out ./bin/a.out
 prof:
-	$(CC) -pg -DAVX2 -mavx2 -pthread -O3 $(CFILES) -o $(FILE)-prof
+	$(CC) -pg -lm -DAVX2 -mavx2 -pthread -O3 $(CFILES) -o $(FILE)-prof
 clean:
 	rm -f ./bin/a.out
 	rm -f ./bin/eggnog-chess-engine*

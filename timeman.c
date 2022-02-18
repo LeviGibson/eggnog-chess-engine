@@ -26,11 +26,19 @@ int choose_movetime(int i_wtime, int i_btime, int i_winc, int i_binc, int side) 
     float winc = (float)i_winc;
     float binc = (float)i_binc;
 
+    float d = 70;
+    float z = 5.4;
+    float t = 1.0056;
+    float s = 95;
+    float a = -500;
+
     if (side == white) {
-        float time = (powf((wtime/1000), 1.2f) * 1000)/40;
-        return (int )max((time - (float )moveOverhead + (winc / 2)), 75);
+        float time = ((1/(1+powf(t, -((wtime/1000)+a))))*s)-z+(wtime/1000/d);
+        time *= 1000;
+        return (int )max((time - (float )moveOverhead + (winc / 2)), 75.f);
     } else {
-        float time = (powf((btime/1000), 1.2f) * 1000)/40;
-        return (int )max((time - (float )moveOverhead + (binc / 2)), 75);
+        float time = ((1/(1+powf(t, -((btime/1000)+a))))*s)-z+(btime/1000/d);
+        time *= 1000;
+        return (int )max((time - (float )moveOverhead + (binc / 2)), 75.f);
     }
 }

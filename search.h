@@ -6,7 +6,7 @@
 
 //macro "max" is defined in minwindef.h when compiling with mingw
 #ifndef max
-#define max(x, y) (y) > (x) ? (y) : (x)
+#define max(x, y) ((y) > (x) ? (y) : (x))
 #endif
 
 void *search_position(void *arg);
