@@ -26,11 +26,11 @@ int choose_movetime(int i_wtime, int i_btime, int i_winc, int i_binc, int side) 
     float winc = (float)i_winc;
     float binc = (float)i_binc;
 
-    float d = 70;
-    float z = 1.3f;
-    float t = 1.007f;
-    float s = 43;
-    float a = -500;
+    float d = 60;
+    float z = 4.6f;
+    float t = 1.005f;
+    float s = 50;
+    float a = -460;
 
     if (side == white) {
         float time = ((1/(1+powf(t, -((wtime/1000)+a))))*s)-z+(wtime/1000/d);
