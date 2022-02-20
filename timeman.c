@@ -27,7 +27,7 @@ int choose_movetime(int i_wtime, int i_btime, int i_winc, int i_binc, int side) 
     float binc = (float)i_binc;
 
     float d = 70;
-    float z = 1.8f;
+    float z = 1.3f;
     float t = 1.007f;
     float s = 43;
     float a = -500;
