@@ -6,13 +6,13 @@
 #include "syzygy.h"
 #include "uci.h"
 #include "moveOrder.h"
+#include "see.h"
 #include <stdio.h>
 #include <pthread.h>
 
 #define fabs(x) (((x) > 0) ? (x) : -(x))
 
 int DEF_ASPWINDOW = 1760;
-#define NO_MOVE (-15)
 
 #define DEF_ALPHA (-5000000)
 #define DEF_BETA (5000000)
@@ -27,19 +27,19 @@ long qnodes = 0;
 long tbHits = 0;
 
 const int mvv_lva[12][12] = {
-        105, 205, 305, 405, 505, 605,  105, 205, 305, 405, 505, 605,
-        104, 204, 304, 404, 504, 604,  104, 204, 304, 404, 504, 604,
-        103, 203, 303, 403, 503, 603,  103, 203, 303, 403, 503, 603,
-        102, 202, 302, 402, 502, 602,  102, 202, 302, 402, 502, 602,
-        101, 201, 301, 401, 501, 601,  101, 201, 301, 401, 501, 601,
-        100, 200, 300, 400, 500, 600,  100, 200, 300, 400, 500, 600,
+        15, 25, 35, 45, 55, 65,  15, 25, 35, 45, 55, 65,
+        14, 24, 34, 44, 54, 64,  14, 24, 34, 44, 54, 64,
+        13, 23, 33, 43, 53, 63,  13, 23, 33, 43, 53, 63,
+        12, 22, 32, 42, 52, 62,  12, 22, 32, 42, 52, 62,
+        11, 21, 31, 41, 51, 61,  11, 21, 31, 41, 51, 61,
+        10, 20, 30, 40, 50, 60,  10, 20, 30, 40, 50, 60,
 
-        105, 205, 305, 405, 505, 605,  105, 205, 305, 405, 505, 605,
-        104, 204, 304, 404, 504, 604,  104, 204, 304, 404, 504, 604,
-        103, 203, 303, 403, 503, 603,  103, 203, 303, 403, 503, 603,
-        102, 202, 302, 402, 502, 602,  102, 202, 302, 402, 502, 602,
-        101, 201, 301, 401, 501, 601,  101, 201, 301, 401, 501, 601,
-        100, 200, 300, 400, 500, 600,  100, 200, 300, 400, 500, 600
+        15, 25, 35, 45, 55, 65,  15, 25, 35, 45, 55, 65,
+        14, 24, 34, 44, 54, 64,  14, 24, 34, 44, 54, 64,
+        13, 23, 33, 43, 53, 63,  13, 23, 33, 43, 53, 63,
+        12, 22, 32, 42, 52, 62,  12, 22, 32, 42, 52, 62,
+        11, 21, 31, 41, 51, 61,  11, 21, 31, 41, 51, 61,
+        10, 20, 30, 40, 50, 60,  10, 20, 30, 40, 50, 60
 };
 
 int historyCount;
@@ -255,6 +255,8 @@ int score_move(int move, const int *hashmove, Thread *thread){
     }
 
     if (getcapture(move)){
+
+
         int start_piece, end_piece;
         int target_piece = P;
 
@@ -276,6 +278,11 @@ int score_move(int move, const int *hashmove, Thread *thread){
         } else {
             if ((getpiece(move) != p) && (pawn_mask[black][gettarget(move)] & WP))
                 return 10000;
+        }
+
+        if (board->searchDepth > 8) {
+            int val = seeCapture(move, board);
+            return val + mvv_lva[getpiece(move)][target_piece] + 10000;
         }
 
         return mvv_lva[getpiece(move)][target_piece] + 10000;
@@ -348,7 +355,7 @@ static inline void sort_moves(MoveList *move_list, int *hashmove, Thread *thread
 
     insertion_sort(move_list);
 
-//    if (thread->board.searchDepth == 0) return;
+//    if (thread->board.searchDepth <= 6) return;
 //    print_fen(&thread->board);
 //    printf("\n");
 //     for (int i = 0; i < move_list->count; i++) {
@@ -361,6 +368,7 @@ static inline void sort_moves(MoveList *move_list, int *hashmove, Thread *thread
 
 static inline int quiesce(int alpha, int beta, Thread *thread) {
     Board *board = &thread->board;
+    board->searchDepth = 0;
 
     if (board->ply > selDepth){
         selDepth = board->ply;
@@ -432,6 +440,7 @@ int ZwSearch(int beta, int depth, Thread *thread){
     }
 
     Board *board = &thread->board;
+    board->searchDepth = depth;
 
     if (depth <= 0) {
         int qui = quiesce(beta - 1, beta, thread);
@@ -494,6 +503,7 @@ static inline int search(int depth, int alpha, int beta, Line *pline, Thread *th
     }
 
     Board *board = &thread->board;
+    board->searchDepth = depth;
 
     //do check extensions before probing hash table
     int in_check = is_square_attacked(bsf((board->side == white) ? board->bitboards[K] : board->bitboards[k]), (board->side ^ 1), board);
@@ -891,6 +901,7 @@ void *search_position(void *arg){
         thread.follow_pv = 1;
         thread.found_pv = 0;
         thread.board.depthAdjuster = 0;
+        thread.board.searchDepth = currentDepth;
 
         if (dynamicTimeManagment && !willMakeNextDepth(currentDepth, depthTime))
             break;
@@ -961,9 +972,9 @@ void *search_position(void *arg){
 
         prevBestMove = board->prevPv.moves[0];
 
-        printf("info score %s %d depth %d seldepth %d nodes %ld qnodes %ld tbhits %ld time %d pv ",
+        printf("info score %s %d depth %d seldepth %d nodes %ld nps %ld qnodes %ld tbhits %ld time %d pv ",
                (abs(eval) > 4000000) ? "mate" : "cp" , (abs(eval) > 4000000) ? (4900000 - abs(eval)) * (eval / abs(eval)) : eval/64,
-               currentDepth, selDepth, nodes, qnodes, tbHits, (get_time_ms() - startingTime));
+               currentDepth, selDepth, nodes, ((nodes*1000)/(get_time_ms() - startingTime)), qnodes, tbHits, (get_time_ms() - startingTime));
 
         for (int i = 0; i < max_ply; i++){
             if (board->prevPv.moves[i] == 0)

@@ -23,7 +23,8 @@ AVX2_OBJS = search.c.avx2.o \
        transposition.c.avx2.o \
        moveOrder.c.avx2.o \
        Fathom/tbchess.c.avx2.o \
-       Fathom/tbprobe.c.avx2.o
+       Fathom/tbprobe.c.avx2.o \
+       see.c.avx2.o
 
 AVX_OBJS = search.c.avx.o \
        nnue/nnue.c.avx.o \
@@ -37,7 +38,8 @@ AVX_OBJS = search.c.avx.o \
 	   transposition.c.avx.o \
 	   moveOrder.c.avx.o \
 	   Fathom/tbchess.c.avx.o \
-	   Fathom/tbprobe.c.avx.o
+	   Fathom/tbprobe.c.avx.o \
+	   see.c.avx.o
 
 SSE2_OBJS = search.c.sse2.o \
        nnue/nnue.c.sse2.o \
@@ -51,7 +53,8 @@ SSE2_OBJS = search.c.sse2.o \
        transposition.c.sse2.o \
        moveOrder.c.sse2.o \
        Fathom/tbchess.c.sse2.o \
-       Fathom/tbprobe.c.sse2.o
+       Fathom/tbprobe.c.sse2.o \
+       see.c.sse2.o
 
 SSE_OBJS = search.c.sse.o \
        nnue/nnue.c.sse.o \
@@ -65,7 +68,9 @@ SSE_OBJS = search.c.sse.o \
 	   transposition.c.sse.o \
 	   moveOrder.c.sse.o \
 	   Fathom/tbchess.c.sse.o \
-	   Fathom/tbprobe.c.sse.o
+	   Fathom/tbprobe.c.sse.o \
+	   see.c.sse.o
+
 POPCNT_OBJS = search.c.popcnt.o \
        nnue/nnue.c.popcnt.o \
        board.c.popcnt.o \
@@ -78,7 +83,8 @@ POPCNT_OBJS = search.c.popcnt.o \
 	   transposition.c.popcnt.o \
 	   moveOrder.c.popcnt.o \
 	   Fathom/tbchess.c.popcnt.o \
-	   Fathom/tbprobe.c.popcnt.o
+	   Fathom/tbprobe.c.popcnt.o \
+	   see.c.popcnt.o
 
 OS = linux
 FILE = ./bin/eggnog-chess-engine

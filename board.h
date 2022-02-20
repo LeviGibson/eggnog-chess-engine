@@ -76,6 +76,7 @@ struct Board{
 
     float depthAdjuster;
     int quinode;
+    int searchDepth;
 
     int helperThread;
 };
@@ -141,39 +142,15 @@ typedef struct {
 #define take_back() \
     memcpy(board, &board_copy, sizeof(Board))
 
-//#define copy_board()                                                      \
-//    U64 bitboards_copy[12], occupancies_copy[3], zobrist_history_copy[zobrist_history_length], current_zobrist_key_copy, zobrist_key_parts_copy[15], zobrist_key_bitboards_copy[12];\
-//    int side_copy, enpassant_copy, castle_copy, zobrist_history_length_copy, prevmove_copy;                                                                                         \
-//                                                                          \
-//    int16_t accumulation_copy[2][KPSIZE];                               \
-//    memcpy(accumulation_copy, currentNnue.accumulation, sizeof accumulation_copy); \
-//                                                                          \
-//    memcpy(zobrist_history_copy, zobrist_history, sizeof zobrist_history_copy);\
-//    memcpy(bitboards_copy, bitboards, sizeof bitboards_copy);                   \
-//    memcpy(occupancies_copy, occupancies, sizeof occupancies_copy);       \
-//    memcpy(zobrist_key_parts_copy, zobrist_key_parts, sizeof zobrist_key_parts); \
-//    memcpy(zobrist_key_bitboards_copy, zobrist_key_bitboards, sizeof zobrist_key_bitboards);  \
-//                                                                          \
-//    side_copy = side, enpassant_copy = enpessant, castle_copy = castle;    \
-//    zobrist_history_length_copy = zobrist_history_length;                 \
-//    prevmove_copy = prevmove;\
-//    current_zobrist_key_copy = current_zobrist_key                          \
-//
-//#define take_back() \
-//    memcpy(currentNnue.accumulation, accumulation_copy, sizeof accumulation_copy); \
-//                    \
-//    memcpy(bitboards, bitboards_copy, sizeof bitboards);              \
-//    memcpy(occupancies, occupancies_copy, sizeof occupancies);        \
-//    memcpy(zobrist_history, zobrist_history_copy, sizeof zobrist_history);\
-//                                                                          \
-//    memcpy(zobrist_key_parts, zobrist_key_parts_copy, sizeof zobrist_key_parts); \
-//    memcpy(zobrist_key_bitboards, zobrist_key_bitboards_copy, sizeof zobrist_key_bitboards); \
-//                                                                          \
-//    side = side_copy, enpessant = enpassant_copy, castle = castle_copy;   \
-//    current_zobrist_key = current_zobrist_key_copy;                       \
-//    prevmove = prevmove_copy;\
-//    zobrist_history_length = zobrist_history_length_copy                 \
+#define NO_MOVE (-15)
 
+//macro "max" is defined in minwindef.h when compiling with mingw
+#ifndef max
+#define max(x, y) ((y) > (x) ? (y) : (x))
+#endif
+
+int piece_at(int square, Board *board);
+void update_occupancies(Board *board);
 void generate_only_legal_moves(MoveList *moves, Board *board);
 void print_move(int move);
 

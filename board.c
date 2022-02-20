@@ -463,7 +463,7 @@ static inline void generate_king_moves(MoveList *legalMoves, Board *board){
     }
 }
 
-static inline void update_occupancies(Board *board){
+void update_occupancies(Board *board){
 
     memset(board->occupancies, 0ULL, sizeof(board->occupancies));
 
