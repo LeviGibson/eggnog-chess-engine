@@ -5,6 +5,8 @@
 #include <stdio.h>
 #include "see.h"
 
+#define hash_size 500000
+int hash[hash_size];
 
 int can_piece_move_to(int from, int to, Board *board){
     copy_board();
@@ -103,16 +105,26 @@ int pieceValues[12] = {100, 300, 300, 500, 1000, 999999, 100, 300, 300, 500, 100
 int see(int square, Board *board){
     int value = 0;
     int move = get_smallest_attacker(square, board);
+
+    int *hashptr = &hash[(board->current_zobrist_key ^ get_move_key(move)) % hash_size];
+    if (*hashptr != NO_EVAL)
+        return *hashptr;
+
     if (move != NO_MOVE){
         copy_board();
 
         int pieceCapturedValue = pieceValues[piece_at(square, board)];
-        if (!make_move(move, all_moves, 0, board)) return 0;
+        int success = make_move(move, all_moves, 0, board);
+        if (!success){
+            *hashptr = 0;
+            return 0;
+        }
         value = max(0, pieceCapturedValue - see(square, board));
 
         take_back();
     }
 
+    *hashptr = value;
     return value;
 }
 
@@ -133,4 +145,10 @@ int seeCapture(int move, Board *board){
 
     take_back();
     return seeval;
+}
+
+void init_see(){
+    for (int i = 0; i < hash_size; ++i) {
+        hash[i] = NO_EVAL;
+    }
 }

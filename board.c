@@ -21,6 +21,7 @@ U64 piece_keys[12][64];
 U64 castle_keys[16];
 U64 enpessent_keys[64];
 U64 side_keys[2];
+U64 move_keys[4096];
 
 void init_zobrist_keys(){
     for (int piece = P; piece <= k; piece++){
@@ -37,9 +38,19 @@ void init_zobrist_keys(){
         enpessent_keys[square] = get_random_U64();
     }
 
+    for (int square = 0; square < 4096; square++){
+        move_keys[square] = get_random_U64();
+    }
+
     side_keys[white] = get_random_U64();
     side_keys[black] = get_random_U64();
 
+}
+
+U64 get_move_key(int move){
+    move &= 0b00000000000000000000111111111111;
+    assert(move < 4096);
+    return move_keys[move];
 }
 
 void make_null_move(Board *board) {

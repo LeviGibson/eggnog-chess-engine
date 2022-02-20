@@ -6,6 +6,8 @@
 #define EGGNOG_CHESS_ENGINE_SEE_H
 
 #include "board.h"
+
 int seeCapture(int move, Board *board);
+void init_see();
 
 #endif //EGGNOG_CHESS_ENGINE_SEE_H

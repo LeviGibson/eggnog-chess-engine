@@ -155,8 +155,7 @@ void generate_only_legal_moves(MoveList *moves, Board *board);
 void print_move(int move);
 
 void make_null_move(Board *board);
-U64 generate_zobrist_key(Board *board);
-U64 update_zobrist_key(Board *board);
+U64 get_move_key(int move);
 void init_zobrist_keys();
 
 int is_threefold_repetition(Board *board);
