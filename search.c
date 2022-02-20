@@ -280,7 +280,7 @@ int score_move(int move, const int *hashmove, Thread *thread){
                 return 10000;
         }
 
-        if (board->searchDepth > 6) {
+        if (board->searchDepth > 7) {
             int val = seeCapture(move, board);
             return val + mvv_lva[getpiece(move)][target_piece] + 10000;
         }
