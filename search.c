@@ -280,10 +280,10 @@ int score_move(int move, const int *hashmove, Thread *thread){
                 return 10000;
         }
 
-        if (board->searchDepth > 7) {
-            int val = seeCapture(move, board);
-            return val + mvv_lva[getpiece(move)][target_piece] + 10000;
-        }
+        int val = seeCapture(move, board);
+        if (board->quinode)
+            return val + mvv_lva[getpiece(move)][target_piece];
+        return val + mvv_lva[getpiece(move)][target_piece] + 10000;
 
         return mvv_lva[getpiece(move)][target_piece] + 10000;
     } else {
@@ -410,6 +410,9 @@ static inline int quiesce(int alpha, int beta, Thread *thread) {
 
     for (int moveId = 0; moveId < legalMoves.count; moveId++){
         int move = legalMoves.moves[moveId];
+
+        if (legalMoves.scores[moveId] <= -200)
+            continue;
 
         if (make_move(move, only_captures, 0, board)){
             int score = -quiesce(-beta, -alpha, thread);
