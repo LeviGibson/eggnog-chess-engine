@@ -411,7 +411,7 @@ static inline int quiesce(int alpha, int beta, Thread *thread) {
     for (int moveId = 0; moveId < legalMoves.count; moveId++){
         int move = legalMoves.moves[moveId];
 
-        if (legalMoves.scores[moveId] <= -200)
+        if (legalMoves.scores[moveId] <= -220)
             continue;
 
         if (make_move(move, only_captures, 0, board)){
@@ -430,54 +430,6 @@ static inline int quiesce(int alpha, int beta, Thread *thread) {
 
 
     return alpha;
-}
-
-int ZwSearch(int beta, int depth, Thread *thread){
-    nodes++;
-
-    if (nodes % 2048 == 0)
-        communicate();
-
-    if (stop){
-        return 0;
-    }
-
-    Board *board = &thread->board;
-    board->searchDepth = depth;
-
-    if (depth <= 0) {
-        int qui = quiesce(beta - 1, beta, thread);
-        return qui;
-    }
-
-    int tmp[4] = {0,0,0,0};
-
-    MoveList legalMoves;
-    legalMoves.count = 0;
-
-    generate_moves(&legalMoves, board);
-    sort_moves(&legalMoves, tmp, thread);
-
-    copy_board();
-
-    for (int moveId = 0; moveId < legalMoves.count; moveId++){
-        int move = legalMoves.moves[moveId];
-
-        int score;
-
-        if (make_move(move, all_moves, 1, board)){
-
-            score = -ZwSearch(-beta + 1, depth-1, thread);
-
-            take_back();
-
-            if (score >= beta){
-                return beta;
-            }
-        }
-    }
-
-    return beta-1;
 }
 
 void find_pv(MoveList *moves, Thread *thread){
@@ -613,11 +565,12 @@ static inline int search(int depth, int alpha, int beta, Line *pline, Thread *th
         make_null_move(board);
         board->enpessant = no_sq;
 
-        eval = -ZwSearch(1 - beta, depth - 3, thread);
+        Line nmline;
+        nmline.length = 0;
+        eval = -search(depth-3, -beta, 1-beta, &nmline, thread);
 
         take_back();
         if (eval >= beta) {
-            RecordHash(depth - 2, beta, NO_MOVE, hashfBETA, NULL, board);
             return beta;
         }
     }

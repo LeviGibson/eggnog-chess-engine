@@ -54,6 +54,7 @@ U64 get_move_key(int move){
 }
 
 void make_null_move(Board *board) {
+    board->ply++;
     board->side ^= 1;
     board->zobrist_key_parts[12] = side_keys[board->side];
     board->current_zobrist_key ^= side_keys[white];
