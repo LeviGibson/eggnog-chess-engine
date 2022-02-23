@@ -143,7 +143,7 @@ void append_active_indicies(NnueData *data, Board *board) {
     int w_ksq = w_orient[bsf(board->bitboards[K])];
     int b_ksq = b_orient[bsf(board->bitboards[k])];
 
-    for (unsigned ptype = P; ptype < k; ++ptype) {
+    for (uint32_t ptype = P; ptype < k; ++ptype) {
         if (ptype == K)
             continue;
 
@@ -162,8 +162,8 @@ void append_active_indicies(NnueData *data, Board *board) {
 }
 
 //vectorised by the compiler
-void add_index(short *restrict acc, unsigned int index, unsigned int c) {
-    unsigned offset = 256 * index;
+void add_index(int16_t *restrict acc, uint32_t index, uint32_t c) {
+    uint32_t offset = 256 * index;
     int16_t *restrict w = in_weights + offset;
     acc += 256*c;
 
@@ -172,8 +172,8 @@ void add_index(short *restrict acc, unsigned int index, unsigned int c) {
 }
 
 //vectorised by the compiler
-void subtract_index(short *restrict acc, unsigned index, unsigned c) {
-    unsigned offset = 256 * index;
+void subtract_index(int16_t *restrict acc, uint32_t index, uint32_t c) {
+    uint32_t offset = 256 * index;
     int16_t *restrict w = in_weights + offset;
     acc += 256*c;
 
@@ -319,7 +319,7 @@ int materialScore(Board *board){
 
 int nnue_evaluate(Board *board) {
 
-    unsigned hashIndex = board->current_zobrist_key % (tt_size*4);
+    uint32_t hashIndex = board->current_zobrist_key % (tt_size*4);
     EvalHashEntry *hashptr = &evalHashTable[hashIndex];
     NnueData *data = &board->currentNnue;
 
@@ -338,11 +338,11 @@ int nnue_evaluate(Board *board) {
     //convert winning advantages into material rather than activity
     if (data->eval > (180*64) && (board->side == board->searchColor)){
         int mat = materialScore(board);
-        mat = mat > 0 ? mat : 1;
+        mat = mat > 0 ? mat+1 : 1;
         data->eval *= mat;
     } else if (data->eval < (180*64) && (board->side != board->searchColor)){
         int mat = -materialScore(board);
-        mat = mat > 0 ? mat : 1;
+        mat = mat > 0 ? mat+1 : 1;
         data->eval *= mat;
     }
 
@@ -350,9 +350,6 @@ int nnue_evaluate(Board *board) {
 }
 
 void nnue_pop_bit(int ptype, int bit, Board *board){
-//    print_bitboard(1ULL << bit);
-//    print_bitboard(board->bitboards[ptype]);
-//    print_fen(board);
 
     pop_bit(board->bitboards[ptype], bit);
 

@@ -36,13 +36,13 @@ struct NnueData{
     int32_t l2[L3SIZE ];
     int32_t l3[OUTSIZE];
 
-    int eval;
+    int32_t eval;
 
     int16_t accumulation[2][KPSIZE];
     int16_t tmpAccumulation[KPSIZE*2];
 
-    unsigned activeIndicies[2][32];
-    unsigned activeIndexCount[2];
+    uint32_t activeIndicies[2][32];
+    uint32_t activeIndexCount[2];
 };
 
 #include "board.h"
