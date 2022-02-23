@@ -320,18 +320,19 @@ int materialScore(Board *board){
 int nnue_evaluate(Board *board) {
 
     unsigned hashIndex = board->current_zobrist_key % (tt_size*4);
+    EvalHashEntry *hashptr = &evalHashTable[hashIndex];
     NnueData *data = &board->currentNnue;
 
     if (evalHashTable[hashIndex].key == board->current_zobrist_key){
-        data->eval = evalHashTable[hashIndex].eval;
+        data->eval = hashptr->eval;
     } else {
         propogate_l1(data);
         propogate_l2(data);
         propogate_l3(data);
         data->eval = (board->side == white) ? data->l3[0] : -data->l3[0];
 
-        evalHashTable[hashIndex].eval = data->eval;
-        evalHashTable[hashIndex].key = board->current_zobrist_key;
+        hashptr->eval = data->eval;
+        hashptr->key = board->current_zobrist_key;
     }
 
     //convert winning advantages into material rather than activity
