@@ -76,7 +76,7 @@ struct Board{
 
     float depthAdjuster;
     int quinode;
-    int searchDepth;
+    int kpExtended;
 
     int helperThread;
 };

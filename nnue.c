@@ -223,7 +223,7 @@ void clamp_accumulator(int16_t *acc){
 #endif
 }
 
-static inline void propogate_neuron(const short a, const int8_t *b, int *restrict c) {
+static inline void propogate_neuron(const int16_t a, const int8_t *b, int32_t *restrict c) {
 
 #ifdef AVX2
     __m256i va = _mm256_set1_epi32(a);

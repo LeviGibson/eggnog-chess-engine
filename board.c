@@ -1006,6 +1006,7 @@ void parse_fen(char *fen, Board *board)
     board->helperThread = 0;
     board->nnueUpdate = 1;
     board->depthAdjuster = 0;
+    board->kpExtended = 0;
 
     refresh_accumulator(&board->currentNnue, board);
     refresh_weak_squares(board);

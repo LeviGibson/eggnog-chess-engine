@@ -285,7 +285,6 @@ int score_move(int move, const int *hashmove, Thread *thread){
             return val + mvv_lva[getpiece(move)][target_piece];
         return val + mvv_lva[getpiece(move)][target_piece] + 10000;
 
-        return mvv_lva[getpiece(move)][target_piece] + 10000;
     } else {
         if (move == killer_moves[board->ply][0]){
             return(8000);
@@ -368,7 +367,6 @@ static inline void sort_moves(MoveList *move_list, int *hashmove, Thread *thread
 
 static inline int quiesce(int alpha, int beta, Thread *thread) {
     Board *board = &thread->board;
-    board->searchDepth = 0;
 
     if (board->ply > selDepth){
         selDepth = board->ply;
@@ -458,7 +456,13 @@ static inline int search(int depth, int alpha, int beta, Line *pline, Thread *th
     }
 
     Board *board = &thread->board;
-    board->searchDepth = depth;
+
+    //extend depth when entering king+pawn endgames
+    if (!board->kpExtended && board->occupancies[both] == (WK | BK | WP | BP)){
+        if (board->ply)
+            depth += (depth/2);
+        board->kpExtended = 1;
+    }
 
     //do check extensions before probing hash table
     int in_check = is_square_attacked(bsf((board->side == white) ? board->bitboards[K] : board->bitboards[k]), (board->side ^ 1), board);
@@ -857,7 +861,6 @@ void *search_position(void *arg){
         thread.follow_pv = 1;
         thread.found_pv = 0;
         thread.board.depthAdjuster = 0;
-        thread.board.searchDepth = currentDepth;
 
         if (dynamicTimeManagment && !willMakeNextDepth(currentDepth, depthTime))
             break;
