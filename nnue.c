@@ -194,11 +194,30 @@ void refresh_accumulator(NnueData *data, Board *board) {
     }
 }
 
-void clamp_layer(int *layer){
+
+void clamp_layer(int32_t *layer){
+#ifdef AVX2
+
+    __m256i _8128 = _mm256_set1_epi32(8128);
+    __m256i _0 = _mm256_set1_epi32(0);
+
+    for (int i = 0; i < 32; i += 8) {
+        __m256i _x = _mm256_load_si256((void*)&layer[i]);
+        _x = _mm256_min_epi32(_x, _8128);
+        _x = _mm256_max_epi32(_x, _0);
+        _x = _mm256_srli_epi32(_x, 6);
+
+        _mm256_storeu_si256((__m256i*)&layer[i], _x);
+    }
+
+#else
+
     for (int i = 0; i < 32; ++i) {
         layer[i] = clamp(layer[i], 0, 8128);
         layer[i] /= 64;
     }
+
+#endif
 }
 
 void clamp_accumulator(int16_t *acc){
