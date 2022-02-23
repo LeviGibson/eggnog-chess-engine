@@ -9,10 +9,11 @@ CFILES = main.c\
  transposition.c\
  moveOrder.c\
  Fathom/*.c\
- nnue/nnue.c
+ nnue.c\
+ see.c
 
 AVX2_OBJS = search.c.avx2.o \
-       nnue/nnue.c.avx2.o \
+       nnue.c.avx2.o \
        board.c.avx2.o \
        main.c.avx2.o \
        syzygy.c.avx2.o \
@@ -27,7 +28,7 @@ AVX2_OBJS = search.c.avx2.o \
        see.c.avx2.o
 
 AVX_OBJS = search.c.avx.o \
-       nnue/nnue.c.avx.o \
+       nnue.c.avx.o \
        board.c.avx.o \
 	   main.c.avx.o \
 	   syzygy.c.avx.o \
@@ -42,7 +43,7 @@ AVX_OBJS = search.c.avx.o \
 	   see.c.avx.o
 
 SSE2_OBJS = search.c.sse2.o \
-       nnue/nnue.c.sse2.o \
+       nnue.c.sse2.o \
        board.c.sse2.o \
        main.c.sse2.o \
        syzygy.c.sse2.o \
@@ -57,7 +58,7 @@ SSE2_OBJS = search.c.sse2.o \
        see.c.sse2.o
 
 SSE_OBJS = search.c.sse.o \
-       nnue/nnue.c.sse.o \
+       nnue.c.sse.o \
        board.c.sse.o \
 	   main.c.sse.o \
 	   syzygy.c.sse.o \
@@ -72,7 +73,7 @@ SSE_OBJS = search.c.sse.o \
 	   see.c.sse.o
 
 POPCNT_OBJS = search.c.popcnt.o \
-       nnue/nnue.c.popcnt.o \
+       nnue.c.popcnt.o \
        board.c.popcnt.o \
 	   main.c.popcnt.o \
 	   syzygy.c.popcnt.o \

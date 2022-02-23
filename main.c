@@ -4,7 +4,7 @@
 #include "uci.h"
 #include "moveOrder.h"
 #include "transposition.h"
-#include "nnue/nnue.h"
+#include "nnue.h"
 #include "see.h"
 
 int main(int argc, char* argv[]) {

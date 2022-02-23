@@ -9,7 +9,7 @@ typedef struct Board Board;
 
 #include <string.h>
 #include "bitboard.h"
-#include "nnue/nnue.h"
+#include "nnue.h"
 
 
 #define start_position "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"

@@ -1,5 +1,5 @@
 #include "search.h"
-#include "nnue/nnue.h"
+#include "nnue.h"
 #include "timeman.h"
 #include "transposition.h"
 #include "Fathom/tbprobe.h"

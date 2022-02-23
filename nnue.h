@@ -44,7 +44,7 @@ struct NnueData{
     unsigned activeIndexCount[2];
 };
 
-#include "../board.h"
+#include "board.h"
 
 #define CLIPPED_RELU(x) clamp(x, 0, 127)
 #define clamp(a, b, c) ((a) < (b) ? (b) : (a) > (c) ? (c) : (a))
