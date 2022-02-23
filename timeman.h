@@ -10,7 +10,7 @@
 #include <sys/time.h>
 #endif
 
-static inline int get_time_ms() {
+static inline int32_t get_time_ms() {
 #ifdef WIN64
     return GetTickCount();
 #else
@@ -20,14 +20,14 @@ static inline int get_time_ms() {
 #endif
 }
 
-int moveTime;
+int32_t moveTime;
 
-int startingTime;
+int32_t startingTime;
 
 void start_time();
 
 void communicate();
 
-int choose_movetime(int wtime, int btime, int winc, int binc, int side);
+int32_t choose_movetime(int32_t wtime, int32_t btime, int32_t winc, int32_t binc, int32_t side);
 
 #endif

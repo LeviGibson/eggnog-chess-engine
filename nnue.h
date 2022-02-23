@@ -27,7 +27,7 @@ alignas(64) int32_t l1_biases[L2SIZE ];
 alignas(64) int32_t l2_biases[L3SIZE ];
 alignas(64) int32_t l3_biases[OUTSIZE];
 
-int load_model(const char *path);
+int32_t load_model(const char *path);
 
 typedef struct NnueData NnueData;
 
@@ -50,10 +50,10 @@ struct NnueData{
 #define CLIPPED_RELU(x) clamp(x, 0, 127)
 #define clamp(a, b, c) ((a) < (b) ? (b) : (a) > (c) ? (c) : (a))
 
-int nnue_evaluate(Board *board);
+int32_t nnue_evaluate(Board *board);
 
-void nnue_pop_bit(int ptype, int bit, Board *board);
-void nnue_set_bit(int ptype, int bit, Board *board);
+void nnue_pop_bit(int32_t ptype, int32_t bit, Board *board);
+void nnue_set_bit(int32_t ptype, int32_t bit, Board *board);
 
 void refresh_accumulator(NnueData *data, Board *board);
 

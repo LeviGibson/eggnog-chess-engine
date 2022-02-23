@@ -7,13 +7,13 @@
 #include "Fathom/tbprobe.h"
 
 
-int parse_tb_move(unsigned from, unsigned to, unsigned prom, Board *board){
+int32_t parse_tb_move(uint32_t from, uint32_t to, uint32_t prom, Board *board){
 
     MoveList legalMoves;
     memset(&legalMoves, 0, sizeof legalMoves);
     generate_moves(&legalMoves, board);
 
-    for (int i = 0; i < legalMoves.count; i++) {
+    for (int32_t i = 0; i < legalMoves.count; i++) {
         if ((getsource(legalMoves.moves[i]) == from) && (gettarget(legalMoves.moves[i]) == to)){
             if ((prom == TB_PROMOTES_QUEEN) && (getpromoted(legalMoves.moves[i]) != Q) && (getpromoted(legalMoves.moves[i]) != q))
                 continue;
@@ -30,7 +30,7 @@ int parse_tb_move(unsigned from, unsigned to, unsigned prom, Board *board){
     return 0;
 }
 
-unsigned get_wdl(Board *board){
+uint32_t get_wdl(Board *board){
 
     return tb_probe_wdl((board->occupancies[black]), (board->occupancies[white]), (board->bitboards[K] | board->bitboards[k]),
                         (board->bitboards[Q] | board->bitboards[q]), (board->bitboards[r] | board->bitboards[R]),
@@ -38,12 +38,12 @@ unsigned get_wdl(Board *board){
                         (board->bitboards[P] | board->bitboards[p]), 0, board->castle, 0, board->side);
 }
 
-int get_root_move(Board *board){
+int32_t get_root_move(Board *board){
 
-    unsigned results[TB_MAX_MOVES];
+    uint32_t results[TB_MAX_MOVES];
     memset(results, 0, sizeof results);
 
-    unsigned tbres = tb_probe_root((board->occupancies[black]), (board->occupancies[white]), (board->bitboards[K] | board->bitboards[k]),
+    uint32_t tbres = tb_probe_root((board->occupancies[black]), (board->occupancies[white]), (board->bitboards[K] | board->bitboards[k]),
                                    (board->bitboards[Q] | board->bitboards[q]), (board->bitboards[r] | board->bitboards[R]),
                                    (board->bitboards[b] | board->bitboards[B]), (board->bitboards[N] | board->bitboards[n]),
                                    (board->bitboards[P] | board->bitboards[p]), 0, board->castle, 0, (bool)board->side, results);

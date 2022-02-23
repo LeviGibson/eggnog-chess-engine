@@ -13,7 +13,7 @@ typedef struct EvalHashEntry EvalHashEntry;
 
 struct EvalHashEntry{
     U64 key;
-    int eval;
+    int32_t eval;
 };
 
 EvalHashEntry evalHashTable[tt_size * 4];
@@ -30,18 +30,18 @@ alignas(64) int32_t l1_biases[L2SIZE ];
 alignas(64) int32_t l2_biases[L3SIZE ];
 alignas(64) int32_t l3_biases[OUTSIZE];
 
-void transform_weight_indicies(int8_t arr[], unsigned dims){
+void transform_weight_indicies(int8_t arr[], uint32_t dims){
     int8_t tmpArr[dims*32];
     memcpy(tmpArr, arr, sizeof tmpArr);
 
-    for (int r = 0; r < 32; ++r) {
-        for (int c = 0; c < dims; ++c) {
+    for (int32_t r = 0; r < 32; ++r) {
+        for (int32_t c = 0; c < dims; ++c) {
             arr[(c * 32) + r] = tmpArr[(dims*r) + c];
         }
     }
 }
 
-int load_model(const char *path){
+int32_t load_model(const char *path){
     //avoid compiler warnings
     unsigned long tmp;
 
@@ -71,16 +71,16 @@ int load_model(const char *path){
 
     fclose(fin);
 
-    for (int i = 0; i < tt_size; ++i) {
+    for (int32_t i = 0; i < tt_size; ++i) {
         evalHashTable[i].eval = NO_EVAL;
     }
 
     return 0;
 }
 
-int NnuePtypes[12] = {6, 5, 4, 3, 2, K, 12, 11, 10, 9, 8, k};
+int32_t NnuePtypes[12] = {6, 5, 4, 3, 2, K, 12, 11, 10, 9, 8, k};
 
-const static int w_orient[64] = {
+const static int32_t w_orient[64] = {
         56, 57, 58, 59, 60, 61, 62, 63,
         48, 49, 50, 51, 52, 53, 54, 55,
         40, 41, 42, 43, 44, 45, 46, 47,
@@ -91,7 +91,7 @@ const static int w_orient[64] = {
         0, 1, 2, 3, 4, 5, 6, 7,
 };
 
-const static int b_orient[64] = {
+const static int32_t b_orient[64] = {
         7, 6, 5, 4, 3, 2, 1, 0,
         15, 14, 13, 12, 11, 10, 9, 8,
         23, 22, 21, 20, 19, 18, 17, 16,
@@ -124,15 +124,15 @@ uint32_t PieceToIndex[2][14] = {
 };
 
 
-int orient(int c, int s) {
+int32_t orient(int32_t c, int32_t s) {
     return s ^ (c == white ? 0x00 : 0x3f);
 }
 
-int make_index(int c, int s, int pc, int ksq) {
+int32_t make_index(int32_t c, int32_t s, int32_t pc, int32_t ksq) {
     return orient(c, s) + PieceToIndex[c][pc] + PS_END * ksq;
 }
 
-static void append_index(int c, int index, NnueData *data) {
+static void append_index(int32_t c, int32_t index, NnueData *data) {
     data->activeIndicies[c][data->activeIndexCount[c]++] = index;
 }
 
@@ -140,8 +140,8 @@ void append_active_indicies(NnueData *data, Board *board) {
     data->activeIndexCount[black] = 0;
     data->activeIndexCount[white] = 0;
 
-    int w_ksq = w_orient[bsf(board->bitboards[K])];
-    int b_ksq = b_orient[bsf(board->bitboards[k])];
+    int32_t w_ksq = w_orient[bsf(board->bitboards[K])];
+    int32_t b_ksq = b_orient[bsf(board->bitboards[k])];
 
     for (uint32_t ptype = P; ptype < k; ++ptype) {
         if (ptype == K)
@@ -149,9 +149,9 @@ void append_active_indicies(NnueData *data, Board *board) {
 
         U64 bitboard = board->bitboards[ptype];
         while (bitboard) {
-            int bit = bsf(bitboard);
-            int sq = w_orient[bit];
-            int pc = NnuePtypes[ptype];
+            int32_t bit = bsf(bitboard);
+            int32_t sq = w_orient[bit];
+            int32_t pc = NnuePtypes[ptype];
 
             append_index(white, make_index(white, sq, pc, w_ksq), data);
             append_index(black, make_index(black, sq, pc, b_ksq), data);
@@ -184,11 +184,11 @@ void subtract_index(int16_t *restrict acc, uint32_t index, uint32_t c) {
 void refresh_accumulator(NnueData *data, Board *board) {
     append_active_indicies(data, board);
 
-    for (unsigned int c = 0; c < 2; c++) {
+    for (u_int32_t c = 0; c < 2; c++) {
         memcpy(data->accumulation[c], in_biases, 256 * sizeof(int16_t));
 
         for (size_t k = 0; k < data->activeIndexCount[c]; k++) {
-            unsigned index = data->activeIndicies[c][k];
+            uint32_t index = data->activeIndicies[c][k];
             add_index(data->accumulation[0], index, c);
         }
     }
@@ -201,7 +201,7 @@ void clamp_layer(int32_t *layer){
     __m256i _8128 = _mm256_set1_epi32(8128);
     __m256i _0 = _mm256_set1_epi32(0);
 
-    for (int i = 0; i < 32; i += 8) {
+    for (int32_t i = 0; i < 32; i += 8) {
         __m256i _x = _mm256_load_si256((void*)&layer[i]);
         _x = _mm256_min_epi32(_x, _8128);
         _x = _mm256_max_epi32(_x, _0);
@@ -212,7 +212,7 @@ void clamp_layer(int32_t *layer){
 
 #else
 
-    for (int i = 0; i < 32; ++i) {
+    for (int32_t i = 0; i < 32; ++i) {
         layer[i] = clamp(layer[i], 0, 8128);
         layer[i] /= 64;
     }
@@ -226,7 +226,7 @@ void clamp_accumulator(int16_t *acc){
     __m256i _127 = _mm256_set1_epi16(127);
     __m256i _0 = _mm256_set1_epi16(0);
 
-    for (int i = 0; i < 512; i += 16) {
+    for (int32_t i = 0; i < 512; i += 16) {
         __m256i _x = _mm256_load_si256((void*)&acc[i]);
         _x = _mm256_min_epi16(_x, _127);
         _x = _mm256_max_epi16(_x, _0);
@@ -235,7 +235,7 @@ void clamp_accumulator(int16_t *acc){
 
 #else
 
-    for (int i = 0; i < 512; ++i) {
+    for (int32_t i = 0; i < 512; ++i) {
         acc[i] = clamp(acc[i], 0, 127);
     }
 
@@ -247,14 +247,14 @@ static inline void propogate_neuron(const int16_t a, const int8_t *b, int32_t *r
 #ifdef AVX2
     __m256i va = _mm256_set1_epi32(a);
 
-    for (int i = 0 ; i < 32 ; i += 8) {
+    for (int32_t i = 0 ; i < 32 ; i += 8) {
         __m256i vb = _mm256_cvtepi8_epi32( _mm_loadl_epi64((__m128i*)&b[i]) );
         __m256i prod = _mm256_madd_epi16(va, vb);
         __m256i sum = _mm256_add_epi32(prod, _mm256_loadu_si256((const __m256i*)&c[i]));
         _mm256_storeu_si256((__m256i*)&c[i], sum);
     }
 #else
-    for (int i = 0; i < 32; ++i)
+    for (int32_t i = 0; i < 32; ++i)
         c[i] += a * b[i];
 #endif
 
@@ -268,9 +268,9 @@ void propogate_l1(NnueData *data) {
 
     clamp_accumulator(tmpAccum);
 
-    for (int i = 0; i < 512; ++i) {
+    for (int32_t i = 0; i < 512; ++i) {
         if (tmpAccum[i]) {
-            int offset = 32 * i;
+            int32_t offset = 32 * i;
             propogate_neuron(tmpAccum[i], &l1_weights[offset], data->l1);
         }
     }
@@ -281,11 +281,11 @@ void propogate_l1(NnueData *data) {
 void propogate_l2(NnueData *data){
     memcpy(data->l2, l2_biases, sizeof l2_biases);
 
-    for (int o = 0; o < 32; ++o) {
+    for (int32_t o = 0; o < 32; ++o) {
         if (!data->l1[o])
             continue;
 
-        int offset = 32 * o;
+        int32_t offset = 32 * o;
         propogate_neuron((short )data->l1[o], &l2_weights[offset], data->l2);
     }
 
@@ -294,13 +294,13 @@ void propogate_l2(NnueData *data){
 
 void propogate_l3(NnueData *data){
     memcpy(data->l3, l3_biases, sizeof l3_biases);
-    for (int i = 0; i < 32; ++i) {
+    for (int32_t i = 0; i < 32; ++i) {
         data->l3[0] += data->l2[i] * l3_weights[i];
     }
 }
 
-int materialScore(Board *board){
-    int eval = 0;
+int32_t materialScore(Board *board){
+    int32_t eval = 0;
 
     eval += 1 * count_bits(board->bitboards[P]);
     eval += 3 * count_bits(board->bitboards[N]);
@@ -317,7 +317,7 @@ int materialScore(Board *board){
     return board->side == white ? eval : -eval;
 }
 
-int nnue_evaluate(Board *board) {
+int32_t nnue_evaluate(Board *board) {
 
     uint32_t hashIndex = board->current_zobrist_key % (tt_size*4);
     EvalHashEntry *hashptr = &evalHashTable[hashIndex];
@@ -337,11 +337,11 @@ int nnue_evaluate(Board *board) {
 
     //convert winning advantages into material rather than activity
     if (data->eval > (180*64) && (board->side == board->searchColor)){
-        int mat = materialScore(board);
+        int32_t mat = materialScore(board);
         mat = mat > 0 ? mat+1 : 1;
         data->eval *= mat;
     } else if (data->eval < (180*64) && (board->side != board->searchColor)){
-        int mat = -materialScore(board);
+        int32_t mat = -materialScore(board);
         mat = mat > 0 ? mat+1 : 1;
         data->eval *= mat;
     }
@@ -349,38 +349,38 @@ int nnue_evaluate(Board *board) {
     return data->eval;
 }
 
-void nnue_pop_bit(int ptype, int bit, Board *board){
+void nnue_pop_bit(int32_t ptype, int32_t bit, Board *board){
 
     pop_bit(board->bitboards[ptype], bit);
 
-    int w_ksq = w_orient[bsf(board->bitboards[K])];
-    int b_ksq = b_orient[bsf(board->bitboards[k])];
+    int32_t w_ksq = w_orient[bsf(board->bitboards[K])];
+    int32_t b_ksq = b_orient[bsf(board->bitboards[k])];
 
-    int sq = w_orient[bit];
-    int pc = NnuePtypes[ptype];
+    int32_t sq = w_orient[bit];
+    int32_t pc = NnuePtypes[ptype];
 
-    int wi = make_index(white, sq, pc, w_ksq);
-    int bi = make_index(black, sq, pc, b_ksq);
+    int32_t wi = make_index(white, sq, pc, w_ksq);
+    int32_t bi = make_index(black, sq, pc, b_ksq);
 
     subtract_index(board->currentNnue.accumulation[0], wi, white);
     subtract_index(board->currentNnue.accumulation[0], bi, black);
 }
 
-void nnue_set_bit(int ptype, int bit, Board *board){
+void nnue_set_bit(int32_t ptype, int32_t bit, Board *board){
 
     set_bit(board->bitboards[ptype], bit);
 
     if (!board->nnueUpdate)
         return;
 
-    int w_ksq = w_orient[bsf(board->bitboards[K])];
-    int b_ksq = b_orient[bsf(board->bitboards[k])];
+    int32_t w_ksq = w_orient[bsf(board->bitboards[K])];
+    int32_t b_ksq = b_orient[bsf(board->bitboards[k])];
 
-    int sq = w_orient[bit];
-    int pc = NnuePtypes[ptype];
+    int32_t sq = w_orient[bit];
+    int32_t pc = NnuePtypes[ptype];
 
-    int wi = make_index(white, sq, pc, w_ksq);
-    int bi = make_index(black, sq, pc, b_ksq);
+    int32_t wi = make_index(white, sq, pc, w_ksq);
+    int32_t bi = make_index(black, sq, pc, b_ksq);
 
     add_index(board->currentNnue.accumulation[0], wi, white);
     add_index(board->currentNnue.accumulation[0], bi, black);

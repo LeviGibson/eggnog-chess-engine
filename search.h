@@ -5,6 +5,6 @@
 #include "board.h"
 
 void *search_position(void *arg);
-int stop;
+int32_t stop;
 
 #endif

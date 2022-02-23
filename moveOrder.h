@@ -15,6 +15,5 @@ int16_t int16bb_max(const int16_t *x);
 void calculate_ws_table();
 
 void init_move_table();
-//void moveorder_test(int numGames);
 
 #endif //EGGNOG_CHESS_ENGINE_MOVEORDER_H

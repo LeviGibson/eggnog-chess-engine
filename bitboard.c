@@ -7,8 +7,8 @@
 
 void print_bitboard(U64 bitboard){
 
-    int rank = 8;
-    for (int square = 0; square < 64; square++){
+    int32_t rank = 8;
+    for (int32_t square = 0; square < 64; square++){
         if (square % 8 == 0) {
             printf("\n");
             printf("%d  ", rank);
@@ -428,7 +428,7 @@ const U64 bishop_magic_numbers[64] = {
         0x4010011029020020ULL
 };
 
-const int rook_relevant_occupancy_count[64] = {
+const int32_t rook_relevant_occupancy_count[64] = {
         12, 11, 11, 11, 11, 11, 11, 12,
         11, 10, 10, 10, 10, 10, 10, 11,
         11, 10, 10, 10, 10, 10, 10, 11,
@@ -439,7 +439,7 @@ const int rook_relevant_occupancy_count[64] = {
         12, 11, 11, 11, 11, 11, 11, 12
 };
 
-const int bishop_relevant_occupancy_count[64] = {
+const int32_t bishop_relevant_occupancy_count[64] = {
         6, 5, 5, 5, 5, 5, 5, 6,
         5, 5, 5, 5, 5, 5, 5, 5,
         5, 5, 7, 7, 7, 7, 5, 5,
@@ -461,7 +461,7 @@ U64 bishop_attacks[64][512];
 
 /**
 void init_knight_mask(){
-    for (int square = 0; square < 64; square++){
+    for (int32_t square = 0; square < 64; square++){
         U64 bitboard = 1ULL << square;
 
         if (bitboard & not_a_file) knight_mask[square] |= bitboard >> 17;
@@ -477,7 +477,7 @@ void init_knight_mask(){
 }**/
 /**
 void init_pawn_mask(){
-    for (int square = 0; square < 64; square++){
+    for (int32_t square = 0; square < 64; square++){
         U64 bitboard = 1ULL << square;
 
         if (bitboard & not_a_file) pawn_mask[white][square] |= bitboard >> 9;
@@ -489,7 +489,7 @@ void init_pawn_mask(){
 }**/
 /**
 void init_king_mask(){
-    for (int square = 0; square < 64; square++){
+    for (int32_t square = 0; square < 64; square++){
         U64 bitboard = 1ULL << square;
         king_mask[square] |= bitboard << 8;
         king_mask[square] |= bitboard >> 8;
@@ -509,15 +509,15 @@ void init_king_mask(){
 }**/
 
 void init_rook_relevant_occupancies(){
-    for (int square = 0; square < 64; square++){
-        int rank = square / 8;
-        for (int file = (square % 8)+1; file < 7; file++){
+    for (int32_t square = 0; square < 64; square++){
+        int32_t rank = square / 8;
+        for (int32_t file = (square % 8)+1; file < 7; file++){
             rook_relevant_occupancies[square] |= 1ULL << ((rank*8)+file);
         }
-        for (int file = (square % 8)-1; file > 0; file--){
+        for (int32_t file = (square % 8)-1; file > 0; file--){
             rook_relevant_occupancies[square] |= 1ULL << ((rank*8)+file);
         }
-        int file = square % 8;
+        int32_t file = square % 8;
         for (rank = (square/8)+1; rank < 7; rank++){
             rook_relevant_occupancies[square] |= 1ULL << ((rank*8)+file);
         }
@@ -528,11 +528,11 @@ void init_rook_relevant_occupancies(){
 }
 
 void init_bishop_relevant_occupancies(){
-    for (int square = 0; square < 64; square++){
-        int sfile = square  % 8;
-        int srank = square / 8;
+    for (int32_t square = 0; square < 64; square++){
+        int32_t sfile = square  % 8;
+        int32_t srank = square / 8;
 
-        int rank, file;
+        int32_t rank, file;
 
         for (file = sfile+1, rank = srank+1; file < 7 && rank < 7; file++, rank++) bishop_relevant_occupancies[square] |= (1ULL << ((rank*8)+file));
         for (file = sfile-1, rank = srank+1; file > 0 && rank < 7; file--, rank++) bishop_relevant_occupancies[square] |= (1ULL << ((rank*8)+file));
@@ -542,29 +542,29 @@ void init_bishop_relevant_occupancies(){
     }
 }
 
-U64 rook_attacks_on_the_fly(int square, U64 occupancies){
+U64 rook_attacks_on_the_fly(int32_t square, U64 occupancies){
 
     U64 moves = 0ULL;
 
-    int rank = square / 8;
-    for (int file = (square % 8)+1; file <= 7; file++){
-        int target = ((rank*8)+file);
+    int32_t rank = square / 8;
+    for (int32_t file = (square % 8)+1; file <= 7; file++){
+        int32_t target = ((rank*8)+file);
         moves |= 1ULL << target;
         if (get_bit(occupancies, target)) break;
     }
-    for (int file = (square % 8)-1; file >= 0; file--){
-        int target = ((rank*8)+file);
+    for (int32_t file = (square % 8)-1; file >= 0; file--){
+        int32_t target = ((rank*8)+file);
         moves |= 1ULL << target;
         if (get_bit(occupancies, target)) break;
     }
-    int file = square % 8;
+    int32_t file = square % 8;
     for (rank = (square/8)+1; rank <= 7; rank++){
-        int target = ((rank*8)+file);
+        int32_t target = ((rank*8)+file);
         moves |= 1ULL << target;
         if (get_bit(occupancies, target)) break;
     }
     for (rank = (square/8)-1; rank >= 0; rank--){
-        int target = ((rank*8)+file);
+        int32_t target = ((rank*8)+file);
         moves |= 1ULL << target;
         if (get_bit(occupancies, target)) break;
     }
@@ -572,31 +572,31 @@ U64 rook_attacks_on_the_fly(int square, U64 occupancies){
     return moves;
 }
 
-U64 bishop_attacks_on_the_fly(int square, U64 occupancies){
-    int sfile = square  % 8;
-    int srank = square / 8;
+U64 bishop_attacks_on_the_fly(int32_t square, U64 occupancies){
+    int32_t sfile = square  % 8;
+    int32_t srank = square / 8;
 
-    int rank, file;
+    int32_t rank, file;
 
     U64 moves = 0ULL;
 
     for (file = sfile+1, rank = srank+1; file <= 7 && rank <= 7; file++, rank++) {
-        int target = ((rank * 8) + file);
+        int32_t target = ((rank * 8) + file);
         moves |= (1ULL << target);
         if (get_bit(occupancies, target)) break;
     }
     for (file = sfile-1, rank = srank+1; file >= 0 && rank <= 7; file--, rank++) {
-        int target = ((rank * 8) + file);
+        int32_t target = ((rank * 8) + file);
         moves |= (1ULL << target);
         if (get_bit(occupancies, target)) break;
     }
     for (file = sfile+1, rank = srank-1; file <= 7 && rank >= 0; file++, rank--) {
-        int target = ((rank * 8) + file);
+        int32_t target = ((rank * 8) + file);
         moves |= (1ULL << target);
         if (get_bit(occupancies, target)) break;
     }
     for (file = sfile-1, rank = srank-1; file >= 0 && rank >= 0; file--, rank--) {
-        int target = ((rank * 8) + file);
+        int32_t target = ((rank * 8) + file);
         moves |= (1ULL << target);
         if (get_bit(occupancies, target)) break;
     }
@@ -605,11 +605,11 @@ U64 bishop_attacks_on_the_fly(int square, U64 occupancies){
 }
 
 //this function is not important. It's for initialisation of magics.
-U64 set_occupancy(int index, U64 mask){
+U64 set_occupancy(int32_t index, U64 mask){
     U64 occupancies = 0ULL;
-    int bits_in_mask = count_bits(mask);
-    for (int bit = 0; bit < bits_in_mask; bit++){
-        int bitIndex = bsf(mask);
+    int32_t bits_in_mask = count_bits(mask);
+    for (int32_t bit = 0; bit < bits_in_mask; bit++){
+        int32_t bitIndex = bsf(mask);
 
         if (index & (1<<bit)) {
             set_bit(occupancies, bitIndex);
@@ -620,22 +620,22 @@ U64 set_occupancy(int index, U64 mask){
 }
 
 void init_rook_magics(){
-    for (int square = 0; square < 64; square++){
-        int indexLimit = 1 << count_bits(rook_relevant_occupancies[square]);
-        for (int index = 0; index < indexLimit; index++){
+    for (int32_t square = 0; square < 64; square++){
+        int32_t indexLimit = 1 << count_bits(rook_relevant_occupancies[square]);
+        for (int32_t index = 0; index < indexLimit; index++){
             U64 occupancies = set_occupancy(index, rook_relevant_occupancies[square]);
-            int magic_index = (int)((rook_magic_numbers[square] * occupancies) >> (64 - rook_relevant_occupancy_count[square]));
+            int32_t magic_index = (int)((rook_magic_numbers[square] * occupancies) >> (64 - rook_relevant_occupancy_count[square]));
             rook_attacks[square][magic_index] = rook_attacks_on_the_fly(square, occupancies);
         }
     }
 }
 
 void init_bishop_magics(){
-    for (int square = 0; square < 64; square++){
-        int indexLimit = 1 << count_bits(bishop_relevant_occupancies[square]);
-        for (int index = 0; index < indexLimit; index++){
+    for (int32_t square = 0; square < 64; square++){
+        int32_t indexLimit = 1 << count_bits(bishop_relevant_occupancies[square]);
+        for (int32_t index = 0; index < indexLimit; index++){
             U64 occupancies = set_occupancy(index, bishop_relevant_occupancies[square]);
-            int magic_index = (int)((bishop_magic_numbers[square] * occupancies) >> (64 - bishop_relevant_occupancy_count[square]));
+            int32_t magic_index = (int)((bishop_magic_numbers[square] * occupancies) >> (64 - bishop_relevant_occupancy_count[square]));
             bishop_attacks[square][magic_index] = bishop_attacks_on_the_fly(square, occupancies);
         }
     }

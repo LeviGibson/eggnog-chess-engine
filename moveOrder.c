@@ -8,7 +8,7 @@
 
 int16_t int16bb_min(const int16_t *x){
     int16_t min = 30000;
-    for (int i = 0; i < 64; ++i) {
+    for (int32_t i = 0; i < 64; ++i) {
         if (x[i] < min)
             min = x[i];
     }
@@ -18,7 +18,7 @@ int16_t int16bb_min(const int16_t *x){
 
 int16_t int16bb_max(const int16_t *x){
     int16_t max = -30000;
-    for (int i = 0; i < 64; ++i) {
+    for (int32_t i = 0; i < 64; ++i) {
         if (x[i] > max)
             max = x[i];
     }
@@ -29,10 +29,10 @@ int16_t int16bb_max(const int16_t *x){
 void calculate_ws_table(){
     memset(moveOrderWorthSearching, 0, sizeof(moveOrderWorthSearching));
 
-    for (int nump = 0; nump < 15; ++nump) {
-        for (int piece = 0; piece < 12; ++piece) {
-            for (int square = 0; square < 64; ++square) {
-                for (int bb = 0; bb < 14; ++bb) {
+    for (int32_t nump = 0; nump < 15; ++nump) {
+        for (int32_t piece = 0; piece < 12; ++piece) {
+            for (int32_t square = 0; square < 64; ++square) {
+                for (int32_t bb = 0; bb < 14; ++bb) {
                     int16_t range = int16bb_max(moveOrderData[nump][piece][square][bb]) - int16bb_min(moveOrderData[nump][piece][square][bb]);
                     if (range > 1700) {
                         moveOrderWorthSearching[nump][piece][square][bb] = 1;
@@ -45,13 +45,13 @@ void calculate_ws_table(){
 
 void init_move_table(){
     FILE *file = fopen("moveOrderData.bin", "r");
-    __attribute__((unused)) unsigned _ = fread((void*)&moveOrderData[0][0][0][0][0], sizeof(int16_t ), 15*12*64*14*64, file);
+    __attribute__((unused)) uint32_t _ = fread((void*)&moveOrderData[0][0][0][0][0], sizeof(int16_t ), 15*12*64*14*64, file);
 
     calculate_ws_table();
 }
 
 //
-//int game(){
+//int32_t game(){
 //    Board b;
 //    Board *board = &b;
 //    parse_fen(start_position, board);
@@ -75,7 +75,7 @@ void init_move_table(){
 //
 //        if (legalMoves.count == 0) return board->side == white ? 1 : -1;
 //
-//        int index = (rand() % legalMoves.count);
+//        int32_t index = (rand() % legalMoves.count);
 //        if (index != 0)
 //            index = rand() % index;
 //
@@ -86,9 +86,9 @@ void init_move_table(){
 //    }
 //}
 //
-//void moveorder_test(int numGames){
-//    int score = 0;
-//    for (int gameId = 0; gameId < numGames; ++gameId) {
+//void moveorder_test(int32_t numGames){
+//    int32_t score = 0;
+//    for (int32_t gameId = 0; gameId < numGames; ++gameId) {
 //        score += game();
 //    }
 //}

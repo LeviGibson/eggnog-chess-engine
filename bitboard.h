@@ -5,8 +5,8 @@
 #ifndef MBBCHESS_BITBOARD_H
 #define MBBCHESS_BITBOARD_H
 
-#define U64 unsigned long long
-#define U32 unsigned int
+#define U64 u_int64_t
+#define U32 u_int32_t
 
 #include <assert.h>
 #include <stdlib.h>
@@ -57,7 +57,7 @@ void print_bitboard(U64 bitboard);
 U64 bishop_relevant_occupancies[64];
 U64 rook_relevant_occupancies[64];
 
-U64 set_occupancy(int index, U64 mask);
+U64 set_occupancy(int32_t index, U64 mask);
 
 void init_bitboards();
 
@@ -65,8 +65,8 @@ const extern U64 knight_mask[64];
 const extern U64 pawn_mask[2][64];
 const extern U64 king_mask[64];
 
-const extern int rook_relevant_occupancy_count[64];
-const extern int bishop_relevant_occupancy_count[64];
+const extern int32_t rook_relevant_occupancy_count[64];
+const extern int32_t bishop_relevant_occupancy_count[64];
 
 U64 rook_attacks[64][4096];
 U64 bishop_attacks[64][512];

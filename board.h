@@ -36,21 +36,21 @@ enum {all_moves, only_captures};
 #define BP board->bitboards[p]
 
 typedef struct {
-    int moves[256];
-    int scores[256];
+    int32_t moves[256];
+    int32_t scores[256];
     U32 count;
 } MoveList;
 
 typedef struct tagLINE {
-    int length;              // Number of moves in the line.
-    int moves[64];  // The line.
+    int32_t length;              // Number of moves in the line.
+    int32_t moves[64];  // The line.
 
 }   Line;
 
 struct Board{
     U64 zobrist_history[101];
-    int zobrist_history_length;
-    int zobrist_history_search_index;
+    int32_t zobrist_history_length;
+    int32_t zobrist_history_search_index;
 
     U64 zobrist_key_parts[15];
     U64 zobrist_key_bitboards[12];
@@ -61,30 +61,30 @@ struct Board{
 
     U64 current_zobrist_key;
 
-    int nnueUpdate;
+    int32_t nnueUpdate;
     NnueData currentNnue;
 
-    int ply;
+    int32_t ply;
 
-    int enpessant;
-    int side;
-    int castle;
-    int prevmove;
-    int searchColor;
-    int pvnode;
+    int32_t enpessant;
+    int32_t side;
+    int32_t castle;
+    int32_t prevmove;
+    int32_t searchColor;
+    int32_t pvnode;
     Line prevPv;
 
     float depthAdjuster;
-    int quinode;
-    int kpExtended;
+    int32_t quinode;
+    int32_t kpExtended;
 
-    int helperThread;
+    int32_t helperThread;
 };
 
 typedef struct {
     Board board;
     Line pv;
-    int follow_pv, found_pv;
+    int32_t follow_pv, found_pv;
 }Thread;
 
 //MOVE ENCODING____________
@@ -149,22 +149,22 @@ typedef struct {
 #define max(x, y) ((y) > (x) ? (y) : (x))
 #endif
 
-int piece_at(int square, Board *board);
+int32_t piece_at(int32_t square, Board *board);
 void update_occupancies(Board *board);
 void generate_only_legal_moves(MoveList *moves, Board *board);
-void print_move(int move);
+void print_move(int32_t move);
 
 void make_null_move(Board *board);
-U64 get_move_key(int move);
+U64 get_move_key(int32_t move);
 void init_zobrist_keys();
 
-int is_threefold_repetition(Board *board);
+int32_t is_threefold_repetition(Board *board);
 
 void generate_moves(MoveList *legalMoves, Board *board);
-int make_move(int move, int flag, int notquinode, Board *board);
+int32_t make_move(int32_t move, int32_t flag, int32_t notquinode, Board *board);
 
-int is_square_attacked(int square, int testingSide, Board *board);
-int is_move_direct_check(int move, Board *board);
+int32_t is_square_attacked(int32_t square, int32_t testingSide, Board *board);
+int32_t is_move_direct_check(int32_t move, Board *board);
 
 void print_board(Board *board);
 void print_fen(Board *board);

@@ -8,7 +8,7 @@
 
 long perft_nodes = 0;
 
-static inline void perft_driver(int depth, Board *board){
+static inline void perft_driver(int32_t depth, Board *board){
 
   if (depth == 0){
     //print_board();
@@ -22,7 +22,7 @@ static inline void perft_driver(int depth, Board *board){
   generate_moves(&legalMoves, board);
 
   copy_board();
-  for (int moveId = 0; moveId < legalMoves.count; moveId++){
+  for (int32_t moveId = 0; moveId < legalMoves.count; moveId++){
     if (make_move(legalMoves.moves[moveId], all_moves, 0, board)){
 
       perft_driver(depth-1, board);
@@ -34,9 +34,9 @@ static inline void perft_driver(int depth, Board *board){
 
 }
 
-void perft_test(int depth, Board *board){
+void perft_test(int32_t depth, Board *board){
 
-  int startingTime = get_time_ms();
+  int32_t startingTime = get_time_ms();
 
   MoveList legalMoves;
   legalMoves.count = 0;
@@ -45,9 +45,9 @@ void perft_test(int depth, Board *board){
 
   copy_board();
 
-  int allNodes = 0;
+  int32_t allNodes = 0;
 
-  for (int moveId = 0; moveId < legalMoves.count; moveId++) {
+  for (int32_t moveId = 0; moveId < legalMoves.count; moveId++) {
     if (make_move(legalMoves.moves[moveId], all_moves, 0, board)){
       perft_nodes = 0;
       perft_driver(depth-1, board);

@@ -8,6 +8,6 @@
 
 #include "board.h"
 
-void perft_test(int depth, Board *board);
+void perft_test(int32_t depth, Board *board);
 
 #endif //MBBCHESS_PERFT_H

@@ -6,13 +6,13 @@
 #include "see.h"
 
 #define hash_size 500000
-int hash[hash_size];
+int32_t hash[hash_size];
 
-int can_piece_move_to(int from, int to, Board *board){
+int32_t can_piece_move_to(int32_t from, int32_t to, Board *board){
     copy_board();
 
-    int capturedPiece = piece_at(to, board);
-    int movedPiece = piece_at(from, board);
+    int32_t capturedPiece = piece_at(to, board);
+    int32_t movedPiece = piece_at(from, board);
 
     if (capturedPiece != -1) {
         pop_bit(board->bitboards[capturedPiece], to);
@@ -22,16 +22,16 @@ int can_piece_move_to(int from, int to, Board *board){
 
     update_occupancies(board);
 
-    int inCheck = is_square_attacked(bsf((board->side == white) ? board->bitboards[K] : board->bitboards[k]), (board->side ^ 1), board);
+    int32_t inCheck = is_square_attacked(bsf((board->side == white) ? board->bitboards[K] : board->bitboards[k]), (board->side ^ 1), board);
     take_back();
 
     if (inCheck) return 0;
     return 1;
 }
 
-int get_move_for_see(U64 mask, int square, int piece, Board *board){
+int32_t get_move_for_see(U64 mask, int32_t square, int32_t piece, Board *board){
     while (mask){
-        int bit = bsf(mask);
+        int32_t bit = bsf(mask);
 
 
         if (can_piece_move_to(bit, square, board)){
@@ -44,10 +44,10 @@ int get_move_for_see(U64 mask, int square, int piece, Board *board){
     return NO_MOVE;
 }
 
-int get_smallest_attacker(int square, Board *board){
+int32_t get_smallest_attacker(int32_t square, Board *board){
     if (board->side == white){
         U64 mask = pawn_mask[black][square] & WP;
-        int move = get_move_for_see(mask, square, P, board);
+        int32_t move = get_move_for_see(mask, square, P, board);
         if (move != NO_MOVE) return move;
 
         mask = knight_mask[square] & WN;
@@ -73,7 +73,7 @@ int get_smallest_attacker(int square, Board *board){
         return NO_MOVE;
     } else {
         U64 mask = pawn_mask[white][square] & BP;
-        int move = get_move_for_see(mask, square, p, board);
+        int32_t move = get_move_for_see(mask, square, p, board);
         if (move != NO_MOVE) return move;
 
         mask = knight_mask[square] & BN;
@@ -100,21 +100,21 @@ int get_smallest_attacker(int square, Board *board){
     }
 }
 
-int pieceValues[12] = {100, 300, 300, 500, 1000, 999999, 100, 300, 300, 500, 1000, -999999};
+int32_t pieceValues[12] = {100, 300, 300, 500, 1000, 999999, 100, 300, 300, 500, 1000, -999999};
 
-int see(int square, Board *board){
-    int value = 0;
-    int move = get_smallest_attacker(square, board);
+int32_t see(int32_t square, Board *board){
+    int32_t value = 0;
+    int32_t move = get_smallest_attacker(square, board);
 
-    int *hashptr = &hash[(board->current_zobrist_key ^ get_move_key(move)) % hash_size];
+    int32_t *hashptr = &hash[(board->current_zobrist_key ^ get_move_key(move)) % hash_size];
     if (*hashptr != NO_EVAL)
         return *hashptr;
 
     if (move != NO_MOVE){
         copy_board();
 
-        int pieceCapturedValue = pieceValues[piece_at(square, board)];
-        int success = make_move(move, all_moves, 0, board);
+        int32_t pieceCapturedValue = pieceValues[piece_at(square, board)];
+        int32_t success = make_move(move, all_moves, 0, board);
         if (!success){
             *hashptr = 0;
             return 0;
@@ -128,27 +128,27 @@ int see(int square, Board *board){
     return value;
 }
 
-int seeCapture(int move, Board *board){
+int32_t seeCapture(int32_t move, Board *board){
     if (getenpessant(move))
         return 0;
 
     copy_board();
     board->nnueUpdate = 0;
 
-    int capturedPieceValue = pieceValues[piece_at(gettarget(move), board)];
-    int success = make_move(move, all_moves, 0, board);
+    int32_t capturedPieceValue = pieceValues[piece_at(gettarget(move), board)];
+    int32_t success = make_move(move, all_moves, 0, board);
     if (!success){
         take_back();
         return 0;
     }
-    int seeval = capturedPieceValue - see(gettarget(move), board);
+    int32_t seeval = capturedPieceValue - see(gettarget(move), board);
 
     take_back();
     return seeval;
 }
 
 void init_see(){
-    for (int i = 0; i < hash_size; ++i) {
+    for (int32_t i = 0; i < hash_size; ++i) {
         hash[i] = NO_EVAL;
     }
 }

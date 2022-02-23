@@ -13,27 +13,27 @@
 #include <unistd.h>
 
 pthread_t searchthread;
-int dynamicTimeManagment = 0;
-int moveOverhead = 0;
-int historyMoveDivisor = 1400;
-int tuneParameter = 1;
+int32_t dynamicTimeManagment = 0;
+int32_t moveOverhead = 0;
+int32_t historyMoveDivisor = 1400;
+int32_t tuneParameter = 1;
 
 void change_to_correct_directory(char *argv){
-    int lastslash = 0;
+    int32_t lastslash = 0;
 #ifdef WIN32
-    for (int i = 0; argv[i]; ++i) {
+    for (int32_t i = 0; argv[i]; ++i) {
         if (argv[i] == '\\'){
             lastslash = i;
         }
     }
 #elif defined(WIN64)
-    for (int i = 0; argv[i]; ++i) {
+    for (int32_t i = 0; argv[i]; ++i) {
         if (argv[i] == '\\'){
             lastslash = i;
         }
     }
 #else
-    for (int i = 0; argv[i]; ++i) {
+    for (int32_t i = 0; argv[i]; ++i) {
         if (argv[i] == '/'){
             lastslash = i;
         }
@@ -45,25 +45,25 @@ void change_to_correct_directory(char *argv){
     memcpy(path, argv, sizeof(path) - 1);
     path[lastslash+1] = 0;
 
-    __attribute__((unused)) int x = chdir(path);
+    __attribute__((unused)) int32_t x = chdir(path);
 }
 
-int parse_move(char *move_string) {
+int32_t parse_move(char *move_string) {
 
     MoveList legalMoves;
     legalMoves.count = 0;
     generate_moves(&legalMoves, &UciBoard);
 
-    int source_square = (move_string[0] - 'a') + (8 - (move_string[1] - '0')) * 8;
-    int target_square = (move_string[2] - 'a') + (8 - (move_string[3] - '0')) * 8;
+    int32_t source_square = (move_string[0] - 'a') + (8 - (move_string[1] - '0')) * 8;
+    int32_t target_square = (move_string[2] - 'a') + (8 - (move_string[3] - '0')) * 8;
 
-    for (int move_count = 0; move_count < legalMoves.count; move_count++) {
+    for (int32_t move_count = 0; move_count < legalMoves.count; move_count++) {
 
-        int move = legalMoves.moves[move_count];
-        int promoted_piece = getpromoted(move);
+        int32_t move = legalMoves.moves[move_count];
+        int32_t promoted_piece = getpromoted(move);
 
         if ((getsource(move) == source_square) && (gettarget(move) == target_square)) {
-            int promoted_piece = getpromoted(move);
+            int32_t promoted_piece = getpromoted(move);
             if (promoted_piece) {
 
                 if (move_string[4] == 'q' && (promoted_piece == Q || promoted_piece == q)) {
@@ -112,7 +112,7 @@ void parse_position(char *command) {
         current_char += 6;
         while (*current_char) {
 
-            int move = parse_move(current_char);
+            int32_t move = parse_move(current_char);
             uci_move_sequence_length++;
 
             make_move(move, all_moves, 1, &UciBoard);
@@ -130,9 +130,9 @@ void parse_position(char *command) {
     UciBoard.searchColor = UciBoard.side;
 }
 
-int depth;
+int32_t depth;
 
-int threadCount = 1;
+int32_t threadCount = 1;
 
 void parse_go(char *command) {
     char *current_depth = NULL;
@@ -140,8 +140,8 @@ void parse_go(char *command) {
     char *current_wtime = NULL;
     char *current_btime = NULL;
 
-    int wtime = 0;
-    int btime = 0;
+    int32_t wtime = 0;
+    int32_t btime = 0;
 
     current_depth = strstr(command, "depth");
     if (current_depth) {
@@ -164,8 +164,8 @@ void parse_go(char *command) {
         moveTime = 10000000;
     }
 
-    int winc = 0;
-    int binc = 0;
+    int32_t winc = 0;
+    int32_t binc = 0;
 
     current_wtime = strstr(command, "wtime");
     if (current_wtime) {

@@ -9,8 +9,8 @@
 #include "uci.h"
 
 HASHE hash_table[tt_size];
-int lines[tt_linesize];
-int lineMoveCount = 0;
+int32_t lines[tt_linesize];
+int32_t lineMoveCount = 0;
 
 pthread_mutex_t lmcLock;
 pthread_mutex_t ttLocks[tt_size];
@@ -33,7 +33,7 @@ void reset_hash_table(){
 
 void init_transposition(){
     pthread_mutex_init(&lmcLock, NULL);
-    for (int i = 0; i < tt_size; ++i) {
+    for (int32_t i = 0; i < tt_size; ++i) {
         pthread_mutex_init(&ttLocks[i], NULL);
     }
 
@@ -42,12 +42,12 @@ void init_transposition(){
 
 void transposition_free(){
     pthread_mutex_destroy(&lmcLock);
-    for (int i = 0; i < tt_size; ++i) {
+    for (int32_t i = 0; i < tt_size; ++i) {
         pthread_mutex_destroy(&ttLocks[i]);
     }
 }
 
-void recover_line(int depth, HASHE *phashe, Line *pline, int alpha, int *ret, Board *board){
+void recover_line(int32_t depth, HASHE *phashe, Line *pline, int32_t alpha, int32_t *ret, Board *board){
     if (depth <= 1 || phashe->value <= alpha || phashe->line == NULL) {
         return;
     }
@@ -58,10 +58,10 @@ void recover_line(int depth, HASHE *phashe, Line *pline, int alpha, int *ret, Bo
     pline->length = *line;
 }
 
-int ProbeHash(int depth, int alpha, int beta, int *move, Line *pline, Board *board){
-    unsigned index = board->current_zobrist_key % tt_size;
+int32_t ProbeHash(int32_t depth, int32_t alpha, int32_t beta, int32_t *move, Line *pline, Board *board){
+    uint32_t index = board->current_zobrist_key % tt_size;
     HASHE * phashe = &hash_table[index];
-    int ret = valUNKNOWN;
+    int32_t ret = valUNKNOWN;
 
     lock(&ttLocks[index]);
 
@@ -90,9 +90,9 @@ int ProbeHash(int depth, int alpha, int beta, int *move, Line *pline, Board *boa
     return ret;
 }
 
-void RecordHash(int depth, int val, int best, int hashf, Line *pline, Board *board){
+void RecordHash(int32_t depth, int32_t val, int32_t best, int32_t hashf, Line *pline, Board *board){
     if ((val != 0) && (val < 4500000) && (val > -450000)) {
-        unsigned index = board->current_zobrist_key % tt_size;
+        uint32_t index = board->current_zobrist_key % tt_size;
 
         lock(&ttLocks[index]);
 

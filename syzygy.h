@@ -7,7 +7,7 @@
 
 #include "board.h"
 
-int get_root_move(Board *board);
+int32_t get_root_move(Board *board);
 unsigned get_wdl(Board *board);
 
 #endif //EGGNOG_CHESS_ENGINE_SYZYGY_H

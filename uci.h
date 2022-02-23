@@ -3,20 +3,20 @@
 
 #include "board.h"
 
-int uci_move_sequence_length;
-int dynamicTimeManagment;
-int historyMoveDivisor;
-int tuneParameter;
+int32_t uci_move_sequence_length;
+int32_t dynamicTimeManagment;
+int32_t historyMoveDivisor;
+int32_t tuneParameter;
 
 Board UciBoard;
-int threadCount;
-int moveOverhead;
+int32_t threadCount;
+int32_t moveOverhead;
 
 void change_to_correct_directory(char *argv);
 void parse_position(char *command);
 void parse_go(char *command);
 void uci_loop();
-int parse_move(char * move_string);
+int32_t parse_move(char * move_string);
 
 #endif
 

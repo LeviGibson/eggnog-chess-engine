@@ -12,21 +12,21 @@
 
 #define fabs(x) (((x) > 0) ? (x) : -(x))
 
-int DEF_ASPWINDOW = 1760;
+int32_t DEF_ASPWINDOW = 1760;
 
 #define DEF_ALPHA (-5000000)
 #define DEF_BETA (5000000)
 
-int aspwindow;
-int tbsearch = 0;
+int32_t aspwindow;
+int32_t tbsearch = 0;
 
-int selDepth = 0;
+int32_t selDepth = 0;
 
 long nodes = 0;
 long qnodes = 0;
 long tbHits = 0;
 
-const int mvv_lva[12][12] = {
+const int32_t mvv_lva[12][12] = {
         15, 25, 35, 45, 55, 65,  15, 25, 35, 45, 55, 65,
         14, 24, 34, 44, 54, 64,  14, 24, 34, 44, 54, 64,
         13, 23, 33, 43, 53, 63,  13, 23, 33, 43, 53, 63,
@@ -42,27 +42,27 @@ const int mvv_lva[12][12] = {
         10, 20, 30, 40, 50, 60,  10, 20, 30, 40, 50, 60
 };
 
-int historyCount;
-int killer_moves[max_ply][2];
+int32_t historyCount;
+int32_t killer_moves[max_ply][2];
 float history_moves[12][64][64];
 
 typedef struct MoveEval MoveEval;
 
 struct MoveEval{
-    int move;
-    int eval;
+    int32_t move;
+    int32_t eval;
 };
 
 static inline void swap(int* a, int* b) {
-    int t = *a;
+    int32_t t = *a;
     *a = *b;
     *b = t;
 }
 
 void insertion_sort(MoveList *movearr){
-    int i = 1;
+    int32_t i = 1;
     while (i < movearr->count){
-        int j = i;
+        int32_t j = i;
         while (j > 0 && movearr->scores[j-1] < movearr->scores[j]) {
             swap(&movearr->scores[j], &movearr->scores[j - 1]);
             swap(&movearr->moves[j], &movearr->moves[j - 1]);
@@ -110,8 +110,8 @@ U64 pastPawnMasks[2][64] = {
 
 void print_m256(__m256i _x){
     U64 *x = (U64*)&_x;
-    for (int i = 0; i < 4; ++i) {
-        for (int j = 0; j < 64; ++j) {
+    for (int32_t i = 0; i < 4; ++i) {
+        for (int32_t j = 0; j < 64; ++j) {
             if (j % 16 == 0)
                 printf("\n");
             printf("%d ", get_bit(x[i], j) ? 1 : 0);
@@ -149,7 +149,7 @@ int16_t hadd_epi16(__m256i x) {
 uint16_t andmask[16] = {1, 1 << 1, 1 << 2, 1 << 3, 1 << 4, 1 << 5, 1 << 6, 1 << 7,
                        1 << 8, 1 << 9, 1 << 10, 1 << 11, 1 << 12, 1 << 13, 1 << 14, 1 << 15};
 
-int bitshifts[16] = {0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15};
+int32_t bitshifts[16] = {0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15};
 
 __m256i cmpeq(__m256i x, __m256i y){
     __m128i x2 = (__m128i)_mm256_extractf128_ps((__m256)x, 1);
@@ -194,7 +194,7 @@ int16_t getScoreFromMoveTable(U64 bitboard, const int16_t *bbPart){
     bitboard = ~bitboard;
         __m256i score = _mm256_set1_epi16(0);
 
-        for (int i = 0; i < 64; i += 16) {
+        for (int32_t i = 0; i < 64; i += 16) {
             __m256i _x = _mm256_loadu_si256((const void *) &bbPart[i]);
             _x = _mm256_xor_si256(_x, inverse_maskmove_epi16(bitboard >> i));
 
@@ -207,7 +207,7 @@ int16_t getScoreFromMoveTable(U64 bitboard, const int16_t *bbPart){
     bitboard = ~bitboard;
     int16_t score = 0;
 
-    for (int i = 0; i < 64; i += 16) {
+    for (int32_t i = 0; i < 64; i += 16) {
         __m256i _x = _mm256_loadu_si256((const void *) &bbPart[i]);
         _x = (__m256i)_mm256_xor_ps((__m256)_x, (__m256)inverse_maskmove_epi16(bitboard >> i));
 
@@ -219,7 +219,7 @@ int16_t getScoreFromMoveTable(U64 bitboard, const int16_t *bbPart){
 
     int16_t score = 0;
 
-    for (int i = 0; i < 64; ++i) {
+    for (int32_t i = 0; i < 64; ++i) {
         if (get_bit(bitboard, i)){
             score += bbPart[i];
         } else {
@@ -235,8 +235,8 @@ int16_t getScoreFromMoveTable(U64 bitboard, const int16_t *bbPart){
 
 //Board is included in Thread *thread
 //returns the score of a move, integer.
-//int *hashmove is  the best move stored in the hash table (from a previous depth)
-int score_move(int move, const int *hashmove, Thread *thread){
+//int32_t *hashmove is  the best move stored in the hash table (from a previous depth)
+int32_t score_move(int32_t move, const int32_t *hashmove, Thread *thread){
     Board *board = &thread->board;
 
     if (thread->found_pv){
@@ -246,7 +246,7 @@ int score_move(int move, const int *hashmove, Thread *thread){
         }
     }
 
-    for (int i = 0; i < 4; i++) {
+    for (int32_t i = 0; i < 4; i++) {
         if (hashmove[i] == -15 || hashmove[i] == 0)
             break;
         if (hashmove[i] == move) {
@@ -257,15 +257,15 @@ int score_move(int move, const int *hashmove, Thread *thread){
     if (getcapture(move)){
 
 
-        int start_piece, end_piece;
-        int target_piece = P;
+        int32_t start_piece, end_piece;
+        int32_t target_piece = P;
 
-        int target_square = gettarget(move);
+        int32_t target_square = gettarget(move);
 
         if (board->side == white) {start_piece = p; end_piece = k;}
         else{start_piece = P; end_piece = K;}
 
-        for (int bb_piece = start_piece; bb_piece < end_piece; bb_piece++){
+        for (int32_t bb_piece = start_piece; bb_piece < end_piece; bb_piece++){
             if (get_bit(board->bitboards[bb_piece], target_square)){
                 target_piece = bb_piece;
                 break;
@@ -280,7 +280,7 @@ int score_move(int move, const int *hashmove, Thread *thread){
                 return 10000;
         }
 
-        int val = seeCapture(move, board);
+        int32_t val = seeCapture(move, board);
         if (board->quinode)
             return val + mvv_lva[getpiece(move)][target_piece];
         return val + mvv_lva[getpiece(move)][target_piece] + 10000;
@@ -295,12 +295,12 @@ int score_move(int move, const int *hashmove, Thread *thread){
 
 	if (board->quinode){ return 0; }
 
-        int score = 0;
+        int32_t score = 0;
 
-        int piece = getpiece(move);
-        int target = gettarget(move);
+        int32_t piece = getpiece(move);
+        int32_t target = gettarget(move);
 
-        int pieceCount = count_bits(WB | WN | WR | WQ | BB | BN | BR | BQ);
+        int32_t pieceCount = count_bits(WB | WN | WR | WQ | BB | BN | BR | BQ);
 
         //for those who attempt to break this engine, take this :)
         if (pieceCount > 14)
@@ -310,7 +310,7 @@ int score_move(int move, const int *hashmove, Thread *thread){
         const int16_t *dataPart = &moveOrderData[pieceCount][piece][target][0][0];
         char *wspart = &moveOrderWorthSearching[pieceCount][piece][target][0];
 
-        for (int bb = 0; bb < 14; bb++){
+        for (int32_t bb = 0; bb < 14; bb++){
             if (bb == P || bb == p || bb == 12 || bb == 13 || wspart[bb] || board->pvnode) {
 
                 const int16_t *bbPart = &dataPart[bb * 64];
@@ -336,7 +336,7 @@ int score_move(int move, const int *hashmove, Thread *thread){
 
         if (historyCount > 0) {
             float historyscore = (history_moves[getpiece(move)][getsource(move)][gettarget(move)] / (float) historyCount) * (float)historyMoveDivisor;
-            score += (int )historyscore;
+            score += (int32_t )historyscore;
         }
 
         return (int)score;
@@ -345,10 +345,10 @@ int score_move(int move, const int *hashmove, Thread *thread){
 
 
 //sorts a list of moves
-//int *hashmove is the move stored in the transposition table from a previous depth
+//int32_t *hashmove is the move stored in the transposition table from a previous depth
 //pretty much ignore this function it's very boring. The main function is the function above (score_move)
-static inline void sort_moves(MoveList *move_list, int *hashmove, Thread *thread){
-    for (int i = 0; i < move_list->count; i++) {
+static inline void sort_moves(MoveList *move_list, int32_t *hashmove, Thread *thread){
+    for (int32_t i = 0; i < move_list->count; i++) {
         move_list->scores[i] = score_move(move_list->moves[i], hashmove, thread);
     }
 
@@ -357,7 +357,7 @@ static inline void sort_moves(MoveList *move_list, int *hashmove, Thread *thread
 //    if (thread->board.searchDepth <= 6) return;
 //    print_fen(&thread->board);
 //    printf("\n");
-//     for (int i = 0; i < move_list->count; i++) {
+//     for (int32_t i = 0; i < move_list->count; i++) {
 //         print_move(move_list->moves[i]);
 //         printf(" : %d\n", move_list->scores[i]);
 //     }
@@ -365,7 +365,7 @@ static inline void sort_moves(MoveList *move_list, int *hashmove, Thread *thread
 //     printf("\n");
 }
 
-static inline int quiesce(int alpha, int beta, Thread *thread) {
+static inline int32_t quiesce(int32_t alpha, int32_t beta, Thread *thread) {
     Board *board = &thread->board;
 
     if (board->ply > selDepth){
@@ -382,7 +382,7 @@ static inline int quiesce(int alpha, int beta, Thread *thread) {
     nodes++;
     qnodes++;
 
-    int stand_pat = nnue_evaluate(board);
+    int32_t stand_pat = nnue_evaluate(board);
 
     if (stand_pat >= beta){
         return beta;
@@ -401,19 +401,19 @@ static inline int quiesce(int alpha, int beta, Thread *thread) {
     copy_board();
     board->quinode = 1;
 
-    int tmp[4] = {0,0,0,0};
+    int32_t tmp[4] = {0,0,0,0};
 
     generate_moves(&legalMoves, board);
     sort_moves(&legalMoves, tmp, thread);
 
-    for (int moveId = 0; moveId < legalMoves.count; moveId++){
-        int move = legalMoves.moves[moveId];
+    for (int32_t moveId = 0; moveId < legalMoves.count; moveId++){
+        int32_t move = legalMoves.moves[moveId];
 
         if (legalMoves.scores[moveId] <= -220)
             continue;
 
         if (make_move(move, only_captures, 0, board)){
-            int score = -quiesce(-beta, -alpha, thread);
+            int32_t score = -quiesce(-beta, -alpha, thread);
 
             take_back();
 
@@ -434,7 +434,7 @@ void find_pv(MoveList *moves, Thread *thread){
     Board *board = &thread->board;
 
     thread->follow_pv = 0;
-    for (int moveId = 0; moveId < moves->count; moveId++){
+    for (int32_t moveId = 0; moveId < moves->count; moveId++){
         if (moves->moves[moveId] == board->prevPv.moves[board->ply]){
             thread->found_pv = 1;
             thread->follow_pv = 1;
@@ -444,7 +444,7 @@ void find_pv(MoveList *moves, Thread *thread){
 
 //the main search function
 //don't call this directly. Call search_position().
-static inline int search(int depth, int alpha, int beta, Line *pline, Thread *thread) {
+static inline int32_t search(int32_t depth, int32_t alpha, int32_t beta, Line *pline, Thread *thread) {
     //general maintenence
     nodes++;
 
@@ -465,7 +465,7 @@ static inline int search(int depth, int alpha, int beta, Line *pline, Thread *th
     }
 
     //do check extensions before probing hash table
-    int in_check = is_square_attacked(bsf((board->side == white) ? board->bitboards[K] : board->bitboards[k]), (board->side ^ 1), board);
+    int32_t in_check = is_square_attacked(bsf((board->side == white) ? board->bitboards[K] : board->bitboards[k]), (board->side ^ 1), board);
 
     if (in_check)
         depth++;
@@ -477,7 +477,7 @@ static inline int search(int depth, int alpha, int beta, Line *pline, Thread *th
     board->depthAdjuster -= (float)(int)board->depthAdjuster;
 
     //find weather this node's move is a past pawn push. If it is, there is not late move reduction.
-    int isPastPawnPush = 0;
+    int32_t isPastPawnPush = 0;
     if (board->occupancies[both] == (WK | BK | WP | BP)) {
         if (getpiece(board->prevmove) == P) {
             if (!(pastPawnMasks[white][gettarget(board->prevmove)] & board->bitboards[p]))
@@ -503,16 +503,16 @@ static inline int search(int depth, int alpha, int beta, Line *pline, Thread *th
 
     //hash table probe
     //hash_move[4] is the best moves from previous depths stored in the transposition table.
-    int hash_move[4] = {NO_MOVE, NO_MOVE, NO_MOVE, NO_MOVE};
-    int hash_lookup = ProbeHash(depth, alpha, beta, hash_move, pline, board);
+    int32_t hash_move[4] = {NO_MOVE, NO_MOVE, NO_MOVE, NO_MOVE};
+    int32_t hash_lookup = ProbeHash(depth, alpha, beta, hash_move, pline, board);
 
     //return hash lookup if it meets the parameters (in function ProbeHash)
     if ((hash_lookup) != valUNKNOWN && board->ply != 0) {
         return hash_lookup;
     }
-    int hashf = hashfALPHA;
+    int32_t hashf = hashfALPHA;
 
-    int staticeval = nnue_evaluate(board);
+    int32_t staticeval = nnue_evaluate(board);
 
     //probing the syzygy table bases
     if (board->ply != 0) {
@@ -530,7 +530,7 @@ static inline int search(int depth, int alpha, int beta, Line *pline, Thread *th
                     return -4000000;
             }
         } else {
-            int move = get_root_move(board);
+            int32_t move = get_root_move(board);
             if (move != 0) {
 
                 if (tbres == 4)
@@ -561,7 +561,7 @@ static inline int search(int depth, int alpha, int beta, Line *pline, Thread *th
     }
 
     //Null Move Pruning
-    int eval;
+    int32_t eval;
     if (depth >= 3 && !in_check && board->ply
         && (WQ | WR) && (BQ | BR)){
         copy_board();
@@ -590,9 +590,9 @@ static inline int search(int depth, int alpha, int beta, Line *pline, Thread *th
     //Razoring
     if (!board->pvnode && !in_check && depth <= 3) {
 
-        int value = staticeval + (125 * 64);
+        int32_t value = staticeval + (125 * 64);
         if (value < beta) {
-            int new_value;
+            int32_t new_value;
             if (depth == 1) {
                 new_value = quiesce(alpha, beta, thread);
                 pline->length = 0;
@@ -621,12 +621,12 @@ static inline int search(int depth, int alpha, int beta, Line *pline, Thread *th
 
     copy_board();
 
-    int legalMoveCount = 0;
-    int move;
+    int32_t legalMoveCount = 0;
+    int32_t move;
     MoveEval best = {.move = NO_MOVE, .eval = -100000000};
 
     //Looping over all the legal moves
-    for (int moveId = 0; moveId < legalMoves.count; moveId++) {
+    for (int32_t moveId = 0; moveId < legalMoves.count; moveId++) {
         move = legalMoves.moves[moveId];
 
         //The illigal moves (moving pinned pieces mostly) are not removed during the move generation, they are removed here.
@@ -733,10 +733,10 @@ struct HelperThread{
 void negamax_thread(void *args){
     NegamaxArgs *nargs = args;
 
-    for (int i = 0; i < max_ply; ++i) {
+    for (int32_t i = 0; i < max_ply; ++i) {
         memset(nargs->pline, 0, sizeof (Line));
 
-        int eval = search(i, DEF_ALPHA, DEF_BETA, nargs->pline, &nargs->thread);
+        int32_t eval = search(i, DEF_ALPHA, DEF_BETA, nargs->pline, &nargs->thread);
 
         memcpy(&nargs->thread.board.prevPv, nargs->pline, sizeof(Line));
 
@@ -749,7 +749,7 @@ void negamax_thread(void *args){
 //if the time is not within the time limit, stop searching
 //if the time is, then keep searching
 //if the actual time exeeds the predicted time, then there's probably a change in PV, so it's worth searching
-int willMakeNextDepth(int curd, const float *times){
+int32_t willMakeNextDepth(int32_t curd, const float *times){
 
     if (curd < 4)
         return 1;
@@ -757,7 +757,7 @@ int willMakeNextDepth(int curd, const float *times){
     float multiplier = 0;
     float divisor = 0;
 
-    for (int i = curd - 3; i < curd; ++i) {
+    for (int32_t i = curd - 3; i < curd; ++i) {
         if (times[i-1] > 1) {
             multiplier += (times[i] / times[i - 1]);
             divisor += 1;
@@ -783,10 +783,10 @@ void *search_position(void *arg){
 
     memcpy(board, &UciBoard, sizeof(Board));
 
-    int depth = *(int*)arg;
+    int32_t depth = *(int*)arg;
 
     if (get_wdl(board) != TB_RESULT_FAILED) {
-        int move = get_root_move(board);
+        int32_t move = get_root_move(board);
 
         //this is shit code but thats okay its not my fault :)
         if (move != 0) {
@@ -816,33 +816,33 @@ void *search_position(void *arg){
     Line negamax_line;
     negamax_line.length = 0;
 
-    int alpha = DEF_ALPHA;
-    int beta = DEF_BETA;
+    int32_t alpha = DEF_ALPHA;
+    int32_t beta = DEF_BETA;
 
-    int eval;
+    int32_t eval;
 
     //best move from previous depth
-    int prevBestMove = 0;
+    int32_t prevBestMove = 0;
 
     //how long did it take to search to current depth
     float depthTime[max_ply];
     memset(depthTime, 0, sizeof depthTime);
 
-    int tmp[4] = {0,0,0,0};
+    int32_t tmp[4] = {0,0,0,0};
     reset_hash_table();
 
     MoveList legalMoves;
     generate_moves(&legalMoves, board);
     generate_only_legal_moves(&legalMoves, board);
     sort_moves(&legalMoves, tmp, &thread);
-    int numThreads = threadCount < legalMoves.count ? (int) threadCount : (int) legalMoves.count;
+    int32_t numThreads = threadCount < legalMoves.count ? (int) threadCount : (int) legalMoves.count;
     HelperThread threads[numThreads];
 
     if (threadCount > 1) {
 
         memset(&threads, 0, sizeof threads);
 
-        for (int i = 0; i < numThreads; ++i) {
+        for (int32_t i = 0; i < numThreads; ++i) {
             threads[i].args = (struct NegamaxArgs) {.pline = &threads[i].line, .thread.board = *board};
             make_move(legalMoves.moves[i], all_moves, 1, &threads[i].args.thread.board);
 
@@ -854,7 +854,7 @@ void *search_position(void *arg){
     printf("info string This build is without Late Move Reduction, and should be used for debugging purposes only.\n");
 #endif
 
-    for (int currentDepth = 1; currentDepth <= depth; currentDepth++){
+    for (int32_t currentDepth = 1; currentDepth <= depth; currentDepth++){
 
         board->ply = 0;
 
@@ -867,7 +867,7 @@ void *search_position(void *arg){
 
         depthTime[currentDepth] = (float )get_time_ms();
 
-        int nmRes = search(currentDepth, alpha, beta, &negamax_line, &thread);
+        int32_t nmRes = search(currentDepth, alpha, beta, &negamax_line, &thread);
 
         if (stop) {
             break;
@@ -935,7 +935,7 @@ void *search_position(void *arg){
                (abs(eval) > 4000000) ? "mate" : "cp" , (abs(eval) > 4000000) ? (4900000 - abs(eval)) * (eval / abs(eval)) : eval/64,
                currentDepth, selDepth, nodes, ((nodes*1000)/(get_time_ms() - startingTime)), qnodes, tbHits, (get_time_ms() - startingTime));
 
-        for (int i = 0; i < max_ply; i++){
+        for (int32_t i = 0; i < max_ply; i++){
             if (board->prevPv.moves[i] == 0)
                 break;
             print_move(board->prevPv.moves[i]);
@@ -951,10 +951,10 @@ void *search_position(void *arg){
     }
 
     if (threadCount > 1) {
-        int originalStop = stop;
+        int32_t originalStop = stop;
 
         stop = 1;
-        for (int i = 0; i < numThreads; ++i) {
+        for (int32_t i = 0; i < numThreads; ++i) {
             pthread_join(threads[i].pthread, NULL);
         }
 

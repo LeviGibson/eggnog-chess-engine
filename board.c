@@ -24,21 +24,21 @@ U64 side_keys[2];
 U64 move_keys[4096];
 
 void init_zobrist_keys(){
-    for (int piece = P; piece <= k; piece++){
-        for (int square = 0; square < 64; square++){
+    for (int32_t piece = P; piece <= k; piece++){
+        for (int32_t square = 0; square < 64; square++){
             piece_keys[piece][square] = get_random_U64();
         }
     }
 
-    for (int i = 0; i < 16; i++) {
+    for (int32_t i = 0; i < 16; i++) {
         castle_keys[i] = get_random_U64();
     }
 
-    for (int square = 0; square < 64; square++){
+    for (int32_t square = 0; square < 64; square++){
         enpessent_keys[square] = get_random_U64();
     }
 
-    for (int square = 0; square < 4096; square++){
+    for (int32_t square = 0; square < 4096; square++){
         move_keys[square] = get_random_U64();
     }
 
@@ -47,7 +47,7 @@ void init_zobrist_keys(){
 
 }
 
-U64 get_move_key(int move){
+U64 get_move_key(int32_t move){
     move &= 0b00000000000000000000111111111111;
     assert(move < 4096);
     return move_keys[move];
@@ -65,17 +65,17 @@ U64 update_zobrist_key(Board *board){
 
     U64 key = board->current_zobrist_key;
 
-    for (int piece = P; piece <= k; piece++){
+    for (int32_t piece = P; piece <= k; piece++){
         if (board->bitboards[piece] != board->zobrist_key_bitboards[piece]){
             key ^= board->zobrist_key_parts[piece];
 
             U64 bitboard = board->bitboards[piece];
             U64 bitboard_key = 0ULL;
 
-            int bb_count = count_bits(bitboard);
+            int32_t bb_count = count_bits(bitboard);
 
-            for (int _ = 0; _ < bb_count; _++){
-                int square = bsf(bitboard);
+            for (int32_t _ = 0; _ < bb_count; _++){
+                int32_t square = bsf(bitboard);
 
                 bitboard_key ^= piece_keys[piece][square];
 
@@ -104,11 +104,11 @@ U64 generate_zobrist_key(Board *board){
     memcpy(board->zobrist_key_bitboards, board->bitboards, sizeof board->bitboards);
 
     U64 key = 0ULL;
-    for (int piece = P; piece <= k; piece++){
+    for (int32_t piece = P; piece <= k; piece++){
         U64 bitboard = board->bitboards[piece];
         U64 bitboard_key = 0ULL;
         while (bitboard){
-            int square = bsf(bitboard);
+            int32_t square = bsf(bitboard);
 
             bitboard_key ^= piece_keys[piece][square];
 
@@ -133,7 +133,7 @@ U64 generate_zobrist_key(Board *board){
     return key;
 }
 
-int is_threefold_repetition(Board *board){
+int32_t is_threefold_repetition(Board *board){
 
     if (board->zobrist_history_length < 8)
         return 0;
@@ -142,14 +142,14 @@ int is_threefold_repetition(Board *board){
         return 1;
     }
 
-    int repetitionlimit = 2;
+    int32_t repetitionlimit = 2;
 
-    for (int position = 0; position <= board->zobrist_history_length; position++){
+    for (int32_t position = 0; position <= board->zobrist_history_length; position++){
         if (position == (board->zobrist_history_search_index + 1))
             repetitionlimit = 1;
 
-        int repetitions = 0;
-        for (int compare = position+1; compare <= board->zobrist_history_length; compare++){
+        int32_t repetitions = 0;
+        for (int32_t compare = position+1; compare <= board->zobrist_history_length; compare++){
             if (board->zobrist_history[compare] == board->zobrist_history[position]){
 
                 repetitions++;
@@ -166,18 +166,18 @@ int is_threefold_repetition(Board *board){
 }
 
 static inline void generate_knight_moves(MoveList *legalMoves, Board *board){
-    int ptype = ((board->side == white) ? N : n);
+    int32_t ptype = ((board->side == white) ? N : n);
     U64 bitboard = board->bitboards[ptype];
 
     U64 friendly_occupanices = board->occupancies[board->side];
 
     while (bitboard){
-        int square = bsf(bitboard);
+        int32_t square = bsf(bitboard);
 
         U64 bb_moves = knight_mask[square] & (~friendly_occupanices);
 
         while (bb_moves){
-            int target = bsf(bb_moves);
+            int32_t target = bsf(bb_moves);
 
             if ((1ULL << target) & board->occupancies[both]) {
                 legalMoves->moves[legalMoves->count] = encode_move(square, target, ptype, 0, 0, 1, 0, 0);
@@ -196,24 +196,24 @@ static inline void generate_knight_moves(MoveList *legalMoves, Board *board){
 }
 
 static inline void generate_pawn_moves(MoveList *legalMoves, Board *board){
-    int ptype = ((board->side == white) ? P : p);
+    int32_t ptype = ((board->side == white) ? P : p);
     U64 bitboard = board->bitboards[ptype];
 
     U64 enemy_occupanices = (board->side == white) ? board->occupancies[black] : board->occupancies[white];
-    int enpoffset = board->side == white ? 8 : -8;
+    int32_t enpoffset = board->side == white ? 8 : -8;
 
     //this deals with a weird bug in Arena GUI
     if (board->enpessant != no_sq && (enemy_occupanices & (1ULL << (board->enpessant+enpoffset))))
         enemy_occupanices |= 1ULL << board->enpessant;
 
     while (bitboard){
-        int square = bsf(bitboard);
+        int32_t square = bsf(bitboard);
 
         //Pawn Captures
         U64 bb_moves = pawn_mask[board->side][square] & enemy_occupanices;
 
         while (bb_moves){
-            int target = bsf(bb_moves);
+            int32_t target = bsf(bb_moves);
 
             //Enpessant
             if (target == board->enpessant) {
@@ -311,18 +311,18 @@ static inline void generate_pawn_moves(MoveList *legalMoves, Board *board){
 }
 
 static inline void generate_bishop_moves(MoveList *legalMoves, Board *board){
-    int ptype = ((board->side == white) ? B : b);
+    int32_t ptype = ((board->side == white) ? B : b);
     U64 bitboard = board->bitboards[ptype];
 
     U64 friendly_occupanices = board->occupancies[board->side];
 
     while (bitboard){
-        int square = bsf(bitboard);
+        int32_t square = bsf(bitboard);
 
         U64 bb_moves = get_bishop_attacks(square, board->occupancies[both]) & (~friendly_occupanices);
 
         while (bb_moves){
-            int target = bsf(bb_moves);
+            int32_t target = bsf(bb_moves);
 
             if ((1ULL << target) & board->occupancies[both]) {
                 legalMoves->moves[legalMoves->count] = encode_move(square, target, ptype, 0, 0, 1, 0, 0);
@@ -340,18 +340,18 @@ static inline void generate_bishop_moves(MoveList *legalMoves, Board *board){
 }
 
 static inline void generate_rook_moves(MoveList *legalMoves, Board *board){
-    int ptype = ((board->side == white) ? R : r);
+    int32_t ptype = ((board->side == white) ? R : r);
     U64 bitboard = board->bitboards[ptype];
 
     U64 friendly_occupanices = board->occupancies[board->side];
 
     while (bitboard){
-        int square = bsf(bitboard);
+        int32_t square = bsf(bitboard);
 
         U64 bb_moves = get_rook_attacks(square, board->occupancies[both]) & (~friendly_occupanices);
 
         while (bb_moves){
-            int target = bsf(bb_moves);
+            int32_t target = bsf(bb_moves);
 
             if ((1ULL << target) & board->occupancies[both]) {
                 legalMoves->moves[legalMoves->count] = encode_move(square, target, ptype, 0, 0, 1, 0, 0);
@@ -370,18 +370,18 @@ static inline void generate_rook_moves(MoveList *legalMoves, Board *board){
 }
 
 static inline void generate_queen_moves(MoveList *legalMoves, Board *board){
-    int ptype = ((board->side == white) ? Q : q);
+    int32_t ptype = ((board->side == white) ? Q : q);
     U64 bitboard = board->bitboards[ptype];
 
     U64 friendly_occupanices = board->occupancies[board->side];
 
     while (bitboard){
-        int square = bsf(bitboard);
+        int32_t square = bsf(bitboard);
 
         U64 bb_moves = (get_bishop_attacks(square, board->occupancies[both]) | get_rook_attacks(square, board->occupancies[both])) & (~friendly_occupanices);
 
         while (bb_moves){
-            int target = bsf(bb_moves);
+            int32_t target = bsf(bb_moves);
 
             if ((1ULL << target) & board->occupancies[both]) {
                 legalMoves->moves[legalMoves->count] = encode_move(square, target, ptype, 0, 0, 1, 0, 0);
@@ -399,7 +399,7 @@ static inline void generate_queen_moves(MoveList *legalMoves, Board *board){
 }
 
 static inline void generate_king_moves(MoveList *legalMoves, Board *board){
-    int ptype = ((board->side == white) ? K : k);
+    int32_t ptype = ((board->side == white) ? K : k);
     U64 bitboard = board->bitboards[ptype];
 
     U64 friendly_occupanices = board->occupancies[board->side];
@@ -408,12 +408,12 @@ static inline void generate_king_moves(MoveList *legalMoves, Board *board){
         print_board(board);
     }
 
-    int square = bsf(bitboard);
+    int32_t square = bsf(bitboard);
 
     U64 bb_moves = king_mask[square] & (~friendly_occupanices);
 
     while (bb_moves){
-        int target = bsf(bb_moves);
+        int32_t target = bsf(bb_moves);
 
         if ((1ULL << target) & board->occupancies[both]) {
             //source, target, ptype, prom, enpessant, capture
@@ -479,11 +479,11 @@ void update_occupancies(Board *board){
 
     memset(board->occupancies, 0ULL, sizeof(board->occupancies));
 
-    for (int piece = P; piece <= K; piece++){
+    for (int32_t piece = P; piece <= K; piece++){
         board->occupancies[white] |= board->bitboards[piece];
     }
 
-    for (int piece = p; piece <= k; piece++){
+    for (int32_t piece = p; piece <= k; piece++){
         board->occupancies[black] |= board->bitboards[piece];
     }
 
@@ -501,7 +501,7 @@ void generate_moves(MoveList *legalMoves, Board *board){
     generate_king_moves(legalMoves, board);
 }
 
-const int castling_right_table[64] = {
+const int32_t castling_right_table[64] = {
         7, 15, 15, 15,  3, 15, 15, 11,
         15, 15, 15, 15, 15, 15, 15, 15,
         15, 15, 15, 15, 15, 15, 15, 15,
@@ -519,15 +519,15 @@ void refresh_weak_squares(Board *board){
     *wb = 0ULL;
     *bb = 0ULL;
 
-    for (int pt = 0; pt < 12; ++pt) {
+    for (int32_t pt = 0; pt < 12; ++pt) {
 
         U64 bitboard = board->bitboards[pt];
         if (!bitboard) continue;
 
-        int bitcount = count_bits(bitboard);
+        int32_t bitcount = count_bits(bitboard);
 
-        for (int i = 0; i < bitcount; ++i) {
-            int square = bsf(bitboard);
+        for (int32_t i = 0; i < bitcount; ++i) {
+            int32_t square = bsf(bitboard);
 
             if (pt == P)
                 *wb |= pawn_mask[white][square];
@@ -562,17 +562,17 @@ void refresh_weak_squares(Board *board){
     *bb = (~*bb) & board->occupancies[black];
 }
 
-int make_move(int move, int flag, int notquinode, Board *board){
+int32_t make_move(int32_t move, int32_t flag, int32_t notquinode, Board *board){
 
     if (flag == all_moves){
         copy_board();
 
         board->ply++;
 
-        int ptype = getpiece(move);
-        int source = getsource(move);
-        int target = gettarget(move);
-        int capture = getcapture(move);
+        int32_t ptype = getpiece(move);
+        int32_t source = getsource(move);
+        int32_t target = gettarget(move);
+        int32_t capture = getcapture(move);
 
         //if move is a king move, refresh the accumulator;
         if (ptype == K || ptype == k){
@@ -593,7 +593,7 @@ int make_move(int move, int flag, int notquinode, Board *board){
                 }
             } else {
                 if (board->side == white){
-                    for (int piece = p; piece <= k; piece++) {
+                    for (int32_t piece = p; piece <= k; piece++) {
                         if (get_bit(board->bitboards[piece], target)) {
 
                             nnue_pop_bit(piece, target, board);
@@ -602,7 +602,7 @@ int make_move(int move, int flag, int notquinode, Board *board){
                         }
                     }
                 } else {
-                    for (int piece = P; piece <= K; piece++) {
+                    for (int32_t piece = P; piece <= K; piece++) {
                         if (get_bit(board->bitboards[piece], target)) {
 
                             nnue_pop_bit(piece, target, board);
@@ -640,7 +640,7 @@ int make_move(int move, int flag, int notquinode, Board *board){
             }
         }
 
-        int promoted = getpromoted(move);
+        int32_t promoted = getpromoted(move);
         if (promoted){
             nnue_pop_bit(ptype, target, board);
             nnue_set_bit(promoted, target, board);
@@ -697,7 +697,7 @@ void generate_only_legal_moves(MoveList *moves, Board *board){
     generate_moves(&tmp, board);
 
     copy_board();
-    for (int i = 0; i < tmp.count; ++i) {
+    for (int32_t i = 0; i < tmp.count; ++i) {
         if (make_move(tmp.moves[i], all_moves, 1, board)) {
             moves->moves[moves->count] = tmp.moves[i];
             moves->count++;
@@ -706,8 +706,8 @@ void generate_only_legal_moves(MoveList *moves, Board *board){
     }
 }
 
-int piece_at(int square, Board *board){
-    for (int i = 0; i < 12; ++i) {
+int32_t piece_at(int32_t square, Board *board){
+    for (int32_t i = 0; i < 12; ++i) {
         if (board->bitboards[i] & 1ULL << square)
             return i;
     }
@@ -718,11 +718,11 @@ int piece_at(int square, Board *board){
 //Simple and fast function to judge if a move is a check.
 //Does not work with discovered checks or castle-checks
 
-int is_move_direct_check(int move, Board *board) {
-    int ptype = getpiece(move);
+int32_t is_move_direct_check(int32_t move, Board *board) {
+    int32_t ptype = getpiece(move);
     U64 kingbb = board->side == white ? board->bitboards[k] : board->bitboards[K];
-    int kingsq = bsf(kingbb);
-    int target = gettarget(move);
+    int32_t kingsq = bsf(kingbb);
+    int32_t target = gettarget(move);
     U64 targetBb = 1ULL << target;
 
     if (ptype == N || ptype == n){
@@ -772,7 +772,7 @@ int is_move_direct_check(int move, Board *board) {
     return 0;
 }
 
-int is_square_attacked(int square, int testingSide, Board *board){
+int32_t is_square_attacked(int32_t square, int32_t testingSide, Board *board){
 
     if ((testingSide == white) && (pawn_mask[black][square] & board->bitboards[P])) return 1;
     if ((testingSide == black) && (pawn_mask[white][square] & board->bitboards[p])) return 1;
@@ -788,9 +788,9 @@ int is_square_attacked(int square, int testingSide, Board *board){
 }
 
 //
-//int piece_values[12] = {10, 30, 32, 50, 100, 0, -10, -30, -32, -50, -100, 0};
+//int32_t piece_values[12] = {10, 30, 32, 50, 100, 0, -10, -30, -32, -50, -100, 0};
 //
-//int get_smallest_attacker(int square, int testingSide){
+//int32_t get_smallest_attacker(int32_t square, int32_t testingSide){
 //    if ((testingSide == white) && (pawn_mask[black][square] & bitboards[P])) return P;
 //
 //    if ((testingSide == black) && (pawn_mask[white][square] & bitboards[p])) return p;
@@ -808,11 +808,11 @@ int is_square_attacked(int square, int testingSide, Board *board){
 //    return -1;
 //}
 //
-//int static_exchange_evaluation(int move) {
-//    int exchange_eval = 0;
+//int32_t static_exchange_evaluation(int32_t move) {
+//    int32_t exchange_eval = 0;
 //
-//    int target = get_move_target(move);
-//    int cap = piece_at(target);
+//    int32_t target = get_move_target(move);
+//    int32_t cap = piece_at(target);
 //    exchange_eval -= piece_values[cap];
 //
 //    if (get_smallest_attacker(target, side^1) != -1)
@@ -821,7 +821,7 @@ int is_square_attacked(int square, int testingSide, Board *board){
 //    return side == white ? exchange_eval + 2000 : (-exchange_eval) + 2000;
 //}
 
-int char_pieces[] = {
+int32_t char_pieces[] = {
         ['P'] = P,
         ['N'] = N,
         ['B'] = B,
@@ -840,7 +840,7 @@ char piece_symbols[12] = {
         'P', 'N', 'B', 'R', 'Q', 'K', 'p', 'n', 'b', 'r', 'q', 'k'
 };
 
-void print_move(int move){
+void print_move(int32_t move){
     printf("%s%s", square_to_coordinates[getsource(move)], square_to_coordinates[gettarget(move)]);
     if ((getpromoted(move) == Q) | (getpromoted(move) == q)){
         printf("q");
@@ -857,8 +857,8 @@ void print_move(int move){
 }
 
 void print_board(Board *board){
-    int rank = 8;
-    for (int square = 0; square < 64; square++){
+    int32_t rank = 8;
+    for (int32_t square = 0; square < 64; square++){
 
         if (!(square % 8)) {
             printf("\n");
@@ -866,9 +866,9 @@ void print_board(Board *board){
             rank--;
         }
 
-        int found_piece = 0;
+        int32_t found_piece = 0;
 
-        for (int piece = P; piece <= k; piece++){
+        for (int32_t piece = P; piece <= k; piece++){
             if (get_bit(board->bitboards[piece], square)){
                 printf("%c ", piece_symbols[piece]);
                 found_piece = 1;
@@ -886,11 +886,11 @@ void print_board(Board *board){
 
 
 void print_fen(Board *board){
-    for (int r = 0; r < 8; ++r) {
-        int esq = 0;
-        for (int f = 0; f < 8; ++f) {
+    for (int32_t r = 0; r < 8; ++r) {
+        int32_t esq = 0;
+        for (int32_t f = 0; f < 8; ++f) {
 
-            int p = piece_at((r * 8) + f, board);
+            int32_t p = piece_at((r * 8) + f, board);
             if (p == -1) { esq++; }
             else {
                 if (esq > 0) {
@@ -924,15 +924,15 @@ void parse_fen(char *fen, Board *board)
     board->enpessant = no_sq;
     board->castle = 0;
 
-    for (int rank = 0; rank < 8; rank++)
+    for (int32_t rank = 0; rank < 8; rank++)
     {
-        for (int file = 0; file < 8; file++)
+        for (int32_t file = 0; file < 8; file++)
         {
-            int square = rank * 8 + file;
+            int32_t square = rank * 8 + file;
 
             if ((*fen >= 'a' && *fen <= 'z') || (*fen >= 'A' && *fen <= 'Z'))
             {
-                int piece = char_pieces[*fen];
+                int32_t piece = char_pieces[*fen];
 
                 set_bit(board->bitboards[piece], square);
 
@@ -941,11 +941,11 @@ void parse_fen(char *fen, Board *board)
 
             if (*fen >= '0' && *fen <= '9')
             {
-                int offset = *fen - '0';
+                int32_t offset = *fen - '0';
 
-                int piece = -1;
+                int32_t piece = -1;
 
-                for (int bb_piece = P; bb_piece <= k; bb_piece++)
+                for (int32_t bb_piece = P; bb_piece <= k; bb_piece++)
                 {
                     if (get_bit(board->bitboards[bb_piece], square))
                         piece = bb_piece;
@@ -986,8 +986,8 @@ void parse_fen(char *fen, Board *board)
 
     if (*fen != '-')
     {
-        int file = fen[0] - 'a';
-        int rank = 8 - (fen[1] - '0');
+        int32_t file = fen[0] - 'a';
+        int32_t rank = 8 - (fen[1] - '0');
 
         board->enpessant = rank * 8 + file;
     }
@@ -995,10 +995,10 @@ void parse_fen(char *fen, Board *board)
     else
         board->enpessant = no_sq;
 
-    for (int piece = P; piece <= K; piece++)
+    for (int32_t piece = P; piece <= K; piece++)
         board->occupancies[white] |= board->bitboards[piece];
 
-    for (int piece = p; piece <= k; piece++)
+    for (int32_t piece = p; piece <= k; piece++)
         board->occupancies[black] |= board->bitboards[piece];
 
     update_occupancies(board);
