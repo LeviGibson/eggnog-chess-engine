@@ -261,17 +261,17 @@ static inline void propogate_neuron(const int16_t a, const int8_t *b, int32_t *r
 }
 
 void propogate_l1(NnueData *data) {
-    int16_t tmp_accum[512];
+    int16_t *tmpAccum = data->tmpAccumulation;
 
-    memcpy(tmp_accum, data->accumulation, sizeof tmp_accum);
+    memcpy(tmpAccum, data->accumulation, sizeof data->tmpAccumulation);
     memcpy(data->l1, l1_biases, sizeof l1_biases);
 
-    clamp_accumulator(tmp_accum);
+    clamp_accumulator(tmpAccum);
 
     for (int i = 0; i < 512; ++i) {
-        if (tmp_accum[i]) {
+        if (tmpAccum[i]) {
             int offset = 32 * i;
-            propogate_neuron(tmp_accum[i], &l1_weights[offset], data->l1);
+            propogate_neuron(tmpAccum[i], &l1_weights[offset], data->l1);
         }
     }
 

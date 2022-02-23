@@ -39,6 +39,7 @@ struct NnueData{
     int eval;
 
     int16_t accumulation[2][KPSIZE];
+    int16_t tmpAccumulation[KPSIZE*2];
 
     unsigned activeIndicies[2][32];
     unsigned activeIndexCount[2];
