@@ -43,7 +43,7 @@ const int32_t mvv_lva[12][12] = {
 };
 
 int32_t historyCount;
-int32_t killer_moves[max_ply][2];
+int32_t killer_moves[MAX_PLY][2];
 float history_moves[12][64][64];
 
 typedef struct MoveEval MoveEval;
@@ -233,6 +233,15 @@ int16_t getScoreFromMoveTable(U64 bitboard, const int16_t *bbPart){
 
 }
 
+#define MOVE_HASH_SIZE 200000
+int32_t moveScoreHash[MOVE_HASH_SIZE];
+
+void search_init(){
+    for (int i = 0; i < MOVE_HASH_SIZE; ++i) {
+        moveScoreHash[i] = NO_MOVE;
+    }
+}
+
 //Board is included in Thread *thread
 //returns the score of a move, integer.
 //int32_t *hashmove is  the best move stored in the hash table (from a previous depth)
@@ -297,33 +306,41 @@ int32_t score_move(int32_t move, const int32_t *hashmove, Thread *thread){
 
         int32_t score = 0;
 
-        int32_t piece = getpiece(move);
-        int32_t target = gettarget(move);
+	    int32_t *hashptr = &moveScoreHash[(board->current_zobrist_key ^ get_move_key(move)) % MOVE_HASH_SIZE];
+	    if (*hashptr != NO_MOVE){
+	        score = *hashptr;
+	    } else {
 
-        int32_t pieceCount = count_bits(WB | WN | WR | WQ | BB | BN | BR | BQ);
+            int32_t piece = getpiece(move);
+            int32_t target = gettarget(move);
 
-        //for those who attempt to break this engine, take this :)
-        if (pieceCount > 14)
-            pieceCount = 14;
-        //ha!
+            int32_t pieceCount = count_bits(WB | WN | WR | WQ | BB | BN | BR | BQ);
 
-        const int16_t *dataPart = &moveOrderData[pieceCount][piece][target][0][0];
-        char *wspart = &moveOrderWorthSearching[pieceCount][piece][target][0];
+            //for those who attempt to break this engine, take this :)
+            if (pieceCount > 14)
+                pieceCount = 14;
+            //ha!
 
-        for (int32_t bb = 0; bb < 14; bb++){
-            if (bb == P || bb == p || bb == 12 || bb == 13 || wspart[bb] || board->pvnode) {
+            const int16_t *dataPart = &moveOrderData[pieceCount][piece][target][0][0];
+            char *wspart = &moveOrderWorthSearching[pieceCount][piece][target][0];
 
-                const int16_t *bbPart = &dataPart[bb * 64];
-                U64 bitboard;
+            for (int32_t bb = 0; bb < 14; bb++) {
+                if (bb == P || bb == p || bb == 12 || bb == 13 || wspart[bb] || board->pvnode) {
 
-                //there are two other bitboards that represent what squares each side attacks
-                if (bb < 12)
-                    bitboard = board->bitboards[bb];
-                else
-                    bitboard = board->unprotectedPieces[bb - 12];
+                    const int16_t *bbPart = &dataPart[bb * 64];
+                    U64 bitboard;
 
-                score += getScoreFromMoveTable(bitboard, bbPart);
+                    //there are two other bitboards that represent what squares each side attacks
+                    if (bb < 12)
+                        bitboard = board->bitboards[bb];
+                    else
+                        bitboard = board->unprotectedPieces[bb - 12];
+
+                    score += getScoreFromMoveTable(bitboard, bbPart);
+                }
             }
+
+            *hashptr = score;
         }
 
         if (getpiece(move) == P && !(pastPawnMasks[white][gettarget(move)] & BP))
@@ -737,7 +754,7 @@ struct HelperThread{
 void negamax_thread(void *args){
     NegamaxArgs *nargs = args;
 
-    for (int32_t i = 0; i < max_ply; ++i) {
+    for (int32_t i = 0; i < MAX_PLY; ++i) {
         memset(nargs->pline, 0, sizeof (Line));
 
         int32_t eval = search(i, DEF_ALPHA, DEF_BETA, nargs->pline, &nargs->thread);
@@ -829,7 +846,7 @@ void *search_position(void *arg){
     int32_t prevBestMove = 0;
 
     //how long did it take to search to current depth
-    float depthTime[max_ply];
+    float depthTime[MAX_PLY];
     memset(depthTime, 0, sizeof depthTime);
 
     int32_t tmp[4] = {0,0,0,0};
@@ -939,7 +956,7 @@ void *search_position(void *arg){
                (abs(eval) > 4000000) ? "mate" : "cp" , (abs(eval) > 4000000) ? (4900000 - abs(eval)) * (eval / abs(eval)) : eval/64,
                currentDepth, selDepth, nodes, ((nodes*1000)/(get_time_ms() - startingTime)), qnodes, tbHits, (get_time_ms() - startingTime));
 
-        for (int32_t i = 0; i < max_ply; i++){
+        for (int32_t i = 0; i < MAX_PLY; i++){
             if (board->prevPv.moves[i] == 0)
                 break;
             print_move(board->prevPv.moves[i]);

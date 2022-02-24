@@ -15,6 +15,7 @@ int main(int argc, char* argv[]) {
     init_move_table();
     init_transposition();
     init_see();
+    search_init();
 
     load_model("nn-eba324f53044.nnue");
     parse_fen(kiwipete, &UciBoard);

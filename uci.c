@@ -149,18 +149,18 @@ void parse_go(char *command) {
         moveTime = 10000000;
     } else {
         moveTime = 1000;
-        depth = max_ply;
+        depth = MAX_PLY;
     }
 
     current_timelimit = strstr(command, "movetime");
     if (current_timelimit) {
-        depth = max_ply;
+        depth = MAX_PLY;
         moveTime = atoi(current_timelimit + 9);
     }
 
     char *infinite = strstr(command, "infinite");
     if (infinite) {
-        depth = max_ply;
+        depth = MAX_PLY;
         moveTime = 10000000;
     }
 
@@ -169,7 +169,7 @@ void parse_go(char *command) {
 
     current_wtime = strstr(command, "wtime");
     if (current_wtime) {
-        depth = max_ply;
+        depth = MAX_PLY;
 
         wtime = atoi(current_wtime + 6);
 
