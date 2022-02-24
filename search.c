@@ -642,13 +642,12 @@ static inline int32_t search(int32_t depth, int32_t alpha, int32_t beta, Line *p
     int32_t move;
     MoveEval best = {.move = NO_MOVE, .eval = -100000000};
 
-    //info score cp -41 depth 9 seldepth 26 nodes 2050802 nps 212805 qnodes 1747914 tbhits 0 time 9637 pv e2a6 b4c3 d2c3 e6d5 e5g4 h3g2 f3g2 f6g4
-    //info score cp -41 depth 9 seldepth 26 nodes 2050802 nps 224253 qnodes 1747914 tbhits 0 time 9145 pv e2a6 b4c3 d2c3 e6d5 e5g4 h3g2 f3g2 f6g4
-    //
-
     //Looping over all the legal moves
     for (uint8_t moveId = 0; moveId < legalMoves.count; moveId++) {
         move = legalMoves.moves[moveId];
+        //TODO tune this
+        if (depth == 1 && (!getcapture(move)) && (!in_check) && !board->pvnode && ((staticeval + (legalMoves.scores[moveId]*64)) + (100*64) < alpha) && !is_move_direct_check(move, board))
+            continue;
 
         //The illigal moves (moving pinned pieces mostly) are not removed during the move generation, they are removed here.
         if (make_move(move, all_moves, 1, board)) {
