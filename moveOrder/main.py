@@ -33,7 +33,7 @@ for line in infile:
     gameId+=1
 
     if gameId % 100 == 0:print(gameId)
-    if gameId == 80000: break
+    if gameId == 120000: break
 
     moves = read_evaluations(line)
 
