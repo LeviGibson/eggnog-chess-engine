@@ -36,21 +36,21 @@ enum {all_moves, only_captures};
 #define BP board->bitboards[p]
 
 typedef struct {
-    int32_t moves[256];
-    int32_t scores[256];
-    U32 count;
+    int32_t moves[128];
+    int32_t scores[128];
+    uint8_t count;
 } MoveList;
 
 typedef struct tagLINE {
-    int32_t length;              // Number of moves in the line.
+    uint8_t length;              // Number of moves in the line.
     int32_t moves[64];  // The line.
 
 }   Line;
 
 struct Board{
     U64 zobrist_history[101];
-    int32_t zobrist_history_length;
-    int32_t zobrist_history_search_index;
+    uint8_t zobrist_history_length;
+    uint8_t zobrist_history_search_index;
 
     U64 zobrist_key_parts[15];
     U64 zobrist_key_bitboards[12];
@@ -61,24 +61,24 @@ struct Board{
 
     U64 current_zobrist_key;
 
-    int32_t nnueUpdate;
+    uint8_t nnueUpdate;
     NnueData currentNnue;
 
-    int32_t ply;
+    uint8_t ply;
 
-    int32_t enpessant;
-    int32_t side;
-    int32_t castle;
-    int32_t prevmove;
-    int32_t searchColor;
-    int32_t pvnode;
+    uint8_t enpessant;
+    uint8_t side;
+    uint8_t castle;
+    uint8_t prevmove;
+    uint8_t searchColor;
+    uint8_t pvnode;
     Line prevPv;
 
     float depthAdjuster;
-    int32_t quinode;
-    int32_t kpExtended;
+    uint8_t quinode;
+    uint8_t kpExtended;
 
-    int32_t helperThread;
+    uint8_t helperThread;
 };
 
 typedef struct {

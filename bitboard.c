@@ -23,7 +23,7 @@ void print_bitboard(U64 bitboard){
 
     printf("\n   A  B  C  D  E  F  G  H");
 
-    printf("\n\nBitboard: 0x%llxULL\n\n", bitboard);
+    printf("\n\nBitboard: 0x%lxULL\n\n", bitboard);
 
 }
 

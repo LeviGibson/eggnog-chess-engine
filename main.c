@@ -17,7 +17,7 @@ int main(int argc, char* argv[]) {
     init_see();
 
     load_model("nn-eba324f53044.nnue");
-    parse_fen(start_position, &UciBoard);
+    parse_fen(kiwipete, &UciBoard);
 
     uci_loop();
 
