@@ -5,7 +5,7 @@
 #ifndef EGGNOG_CHESS_ENGINE_MOVEORDER_H
 #define EGGNOG_CHESS_ENGINE_MOVEORDER_H
 
-#include <stdint.h>
+#include "bitboard.h"
 
 int16_t moveOrderData[15][12][64][14][64];
 char moveOrderWorthSearching[15][12][64][14];

@@ -5,10 +5,11 @@
 #ifndef MBBCHESS_BITBOARD_H
 #define MBBCHESS_BITBOARD_H
 
-#define U64 u_int64_t
-#define U32 u_int32_t
+#define U64 uint64_t
+#define U32 uint32_t
 
 #include <assert.h>
+#include <stdint.h>
 #include <stdlib.h>
 
 //ENUMS

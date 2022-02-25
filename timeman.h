@@ -2,6 +2,7 @@
 #define MBBCHESS_TIMEMAN_H
 
 #include <stddef.h>
+#include "bitboard.h"
 #include <immintrin.h>
 
 #ifdef WIN64

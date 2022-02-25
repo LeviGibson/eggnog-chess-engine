@@ -5,7 +5,6 @@
 #ifndef HALFKP_PROBE_PROPOGATE_H
 #define HALFKP_PROBE_PROPOGATE_H
 
-#include <stdint.h>
 
 #define INSIZE  41024
 #define KPSIZE  256
@@ -14,7 +13,7 @@
 #define L3SIZE  32
 #define OUTSIZE 1
 
-#include <stdint.h>
+#include "bitboard.h"
 #include <stdalign.h>
 
 alignas(64) int16_t in_weights[INSIZE * KPSIZE ];

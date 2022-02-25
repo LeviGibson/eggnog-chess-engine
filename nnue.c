@@ -184,7 +184,7 @@ void subtract_index(int16_t *restrict acc, uint32_t index, uint32_t c) {
 void refresh_accumulator(NnueData *data, Board *board) {
     append_active_indicies(data, board);
 
-    for (u_int32_t c = 0; c < 2; c++) {
+    for (uint32_t c = 0; c < 2; c++) {
         memcpy(data->accumulation[c], in_biases, 256 * sizeof(int16_t));
 
         for (size_t k = 0; k < data->activeIndexCount[c]; k++) {
