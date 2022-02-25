@@ -167,7 +167,7 @@ void add_index(int16_t *restrict acc, uint32_t index, uint32_t c) {
     int16_t *restrict w = in_weights + offset;
     acc += 256*c;
 
-    for (unsigned j = 0; j < 256; j++)
+    for (uint16_t j = 0; j < 256; j++)
         acc[j] += w[j];
 }
 
@@ -177,7 +177,7 @@ void subtract_index(int16_t *restrict acc, uint32_t index, uint32_t c) {
     int16_t *restrict w = in_weights + offset;
     acc += 256*c;
 
-    for (unsigned j = 0; j < 256; j++)
+    for (uint16_t j = 0; j < 256; j++)
         acc[j] -= w[j];
 }
 
@@ -245,13 +245,20 @@ void clamp_accumulator(int16_t *acc){
 static inline void propogate_neuron(const int16_t a, const int8_t *b, int32_t *restrict c) {
 
 #ifdef AVX2
-    __m256i va = _mm256_set1_epi32(a);
+    __m256i va = _mm256_set1_epi16(a);
 
-    for (int32_t i = 0 ; i < 32 ; i += 8) {
-        __m256i vb = _mm256_cvtepi8_epi32( _mm_loadl_epi64((__m128i*)&b[i]) );
-        __m256i prod = _mm256_madd_epi16(va, vb);
-        __m256i sum = _mm256_add_epi32(prod, _mm256_loadu_si256((const __m256i*)&c[i]));
-        _mm256_storeu_si256((__m256i*)&c[i], sum);
+    for (int32_t i = 0 ; i < 32 ; i += 16) {
+        __m256i vb = _mm256_cvtepi8_epi16( _mm_load_si128((__m128i*)&b[i]) );
+        __m256i prod = _mm256_mullo_epi16(va, vb);
+
+        __m256i v1 = _mm256_cvtepi16_epi32((__m128i)_mm256_castps256_ps128((__m256)prod));
+        __m256i v2 = _mm256_cvtepi16_epi32((__m128i)_mm256_extractf128_ps((__m256)prod, 1));
+
+        __m256i sum1 = _mm256_add_epi32(v1, _mm256_loadu_si256((const __m256i*)&c[i]));
+        __m256i sum2 = _mm256_add_epi32(v2, _mm256_loadu_si256((const __m256i*)&c[i+8]));
+
+        _mm256_storeu_si256((__m256i*)&c[i], sum1);
+        _mm256_storeu_si256((__m256i*)&c[i+8], sum2);
     }
 #else
     for (int32_t i = 0; i < 32; ++i)
