@@ -955,7 +955,7 @@ void *search_position(void *arg){
                (abs(eval) > 4000000) ? "mate" : "cp" , (abs(eval) > 4000000) ? (4900000 - abs(eval)) * (eval / abs(eval)) : eval/64,
                currentDepth, selDepth, nodes, ((nodes*1000)/(get_time_ms() - startingTime)), qnodes, tbHits, (get_time_ms() - startingTime));
 
-        for (int32_t i = 0; i < MAX_PLY; i++){
+        for (int32_t i = 0; i < board->prevPv.length; i++){
             if (board->prevPv.moves[i] == 0)
                 break;
             print_move(board->prevPv.moves[i]);

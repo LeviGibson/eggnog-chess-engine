@@ -5,8 +5,8 @@ import logging
 logging.basicConfig(level=logging.CRITICAL)
 
 def run(value : int, default : int):
-    dengine = chess.engine.SimpleEngine.popen_uci("../bin/eggnog-chess-engine-avx2-linux")
-    tengine = chess.engine.SimpleEngine.popen_uci("../bin/eggnog-chess-engine-avx2-linux")
+    dengine = chess.engine.SimpleEngine.popen_uci("../bin/eggnog-chess-enging-avx2-linux")
+    tengine = chess.engine.SimpleEngine.popen_uci("../bin/eggnog-chess-enging-avx2-linux")
 
     # dengine.configure({"Threads" : 6})
     dengine.configure({"Tune" : default})
@@ -24,33 +24,33 @@ def run(value : int, default : int):
 
             result = None
             if board.turn == chess.WHITE:
-                result = tengine.analyse(board, chess.engine.Limit(time=random.uniform(.5, 1)))
+                result = tengine.analyse(board, chess.engine.Limit(time=random.uniform(.4, .6)))
             else:
-                result = tengine.analyse(board, chess.engine.Limit(time=random.uniform(.5, 1)))
+                result = tengine.analyse(board, chess.engine.Limit(time=random.uniform(.4, .6)))
 
             try:
                 if result['score'].relative.score() > 300:
-                    if board.turn == chess.BLACK: score -= 1; print("-", end='\n'); break
-                    elif board.turn == chess.WHITE: score += 1; print("+", end='\n'); break
+                    if board.turn == chess.BLACK: score -= 1; break
+                    elif board.turn == chess.WHITE: score += 1; break
             except:
-                print("= ", end='\n')
                 break
 
             if result['score'].relative.score() < -300:
-                if board.turn == chess.WHITE: score -= 1; print("-", end='\n'); break
-                elif board.turn == chess.BLACK: score += 1; print("+", end='\n'); break
+                if board.turn == chess.WHITE: score -= 1; break
+                elif board.turn == chess.BLACK: score += 1; break
 
             board.push(result['pv'][0])
             if board.is_checkmate():
-                if board.turn == chess.WHITE: score -= 1; print("-", end='\n'); break
-                elif board.turn == chess.BLACK: score += 1; print("+", end='\n'); break
+                if board.turn == chess.WHITE: score -= 1; break
+                elif board.turn == chess.BLACK: score += 1; break
 
             if board.is_stalemate() or board.is_repetition(3) or board.is_fifty_moves():
-                print("=", end='\n')
                 break
-
+        print(game)
     print()
     print(value, score)
+    tengine.quit()
+    dengine.quit()
 
     # board = chess.Board()
     #

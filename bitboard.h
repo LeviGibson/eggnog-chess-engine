@@ -32,6 +32,8 @@ enum {
 #define tt_linesize (tt_size * 6)
 
 //BIT MACROS_____________
+#ifndef RELEASE
+
 #define get_bit(bitboard, square)((bitboard) & (1ULL << (square)))
 
 #define set_bit(bitboard, square)\
@@ -41,7 +43,18 @@ enum {
 #define pop_bit(bitboard, square)\
     assert(get_bit(bitboard, square));  \
     (bitboard) ^= (1ULL << (square))
-//#define pop_bit(bitboard, square) if (get_bit((bitboard), (square))) {((bitboard) ^= (1ULL << (square)));}
+
+#else
+
+#define get_bit(bitboard, square)((bitboard) & (1ULL << (square)))
+
+#define set_bit(bitboard, square)\
+    (bitboard) |= (1ULL << (square))
+
+#define pop_bit(bitboard, square)\
+    (bitboard) ^= (1ULL << (square))
+
+#endif
 
 //count bits in U64
 #define count_bits(bitboard) __builtin_popcountll(bitboard)

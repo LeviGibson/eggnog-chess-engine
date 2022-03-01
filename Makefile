@@ -88,8 +88,13 @@ POPCNT_OBJS = search.c.popcnt.o \
 	   see.c.popcnt.o
 
 OS = linux
+RELEASE = false
 FILE = ./bin/eggnog-chess-engine
 COMMONFLAGS = -O3 -fcommon
+
+ifeq ($(RELEASE), true)
+COMMONFLAGS = -O3 -fcommon -DRELEASE
+endif
 
 ifeq ($(OS), linux)
 
