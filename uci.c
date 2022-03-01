@@ -4,7 +4,7 @@
 #include "search.h"
 #include "timeman.h"
 #include "Fathom/tbprobe.h"
-#include "moveOrder.h"
+#include "perft.h"
 
 #include <string.h>
 #include <stdio.h>
@@ -136,6 +136,7 @@ int32_t threadCount = 1;
 
 void parse_go(char *command) {
     char *current_depth = NULL;
+    char *perft = NULL;
     char *current_timelimit = NULL;
     char *current_wtime = NULL;
     char *current_btime = NULL;
@@ -150,6 +151,13 @@ void parse_go(char *command) {
     } else {
         moveTime = 1000;
         depth = MAX_PLY;
+    }
+
+    perft = strstr(command, "perft");
+    if (perft){
+        depth = atoi(perft + 6);
+        perft_test(depth, &UciBoard);
+        return;
     }
 
     current_timelimit = strstr(command, "movetime");

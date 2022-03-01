@@ -144,10 +144,10 @@ mingwj:
 debug:
 	$(CC) $(FILES) -pthread -o $(FILE)-debug
 gdb:
-	$(CC) $(COMMONFLAGS) -DAVX2 -mavx2 $(CFILES) -g
+	$(CC) $(COMMONFLAGS) -DAVX2 -mavx2 $(LINK_OPTS) $(CFILES) -g
 	mv ./a.out ./bin/a.out
 prof:
-	$(CC) -pg -lm -fcommon -DAVX2 -mavx2 -pthread -O3 $(CFILES) -o $(FILE)-prof
+	$(CC) -pg $(LINK_OPTS) -fcommon -DAVX2 -mavx2 -O3 $(CFILES) -o $(FILE)-prof
 clean:
 	rm -f ./bin/a.out ./bin/gmon.out
 	rm -f ./bin/eggnog-chess-engine*

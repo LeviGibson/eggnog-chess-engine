@@ -36,7 +36,7 @@ static inline void perft_driver(int32_t depth, Board *board){
 
 void perft_test(int32_t depth, Board *board){
 
-  int32_t startingTime = get_time_ms();
+  startingTime = get_time_ms();
 
   MoveList legalMoves;
   legalMoves.count = 0;
