@@ -103,17 +103,16 @@ const static int32_t b_orient[64] = {
 };
 
 enum {
-    PS_W_PAWN = 1,
-    PS_B_PAWN = 1 * 64 + 1,
-    PS_W_KNIGHT = 2 * 64 + 1,
-    PS_B_KNIGHT = 3 * 64 + 1,
-    PS_W_BISHOP = 4 * 64 + 1,
-    PS_B_BISHOP = 5 * 64 + 1,
-    PS_W_ROOK = 6 * 64 + 1,
-    PS_B_ROOK = 7 * 64 + 1,
-    PS_W_QUEEN = 8 * 64 + 1,
-    PS_B_QUEEN = 9 * 64 + 1,
-    PS_END = 10 * 64 + 1
+    PS_W_PAWN = 0,
+    PS_B_PAWN = 1 * 64,
+    PS_W_KNIGHT = 2 * 64,
+    PS_B_KNIGHT = 3 * 64,
+    PS_W_BISHOP = 4 * 64,
+    PS_B_BISHOP = 5 * 64,
+    PS_W_ROOK = 6 * 64,
+    PS_B_ROOK = 7 * 64,
+    PS_W_QUEEN = 8 * 64,
+    PS_B_QUEEN = 9 * 64,
 };
 
 uint32_t PieceToIndex[2][14] = {
@@ -124,15 +123,15 @@ uint32_t PieceToIndex[2][14] = {
 };
 
 
-int32_t orient(int32_t c, int32_t s) {
+static inline int32_t orient(int32_t c, int32_t s) {
     return s ^ (c == white ? 0x00 : 0x3f);
 }
 
-int32_t make_index(int32_t c, int32_t s, int32_t pc, int32_t ksq) {
-    return orient(c, s) + PieceToIndex[c][pc] + PS_END * ksq;
+static inline int32_t make_index(int32_t c, int32_t s, int32_t pc, int32_t ksq) {
+    return orient(c, s) + PieceToIndex[c][pc] + ((10*64+1) * ksq) + 1;
 }
 
-static void append_index(int32_t c, int32_t index, NnueData *data) {
+static inline void append_index(int32_t c, int32_t index, NnueData *data) {
     data->activeIndicies[c][data->activeIndexCount[c]++] = index;
 }
 
