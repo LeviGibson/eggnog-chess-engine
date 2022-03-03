@@ -28,7 +28,7 @@ void print_bitboard(U64 bitboard){
 }
 
 int32_t tt_size = 2000000ULL;
-int32_t tt_linesize = (2000000ULL * 6);
+int32_t tt_linesize = (25);
 
 const U64 knight_mask[64] = {
         132096ULL,

@@ -126,7 +126,7 @@ void RecordHash(int32_t depth, int32_t val, int32_t best, int32_t hashf, Line *p
             phashe->best[0] = best;
         }
 
-        if (depth > 1 && pline != NULL) {
+        if (threadCount > 1 && depth > 1 && pline != NULL) {
             lock(&lmcLock);
 
             if (lineMoveCount > (tt_linesize - 20)){
