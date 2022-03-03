@@ -13,7 +13,7 @@ int main(int argc, char* argv[]) {
     init_bitboards();
     init_zobrist_keys();
     init_move_table();
-    init_transposition();
+    reset_transposition();
     init_see();
     search_init();
 

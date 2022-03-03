@@ -28,7 +28,7 @@ void RecordHash(int32_t depth, int32_t val, int32_t best, int32_t hashf, Line *p
 int32_t ProbeHash(int32_t depth, int32_t alpha, int32_t beta, int32_t *move, Line *pline, Board *board);
 
 void reset_hash_table();
-void init_transposition();
+void reset_transposition();
 void transposition_free();
 
 #endif //EGGNOG_CHESS_ENGINE_TRANSPOSITION_H

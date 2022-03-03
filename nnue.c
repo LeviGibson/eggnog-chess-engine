@@ -15,8 +15,8 @@ struct EvalHashEntry{
     U64 key;
     int32_t eval;
 };
-
-EvalHashEntry evalHashTable[tt_size * 4];
+#define NnueHashSize 100000
+EvalHashEntry evalHashTable[NnueHashSize];
 
 #define TRANSFORMERSTART ((3 * 4) + 181)
 
@@ -71,7 +71,7 @@ int32_t load_model(const char *path){
 
     fclose(fin);
 
-    for (int32_t i = 0; i < tt_size; ++i) {
+    for (int32_t i = 0; i < NnueHashSize; ++i) {
         evalHashTable[i].eval = NO_EVAL;
     }
 
@@ -325,7 +325,7 @@ int32_t materialScore(Board *board){
 
 int32_t nnue_evaluate(Board *board) {
 
-    uint32_t hashIndex = board->current_zobrist_key % (tt_size*4);
+    uint32_t hashIndex = board->current_zobrist_key % (NnueHashSize);
     EvalHashEntry *hashptr = &evalHashTable[hashIndex];
     NnueData *data = &board->currentNnue;
 

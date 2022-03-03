@@ -194,7 +194,7 @@ void parse_go(char *command) {
             winc = atoi(current_binc + 5);
 
         dynamicTimeManagment = 1;
-        moveTime = choose_movetime(wtime, btime, 0, 0, UciBoard.side);
+        moveTime = choose_movetime(wtime, btime, winc, binc, UciBoard.side);
     }
 
     pthread_create(&searchthread, NULL, search_position, &depth);

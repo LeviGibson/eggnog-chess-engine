@@ -14,3 +14,4 @@ moveOrder/data.npz
 tune/lichess_db_puzzle.csv
 tune/plot.png
 tune/__pycache__/puzzles.cpython-38.pyc
+bin/a.out
