@@ -953,7 +953,7 @@ void *search_position(void *arg){
 
         printf("info score %s %d depth %d seldepth %d nodes %ld nps %ld qnodes %ld tbhits %ld time %d pv ",
                (abs(eval) > 4000000) ? "mate" : "cp" , (abs(eval) > 4000000) ? (4900000 - abs(eval)) * (eval / abs(eval)) : eval/64,
-               currentDepth, selDepth, nodes, ((nodes*1000)/(get_time_ms() - startingTime)), qnodes, tbHits, (get_time_ms() - startingTime));
+               currentDepth, selDepth, nodes, ((nodes*1000)/(max(1, get_time_ms() - startingTime))), qnodes, tbHits, (get_time_ms() - startingTime));
 
         for (int32_t i = 0; i < board->prevPv.length; i++){
             if (board->prevPv.moves[i] == 0)

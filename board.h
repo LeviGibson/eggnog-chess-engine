@@ -149,6 +149,10 @@ typedef struct {
 #define max(x, y) ((y) > (x) ? (y) : (x))
 #endif
 
+#ifndef min
+#define min(x, y) ((y) > (x) ? (x) : (y))
+#endif
+
 int32_t piece_at(int32_t square, Board *board);
 void update_occupancies(Board *board);
 void generate_only_legal_moves(MoveList *moves, Board *board);
