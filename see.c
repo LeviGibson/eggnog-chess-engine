@@ -4,6 +4,7 @@
 
 #include <stdio.h>
 #include "see.h"
+#include "search.h"
 
 #define hash_size 500000
 int32_t hash[hash_size];
@@ -100,9 +101,9 @@ int32_t get_smallest_attacker(int32_t square, Board *board){
     }
 }
 
-int32_t pieceValues[12] = {100, 300, 300, 500, 1000, 999999, 100, 300, 300, 500, 1000, -999999};
+int32_t pieceValues[12] = {100, 300, 300, 500, 1000, 0, 100, 300, 300, 500, 1000, 0};
 
-int32_t see(int32_t square, Board *board){
+int32_t see(int32_t square, int32_t beta, Board *board){
     int32_t value = 0;
     int32_t move = get_smallest_attacker(square, board);
 
@@ -119,7 +120,14 @@ int32_t see(int32_t square, Board *board){
             *hashptr = 0;
             return 0;
         }
-        value = max(0, pieceCapturedValue - see(square, board));
+
+        //small "pruning" thing
+        if (beta - (pieceCapturedValue - pieceValues[getpiece(move)]) <= -1) {
+            take_back();
+            return beta + 1;
+        }
+
+        value = max(0, pieceCapturedValue - see(square, pieceCapturedValue, board));
 
         take_back();
     }
@@ -141,7 +149,8 @@ int32_t seeCapture(int32_t move, Board *board){
         take_back();
         return 0;
     }
-    int32_t seeval = capturedPieceValue - see(gettarget(move), board);
+
+    int32_t seeval = capturedPieceValue - see(gettarget(move), 100000, board);
 
     take_back();
     return seeval;
