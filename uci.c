@@ -5,6 +5,7 @@
 #include "timeman.h"
 #include "Fathom/tbprobe.h"
 #include "perft.h"
+#include "transposition.h"
 
 #include <string.h>
 #include <stdio.h>
@@ -252,11 +253,19 @@ void uci_loop() {
             printf("option name Threads type spin default 1 min 1 max 512\n");
             printf("option name Move Overhead type spin default 0 min 0 max 5000\n");
             printf("option name Tune type spin default 0 min 0 max 10000\n");
+            printf("option name Hash type spin default 200000 min 0 max 1024\n");
             printf("uciok\n");
         }
 
         if (strncmp(input, "setoption name Threads value", 28) == 0) {
             threadCount = atoi(input + 29);
+        }
+
+        if (strncmp(input, "setoption name Hash value", 25) == 0) {
+            tt_size = atoi(input + 26);
+            tt_size = (tt_size*1048576) / (int32_t)sizeof(HASHE);
+            tt_linesize = tt_size * 6;
+            reinit_transposition();
         }
 
         if (strncmp(input, "setoption name Move Overhead value", 34) == 0) {

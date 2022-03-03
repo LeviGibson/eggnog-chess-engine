@@ -31,7 +31,7 @@ void reset_hash_table(){
     lineMoveCount = 0;
 }
 
-void reset_transposition(){
+void reinit_transposition(){
     if (hash_table) {
         free(hash_table);
     }
