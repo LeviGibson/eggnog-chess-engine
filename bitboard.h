@@ -28,8 +28,8 @@ enum {
 };
 
 #define NO_EVAL 9999999
-#define tt_size 2000000ULL
-#define tt_linesize (tt_size * 6)
+int tt_size = 2000000ULL;
+int tt_linesize = (2000000ULL * 6);
 
 //BIT MACROS_____________
 #ifndef RELEASE

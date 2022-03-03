@@ -8,12 +8,12 @@
 #include "board.h"
 #include "uci.h"
 
-HASHE hash_table[tt_size];
-int32_t lines[tt_linesize];
+HASHE *hash_table;
+int32_t *lines;
 int32_t lineMoveCount = 0;
 
 pthread_mutex_t lmcLock;
-pthread_mutex_t ttLocks[tt_size];
+pthread_mutex_t *ttLocks;
 
 void lock(pthread_mutex_t *lock){
     if (threadCount > 1)
@@ -26,12 +26,16 @@ void unlock(pthread_mutex_t *lock){
 }
 
 void reset_hash_table(){
-    memset(hash_table, 0, sizeof hash_table);
-    memset(lines, 0, sizeof lines);
+    memset(hash_table, 0, sizeof(HASHE)*tt_size);
+    memset(lines, 0, sizeof(int32_t)*tt_size*6);
     lineMoveCount = 0;
 }
 
 void init_transposition(){
+    hash_table = malloc(sizeof(HASHE)*tt_size);
+    lines = malloc(sizeof(int32_t)*tt_size*6);
+    ttLocks = malloc(sizeof (pthread_mutex_t)*tt_size);
+
     pthread_mutex_init(&lmcLock, NULL);
     for (int32_t i = 0; i < tt_size; ++i) {
         pthread_mutex_init(&ttLocks[i], NULL);
@@ -41,6 +45,9 @@ void init_transposition(){
 }
 
 void transposition_free(){
+    free(lines);
+    free(hash_table);
+
     pthread_mutex_destroy(&lmcLock);
     for (int32_t i = 0; i < tt_size; ++i) {
         pthread_mutex_destroy(&ttLocks[i]);
