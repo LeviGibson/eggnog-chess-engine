@@ -27,7 +27,7 @@ enum {
     a1, b1, c1, d1, e1, f1, g1, h1, no_sq
 };
 
-#define NO_EVAL 9999999
+#define NO_EVAL (-124)
 int32_t tt_size;
 int32_t tt_linesize;
 

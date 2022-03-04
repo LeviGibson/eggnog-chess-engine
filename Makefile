@@ -128,15 +128,15 @@ popcnt: $(POPCNT_OBJS)
 	$(CC) $(OBJS) $(POPCNT_OBJS) $(LINK_OPTS) -o $(FILE)-popcnt-$(OS)$(EXECUTABLE_FILENAME)
 
 %.c.avx2.o: %.c
-	$(CC) $< $(COMMONFLAGS) -DAVX2 -mavx2 -c -o $@
+	$(CC) $< $(COMMONFLAGS) -D AVX2 -mavx2 -c -o $@
 %.c.sse.o: %.c
-	$(CC) $< $(COMMONFLAGS) -DSSE -msse -c -o $@
+	$(CC) $< $(COMMONFLAGS) -D SSE -msse -c -o $@
 %.c.sse2.o: %.c
-	$(CC) $< $(COMMONFLAGS) -DSSE2 -msse2 -c -o $@
+	$(CC) $< $(COMMONFLAGS) -D SSE2 -msse2 -c -o $@
 %.c.avx.o: %.c
-	$(CC) $< $(COMMONFLAGS) -DAVX -mavx -c -o $@
+	$(CC) $< $(COMMONFLAGS) -D AVX -mavx -c -o $@
 %.c.popcnt.o: %.c
-	$(CC) $< $(COMMONFLAGS) -DPOPCNT -mpopcnt -c -o $@
+	$(CC) $< $(COMMONFLAGS) -D POPCNT -mpopcnt -c -o $@
 mingw:
 	make OS=win
 mingwj:

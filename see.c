@@ -7,7 +7,7 @@
 #include "search.h"
 
 #define hash_size 500000
-int32_t hash[hash_size];
+int8_t hash[hash_size];
 
 int32_t can_piece_move_to(int32_t from, int32_t to, Board *board){
     copy_board();
@@ -101,13 +101,13 @@ int32_t get_smallest_attacker(int32_t square, Board *board){
     }
 }
 
-int32_t pieceValues[12] = {100, 300, 300, 500, 1000, 0, 100, 300, 300, 500, 1000, 0};
+int32_t pieceValues[12] = {10, 30, 30, 50, 100, 0, 10, 30, 30, 50, 100, 0};
 
 int32_t see(int32_t square, int32_t beta, Board *board){
-    int32_t value = 0;
+    int8_t value = 0;
     int32_t move = get_smallest_attacker(square, board);
 
-    int32_t *hashptr = &hash[(board->current_zobrist_key ^ get_move_key(move)) % hash_size];
+    int8_t *hashptr = &hash[(board->current_zobrist_key ^ get_move_key(move)) % hash_size];
     if (*hashptr != NO_EVAL)
         return *hashptr;
 
@@ -153,7 +153,7 @@ int32_t seeCapture(int32_t move, Board *board){
     int32_t seeval = capturedPieceValue - see(gettarget(move), 100000, board);
 
     take_back();
-    return seeval;
+    return seeval*10;
 }
 
 void init_see(){
