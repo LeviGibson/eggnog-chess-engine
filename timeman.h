@@ -29,6 +29,6 @@ void start_time();
 
 void communicate();
 
-int32_t choose_movetime(int32_t wtime, int32_t btime, int32_t winc, int32_t binc, int32_t side);
+int32_t choose_movetime(int32_t wtime, int32_t btime, int32_t side);
 
 #endif

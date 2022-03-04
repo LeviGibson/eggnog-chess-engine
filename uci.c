@@ -173,9 +173,6 @@ void parse_go(char *command) {
         moveTime = 10000000;
     }
 
-    int32_t winc = 0;
-    int32_t binc = 0;
-
     current_wtime = strstr(command, "wtime");
     if (current_wtime) {
         depth = MAX_PLY;
@@ -185,17 +182,8 @@ void parse_go(char *command) {
         current_btime = strstr(command, "btime");
         btime = atoi(current_btime + 6);
 
-        char *current_winc = strstr(command, "winc");
-        char *current_binc = strstr(command, "binc");
-
-        if (current_winc)
-            winc = atoi(current_winc + 5);
-
-        if (current_binc)
-            winc = atoi(current_binc + 5);
-
         dynamicTimeManagment = 1;
-        moveTime = choose_movetime(wtime, btime, winc, binc, UciBoard.side);
+        moveTime = choose_movetime(wtime, btime, UciBoard.side);
     }
 
     pthread_create(&searchthread, NULL, search_position, &depth);
