@@ -487,6 +487,9 @@ static inline int32_t search(int32_t depth, int32_t alpha, int32_t beta, Line *p
     if (in_check)
         depth++;
 
+//    if (count_bits(board->unprotectedPieces[white] | board->unprotectedPieces[black]) <= 4)
+//        board->depthAdjuster-=.5f;
+
     //depthAdjuster is a float that is added to and subtracted from in parent nodes
     //if it is greater than 1, reset it, then add one to the depth
     //if it is less than 1, reset it and subtract one from the depth
@@ -605,26 +608,26 @@ static inline int32_t search(int32_t depth, int32_t alpha, int32_t beta, Line *p
     }
 
     //Razoring
-    if (!board->pvnode && !in_check && depth <= 3) {
-
-        int32_t value = staticeval + (125 * 64);
-        if (value < beta) {
-            int32_t new_value;
-            if (depth == 1) {
-                new_value = quiesce(alpha, beta, thread);
-                pline->length = 0;
-                return max(value, new_value);
-            }
-            value += (175 * 64);
-            if (value < beta && depth <= 3) {
-                new_value = quiesce(alpha, beta, thread);
-                if (new_value < beta) {
-                    pline->length = 0;
-                    return max(new_value, value);
-                }
-            }
-        }
-    }
+//    if (!board->pvnode && !in_check && depth <= 3) {
+//
+//        int32_t value = staticeval + (125 * 64);
+//        if (value < beta) {
+//            int32_t new_value;
+//            if (depth == 1) {
+//                new_value = quiesce(alpha, beta, thread);
+//                pline->length = 0;
+//                return max(value, new_value);
+//            }
+//            value += (175 * 64);
+//            if (value < beta && depth <= 2) {
+//                new_value = quiesce(alpha, beta, thread);
+//                if (new_value < beta) {
+//                    pline->length = 0;
+//                    return max(new_value, value);
+//                }
+//            }
+//        }
+//    }
 
     //Generating and sorting the legal moves    
     MoveList legalMoves;
