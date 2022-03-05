@@ -344,11 +344,11 @@ int32_t nnue_evaluate(Board *board) {
     //convert winning advantages into material rather than activity
     if (data->eval > (180*64) && (board->side == board->searchColor)){
         int32_t mat = materialScore(board);
-        mat = mat > 0 ? mat : 1;
+        mat = mat > 0 ? mat + 1 : 1;
         data->eval *= mat;
     } else if (data->eval < (180*64) && (board->side != board->searchColor)){
         int32_t mat = -materialScore(board);
-        mat = mat > 0 ? mat : 1;
+        mat = mat > 0 ? mat + 1 : 1;
         data->eval *= mat;
     }
 
