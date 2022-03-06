@@ -15,7 +15,8 @@ struct EvalHashEntry{
     U64 key;
     int32_t eval;
 };
-#define NnueHashSize 100000
+
+#define NnueHashSize 1000000
 EvalHashEntry evalHashTable[NnueHashSize];
 
 #define TRANSFORMERSTART ((3 * 4) + 181)
