@@ -167,8 +167,20 @@ void add_index(int16_t *restrict acc, uint32_t index, uint32_t c) {
     int16_t *restrict w = in_weights + offset;
     acc += 256*c;
 
+#ifdef AVX2
+
+    for (int32_t j = 0 ; j < 256 ; j += 16) {
+        __m256i _x = _mm256_loadu_si256((void*)&acc[j]);
+        __m256i _y = _mm256_loadu_si256((void*)&w[j]);
+        _mm256_storeu_si256((__m256i*)&acc[j], _mm256_add_epi16(_x, _y));
+    }
+
+#else
+
     for (uint16_t j = 0; j < 256; j++)
         acc[j] += w[j];
+
+#endif
 }
 
 //vectorised by the compiler
@@ -177,8 +189,20 @@ void subtract_index(int16_t *restrict acc, uint32_t index, uint32_t c) {
     int16_t *restrict w = in_weights + offset;
     acc += 256*c;
 
+#ifdef AVX2
+
+    for (int32_t j = 0 ; j < 256 ; j += 16) {
+        __m256i _x = _mm256_loadu_si256((void*)&acc[j]);
+        __m256i _y = _mm256_loadu_si256((void*)&w[j]);
+        _mm256_storeu_si256((__m256i*)&acc[j], _mm256_sub_epi16(_x, _y));
+    }
+
+#else
+
     for (uint16_t j = 0; j < 256; j++)
         acc[j] -= w[j];
+
+#endif
 }
 
 void refresh_accumulator(NnueData *data, Board *board) {
