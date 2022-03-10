@@ -649,7 +649,8 @@ static inline int32_t search(int32_t depth, int32_t alpha, int32_t beta, Line *p
     for (uint8_t moveId = 0; moveId < legalMoves.count; moveId++) {
         move = legalMoves.moves[moveId];
         //TODO tune this
-        if (legalMoveCount && depth == 1 && (!getcapture(move)) && (!in_check) && !board->pvnode && ((staticeval + (legalMoves.scores[moveId]*64)) + (100*64) < alpha) && !is_move_direct_check(move, board))
+        int margins[3] = {0, 100, 200};
+        if (legalMoveCount && depth <= 2 && (!getcapture(move)) && (!in_check) && !board->pvnode && ((staticeval + (legalMoves.scores[moveId]*64)) + (margins[depth]*64) < alpha) && !is_move_direct_check(move, board))
             continue;
 
         //The illigal moves (moving pinned pieces mostly) are not removed during the move generation, they are removed here.
