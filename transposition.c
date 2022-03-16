@@ -74,6 +74,7 @@ void recover_line(int32_t depth, HASHE *phashe, Line *pline, int32_t alpha, int3
     pline->length = *line;
 }
 
+
 int32_t ProbeHash(int32_t depth, int32_t alpha, int32_t beta, int32_t *move, Line *pline, Board *board){
     uint32_t index = board->current_zobrist_key % tt_size;
     HASHE * phashe = &hash_table[index];
@@ -91,7 +92,7 @@ int32_t ProbeHash(int32_t depth, int32_t alpha, int32_t beta, int32_t *move, Lin
                 recover_line(depth, phashe, pline, alpha, &ret, board);
             }
             else if ((phashe->flags == hashfALPHA) && (phashe->value <= alpha)) {
-                ret =  alpha;
+                ret = alpha;
                 recover_line(depth, phashe, pline, alpha, &ret, board);
             }
             else if ((phashe->flags == hashfBETA) && (phashe->value >= beta)) {

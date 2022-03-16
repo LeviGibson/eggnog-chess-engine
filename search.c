@@ -527,7 +527,9 @@ static inline int32_t search(int32_t depth, int32_t alpha, int32_t beta, Line *p
     int32_t hash_lookup = ProbeHash(depth, alpha, beta, hash_move, pline, board);
 
     //return hash lookup if it meets the parameters (in function ProbeHash)
-    if ((hash_lookup) != valUNKNOWN && board->ply != 0) {
+    if (hash_lookup != valUNKNOWN && board->ply != 0) {
+        if (abs(hash_lookup) > (CHECKMATE_SCORE - MAX_PLY))
+            hash_lookup = (CHECKMATE_SCORE - board->ply) * hash_lookup > 0 ? 1 : -1;
         return hash_lookup;
     }
     int32_t hashf = hashfALPHA;
@@ -542,23 +544,23 @@ static inline int32_t search(int32_t depth, int32_t alpha, int32_t beta, Line *p
             if (tbres != TB_RESULT_FAILED) {
 
                 tbHits++;
-                if (tbres == 4)
-                    return 4000000;
-                if (tbres == 2)
+                if (tbres == TB_WIN)
+                    return CHECKMATE_SCORE - board->ply;
+                if (tbres == TB_DRAW)
                     return 0;
-                if (tbres == 0)
-                    return -4000000;
+                if (tbres == TB_LOSS)
+                    return -CHECKMATE_SCORE + board->ply;
             }
         } else {
             int32_t move = get_root_move(board);
             if (move != 0) {
 
-                if (tbres == 4)
-                    return 4000000;
-                if (tbres == 2)
+                if (tbres == TB_WIN)
+                    return CHECKMATE_SCORE - board->ply;
+                if (tbres == TB_DRAW)
                     return 0;
-                if (tbres == 0)
-                    return -4000000;
+                if (tbres == TB_LOSS)
+                    return -CHECKMATE_SCORE + board->ply;
             }
         }
     }
@@ -727,7 +729,7 @@ static inline int32_t search(int32_t depth, int32_t alpha, int32_t beta, Line *p
 
     if (legalMoveCount == 0) {
         if (in_check) {
-            return (-4900000) + board->ply;
+            return (-CHECKMATE_SCORE) + board->ply;
 
         } else {
             return 0;
