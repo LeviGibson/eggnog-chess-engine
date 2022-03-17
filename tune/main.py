@@ -3,8 +3,8 @@ import matplotlib.pyplot as plt
 
 scores = []
 
-testingvalue = 10
-while testingvalue < 1000:
+testingvalue = 0
+while testingvalue < 500:
     print(testingvalue)
 
     score = puzzles.run(testingvalue)

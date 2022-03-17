@@ -7,6 +7,7 @@ def run(value : int):
 
     #download this large file with `wget https://database.lichess.org/lichess_db_puzzle.csv.bz2`
     puzzleFile = open("lichess_db_puzzle.csv", 'r')
+    puzzleFile.seek(0)
 
     engine = chess.engine.SimpleEngine.popen_uci("../bin/eggnog-chess-engine-avx2-linux")
     engine.configure({"Tune" : value})
@@ -24,7 +25,7 @@ def run(value : int):
 
         command = command.split(',')
 
-        if (int(command[3]) < 2600):
+        if (int(command[3]) < 2700):
             continue
 
         index += 1
