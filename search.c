@@ -305,8 +305,9 @@ int32_t score_move(int32_t move, const int32_t *hashmove, Thread *thread){
 	if (board->quinode){ return 0; }
 
         int32_t score = 0;
+        int32_t pieceCount = count_bits(WB | WN | WR | WQ | BB | BN | BR | BQ);
 
-	    int32_t *hashptr = &moveScoreHash[(board->current_zobrist_key ^ get_move_key(move)) % MOVE_HASH_SIZE];
+        int32_t *hashptr = &moveScoreHash[(board->current_zobrist_key ^ get_move_key(move)) % MOVE_HASH_SIZE];
 	    if (*hashptr != NO_MOVE){
 	        score = *hashptr;
 	    } else {
@@ -314,7 +315,6 @@ int32_t score_move(int32_t move, const int32_t *hashmove, Thread *thread){
             int32_t piece = getpiece(move);
             int32_t target = gettarget(move);
 
-            int32_t pieceCount = count_bits(WB | WN | WR | WQ | BB | BN | BR | BQ);
 
             //for those who attempt to break this engine, take this :)
             if (pieceCount > 14)
@@ -342,6 +342,9 @@ int32_t score_move(int32_t move, const int32_t *hashmove, Thread *thread){
 
             *hashptr = score;
         }
+
+        if (is_move_direct_check(move, board) && (pieceCount <= 6 || getpiece(move) == Q || getpiece(move) == q))
+            score += fabs(score)/2;
 
         if (getpiece(move) == P && !(pastPawnMasks[white][gettarget(move)] & BP))
             score += fabs(score)/2;
