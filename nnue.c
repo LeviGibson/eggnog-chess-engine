@@ -21,15 +21,15 @@ EvalHashEntry evalHashTable[NnueHashSize];
 
 #define TRANSFORMERSTART ((3 * 4) + 181)
 
-alignas(64) int16_t in_weights[NNUE_INSIZE * NNUE_KPSIZE ];
-alignas(64) int8_t l1_weights[NNUE_L1SIZE * NNUE_L2SIZE ];
-alignas(64) int8_t l2_weights[NNUE_L2SIZE * NNUE_L3SIZE ];
-alignas(64) int8_t l3_weights[NNUE_L3SIZE * NNUE_OUTSIZE];
+alignas(64) int16_t nnue_in_weights[NNUE_INSIZE * NNUE_KPSIZE ];
+alignas(64) int8_t nnue_l1_weights[NNUE_L1SIZE * NNUE_L2SIZE ];
+alignas(64) int8_t nnue_l2_weights[NNUE_L2SIZE * NNUE_L3SIZE ];
+alignas(64) int8_t nnue_l3_weights[NNUE_L3SIZE * NNUE_OUTSIZE];
 
-alignas(64) int16_t in_biases[NNUE_KPSIZE ];
-alignas(64) int32_t l1_biases[NNUE_L2SIZE ];
-alignas(64) int32_t l2_biases[NNUE_L3SIZE ];
-alignas(64) int32_t l3_biases[NNUE_OUTSIZE];
+alignas(64) int16_t nnue_in_biases[NNUE_KPSIZE ];
+alignas(64) int32_t nnue_l1_biases[NNUE_L2SIZE ];
+alignas(64) int32_t nnue_l2_biases[NNUE_L3SIZE ];
+alignas(64) int32_t nnue_l3_biases[NNUE_OUTSIZE];
 
 void transform_weight_indicies(int8_t arr[], uint32_t dims){
     int8_t tmpArr[dims*32];
@@ -50,25 +50,25 @@ int32_t load_model(const char *path){
 
     //FEATURE TRANSFORMER
     fseek(fin, TRANSFORMERSTART, SEEK_SET);
-    tmp = fread(in_biases, sizeof(int16_t), NNUE_KPSIZE, fin);
-    tmp = fread(in_weights, sizeof(int16_t), NNUE_INSIZE * NNUE_KPSIZE, fin);
+    tmp = fread(nnue_in_biases, sizeof(int16_t), NNUE_KPSIZE, fin);
+    tmp = fread(nnue_in_weights, sizeof(int16_t), NNUE_INSIZE * NNUE_KPSIZE, fin);
 
     fseek(fin, 4, SEEK_CUR);
 
     //Hidden Layer 1
-    tmp = fread(l1_biases, sizeof (l1_biases[0]), NNUE_L2SIZE, fin);
-    tmp = fread(l1_weights, sizeof (l1_weights[0]), NNUE_L1SIZE * NNUE_L2SIZE, fin);
-    transform_weight_indicies(l1_weights, NNUE_L1SIZE);
+    tmp = fread(nnue_l1_biases, sizeof (nnue_l1_biases[0]), NNUE_L2SIZE, fin);
+    tmp = fread(nnue_l1_weights, sizeof (nnue_l1_weights[0]), NNUE_L1SIZE * NNUE_L2SIZE, fin);
+    transform_weight_indicies(nnue_l1_weights, NNUE_L1SIZE);
 
     //Hidden Layer 2
-    tmp = fread(l2_biases, sizeof (l2_biases[0]), NNUE_L3SIZE, fin);
-    tmp = fread(l2_weights, sizeof (l2_weights[0]), NNUE_L2SIZE * NNUE_L3SIZE, fin);
-    transform_weight_indicies(l2_weights, NNUE_L2SIZE);
+    tmp = fread(nnue_l2_biases, sizeof (nnue_l2_biases[0]), NNUE_L3SIZE, fin);
+    tmp = fread(nnue_l2_weights, sizeof (nnue_l2_weights[0]), NNUE_L2SIZE * NNUE_L3SIZE, fin);
+    transform_weight_indicies(nnue_l2_weights, NNUE_L2SIZE);
 
     //Output Layer
-    tmp = fread(l3_biases, sizeof (l3_biases[0]), NNUE_OUTSIZE, fin);
+    tmp = fread(nnue_l3_biases, sizeof (nnue_l3_biases[0]), NNUE_OUTSIZE, fin);
 
-    tmp = fread(l3_weights, sizeof (l3_weights[0]), NNUE_L2SIZE * NNUE_OUTSIZE, fin);
+    tmp = fread(nnue_l3_weights, sizeof (nnue_l3_weights[0]), NNUE_L2SIZE * NNUE_OUTSIZE, fin);
 
     fclose(fin);
 
@@ -164,7 +164,7 @@ void append_active_indicies(NnueData *data, Board *board) {
 //vectorised by the compiler
 void add_index(int16_t *restrict acc, uint32_t index, uint32_t c) {
     uint32_t offset = 256 * index;
-    int16_t *restrict w = in_weights + offset;
+    int16_t *restrict w = nnue_in_weights + offset;
     acc += 256*c;
 
 #ifdef AVX2
@@ -186,7 +186,7 @@ void add_index(int16_t *restrict acc, uint32_t index, uint32_t c) {
 //vectorised by the compiler
 void subtract_index(int16_t *restrict acc, uint32_t index, uint32_t c) {
     uint32_t offset = 256 * index;
-    int16_t *restrict w = in_weights + offset;
+    int16_t *restrict w = nnue_in_weights + offset;
     acc += 256*c;
 
 #ifdef AVX2
@@ -209,7 +209,7 @@ void refresh_accumulator(NnueData *data, Board *board) {
     append_active_indicies(data, board);
 
     for (uint32_t c = 0; c < 2; c++) {
-        memcpy(data->accumulation[c], in_biases, 256 * sizeof(int16_t));
+        memcpy(data->accumulation[c], nnue_in_biases, 256 * sizeof(int16_t));
 
         for (size_t k = 0; k < data->activeIndexCount[c]; k++) {
             uint32_t index = data->activeIndicies[c][k];
@@ -295,14 +295,14 @@ void propogate_l1(NnueData *data) {
     int16_t *tmpAccum = data->tmpAccumulation;
 
     memcpy(tmpAccum, data->accumulation, sizeof data->tmpAccumulation);
-    memcpy(data->l1, l1_biases, sizeof l1_biases);
+    memcpy(data->l1, nnue_l1_biases, sizeof nnue_l1_biases);
 
     clamp_accumulator(tmpAccum);
 
     for (int32_t i = 0; i < 512; ++i) {
         if (tmpAccum[i]) {
             int32_t offset = 32 * i;
-            propogate_neuron(tmpAccum[i], &l1_weights[offset], data->l1);
+            propogate_neuron(tmpAccum[i], &nnue_l1_weights[offset], data->l1);
         }
     }
 
@@ -310,23 +310,23 @@ void propogate_l1(NnueData *data) {
 }
 
 void propogate_l2(NnueData *data){
-    memcpy(data->l2, l2_biases, sizeof l2_biases);
+    memcpy(data->l2, nnue_l2_biases, sizeof nnue_l2_biases);
 
     for (int32_t o = 0; o < 32; ++o) {
         if (!data->l1[o])
             continue;
 
         int32_t offset = 32 * o;
-        propogate_neuron((short )data->l1[o], &l2_weights[offset], data->l2);
+        propogate_neuron((short )data->l1[o], &nnue_l2_weights[offset], data->l2);
     }
 
     clamp_layer(data->l2);
 }
 
 void propogate_l3(NnueData *data){
-    memcpy(data->l3, l3_biases, sizeof l3_biases);
+    memcpy(data->l3, nnue_l3_biases, sizeof nnue_l3_biases);
     for (int32_t i = 0; i < 32; ++i) {
-        data->l3[0] += data->l2[i] * l3_weights[i];
+        data->l3[0] += data->l2[i] * nnue_l3_weights[i];
     }
 }
 

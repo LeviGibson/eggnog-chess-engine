@@ -22,7 +22,7 @@ int main(int argc, char* argv[]) {
     load_nnom("network.nnom");
     parse_fen(start_position, &UciBoard);
 
-    generate_nnom_indicies(&UciBoard);
+//    generate_nnom_indicies(&UciBoard);
 
     uci_loop();
 
