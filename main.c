@@ -19,7 +19,10 @@ int main(int argc, char* argv[]) {
     search_init();
 
     load_model("nn-eba324f53044.nnue");
-    parse_fen(kiwipete, &UciBoard);
+    load_nnom("network.nnom");
+    parse_fen(start_position, &UciBoard);
+
+    generate_nnom_indicies(&UciBoard);
 
     uci_loop();
 

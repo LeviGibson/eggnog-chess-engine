@@ -23,7 +23,7 @@ int32_t can_piece_move_to(int32_t from, int32_t to, Board *board){
 
     update_occupancies(board);
 
-    int32_t inCheck = is_square_attacked(bsf((board->side == white) ? board->bitboards[K] : board->bitboards[k]), (board->side ^ 1), board);
+    int32_t inCheck = is_square_attacked(bsf((board->side == white) ? board->bitboards[p_K] : board->bitboards[p_k]), (board->side ^ 1), board);
     take_back();
 
     if (inCheck) return 0;
@@ -48,53 +48,53 @@ int32_t get_move_for_see(U64 mask, int32_t square, int32_t piece, Board *board){
 int32_t get_smallest_attacker(int32_t square, Board *board){
     if (board->side == white){
         U64 mask = pawn_mask[black][square] & WP;
-        int32_t move = get_move_for_see(mask, square, P, board);
+        int32_t move = get_move_for_see(mask, square, p_P, board);
         if (move != NO_MOVE) return move;
 
         mask = knight_mask[square] & WN;
-        move = get_move_for_see(mask, square, N, board);
+        move = get_move_for_see(mask, square, p_N, board);
         if (move != NO_MOVE) return move;
 
         mask = get_bishop_attacks(square, board->occupancies[both]) & WB;
-        move = get_move_for_see(mask, square, B, board);
+        move = get_move_for_see(mask, square, p_B, board);
         if (move != NO_MOVE) return move;
 
         mask = get_rook_attacks(square, board->occupancies[both]) & WR;
-        move = get_move_for_see(mask, square, R, board);
+        move = get_move_for_see(mask, square, p_R, board);
         if (move != NO_MOVE) return move;
 
         mask = get_queen_attacks(square, board->occupancies[both]) & WQ;
-        move = get_move_for_see(mask, square, Q, board);
+        move = get_move_for_see(mask, square, p_Q, board);
         if (move != NO_MOVE) return move;
 
         mask = king_mask[square] & WK;
-        move = get_move_for_see(mask, square, K, board);
+        move = get_move_for_see(mask, square, p_K, board);
         if (move != NO_MOVE) return move;
 
         return NO_MOVE;
     } else {
         U64 mask = pawn_mask[white][square] & BP;
-        int32_t move = get_move_for_see(mask, square, p, board);
+        int32_t move = get_move_for_see(mask, square, p_p, board);
         if (move != NO_MOVE) return move;
 
         mask = knight_mask[square] & BN;
-        move = get_move_for_see(mask, square, n, board);
+        move = get_move_for_see(mask, square, p_n, board);
         if (move != NO_MOVE) return move;
 
         mask = get_bishop_attacks(square, board->occupancies[both]) & BB;
-        move = get_move_for_see(mask, square, b, board);
+        move = get_move_for_see(mask, square, p_b, board);
         if (move != NO_MOVE) return move;
 
         mask = get_rook_attacks(square, board->occupancies[both]) & BR;
-        move = get_move_for_see(mask, square, r, board);
+        move = get_move_for_see(mask, square, p_r, board);
         if (move != NO_MOVE) return move;
 
         mask = get_queen_attacks(square, board->occupancies[both]) & BQ;
-        move = get_move_for_see(mask, square, q, board);
+        move = get_move_for_see(mask, square, p_q, board);
         if (move != NO_MOVE) return move;
 
         mask = king_mask[square] & BK;
-        move = get_move_for_see(mask, square, k, board);
+        move = get_move_for_see(mask, square, p_k, board);
         if (move != NO_MOVE) return move;
 
         return NO_MOVE;

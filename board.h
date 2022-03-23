@@ -10,6 +10,7 @@ typedef struct Board Board;
 #include <string.h>
 #include "bitboard.h"
 #include "nnue.h"
+#include "nnom.h"
 
 
 #define start_position "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
@@ -21,19 +22,19 @@ typedef struct Board Board;
 enum{wk = 1, wq = 2, bk = 4, bq = 8};
 enum {all_moves, only_captures};
 
-#define WK board->bitboards[K]
-#define WN board->bitboards[N]
-#define WB board->bitboards[B]
-#define WR board->bitboards[R]
-#define WQ board->bitboards[Q]
-#define WP board->bitboards[P]
+#define WK board->bitboards[p_K]
+#define WN board->bitboards[p_N]
+#define WB board->bitboards[p_B]
+#define WR board->bitboards[p_R]
+#define WQ board->bitboards[p_Q]
+#define WP board->bitboards[p_P]
 
-#define BK board->bitboards[k]
-#define BN board->bitboards[n]
-#define BB board->bitboards[b]
-#define BR board->bitboards[r]
-#define BQ board->bitboards[q]
-#define BP board->bitboards[p]
+#define BK board->bitboards[p_k]
+#define BN board->bitboards[p_n]
+#define BB board->bitboards[p_b]
+#define BR board->bitboards[p_r]
+#define BQ board->bitboards[p_q]
+#define BP board->bitboards[p_p]
 
 typedef struct {
     int32_t moves[128];
@@ -63,6 +64,7 @@ struct Board{
 
     uint8_t nnueUpdate;
     NnueData currentNnue;
+    NnomData nnom;
 
     uint8_t ply;
 

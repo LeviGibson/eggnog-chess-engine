@@ -67,13 +67,13 @@ int32_t parse_move(char *move_string) {
             int32_t promoted_piece = getpromoted(move);
             if (promoted_piece) {
 
-                if (move_string[4] == 'q' && (promoted_piece == Q || promoted_piece == q)) {
+                if (move_string[4] == 'q' && (promoted_piece == p_Q || promoted_piece == p_q)) {
                     return move;
-                } else if (move_string[4] == 'b' && (promoted_piece == B || promoted_piece == b)) {
+                } else if (move_string[4] == 'b' && (promoted_piece == p_B || promoted_piece == p_b)) {
                     return move;
-                } else if (move_string[4] == 'r' && (promoted_piece == R || promoted_piece == r)) {
+                } else if (move_string[4] == 'r' && (promoted_piece == p_R || promoted_piece == p_r)) {
                     return move;
-                } else if (move_string[4] == 'n' && (promoted_piece == N || promoted_piece == n)) {
+                } else if (move_string[4] == 'n' && (promoted_piece == p_N || promoted_piece == p_n)) {
                     return move;
                 }
 

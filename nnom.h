@@ -5,10 +5,17 @@
 #ifndef EGGNOG_CHESS_ENGINE_NNOM_H
 #define EGGNOG_CHESS_ENGINE_NNOM_H
 
-#include <stdalign.h>
+#include <stdint.h>
 
-#define NNOM_IN_SIZE 98304
-#define NNOM_L1_SIZE 512
-#define NNOM_L2_SIZE 384
+typedef struct NnomData NnomData;
+struct NnomData{
+    uint32_t indicies[32];
+    uint32_t indexCount;
+};
+
+#include "board.h"
+
+void generate_nnom_indicies(Board *board);
+int load_nnom(char *path);
 
 #endif //EGGNOG_CHESS_ENGINE_NNOM_H

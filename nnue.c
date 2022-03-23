@@ -79,7 +79,7 @@ int32_t load_model(const char *path){
     return 0;
 }
 
-int32_t NnuePtypes[12] = {6, 5, 4, 3, 2, K, 12, 11, 10, 9, 8, k};
+int32_t NnuePtypes[12] = {6, 5, 4, 3, 2, p_K, 12, 11, 10, 9, 8, p_k};
 
 const static int32_t w_orient[64] = {
         56, 57, 58, 59, 60, 61, 62, 63,
@@ -140,11 +140,11 @@ void append_active_indicies(NnueData *data, Board *board) {
     data->activeIndexCount[black] = 0;
     data->activeIndexCount[white] = 0;
 
-    int32_t w_ksq = w_orient[bsf(board->bitboards[K])];
-    int32_t b_ksq = b_orient[bsf(board->bitboards[k])];
+    int32_t w_ksq = w_orient[bsf(board->bitboards[p_K])];
+    int32_t b_ksq = b_orient[bsf(board->bitboards[p_k])];
 
-    for (uint32_t ptype = P; ptype < k; ++ptype) {
-        if (ptype == K)
+    for (uint32_t ptype = p_P; ptype < p_k; ++ptype) {
+        if (ptype == p_K)
             continue;
 
         U64 bitboard = board->bitboards[ptype];
@@ -333,17 +333,17 @@ void propogate_l3(NnueData *data){
 int32_t materialScore(Board *board){
     int32_t eval = 0;
 
-    eval += 1 * count_bits(board->bitboards[P]);
-    eval += 3 * count_bits(board->bitboards[N]);
-    eval += 3 * count_bits(board->bitboards[B]);
-    eval += 5 * count_bits(board->bitboards[R]);
-    eval += 10 * count_bits(board->bitboards[Q]);
+    eval += 1 * count_bits(board->bitboards[p_P]);
+    eval += 3 * count_bits(board->bitboards[p_N]);
+    eval += 3 * count_bits(board->bitboards[p_B]);
+    eval += 5 * count_bits(board->bitboards[p_R]);
+    eval += 10 * count_bits(board->bitboards[p_Q]);
 
-    eval -= 1 * count_bits(board->bitboards[p]);
-    eval -= 3 * count_bits(board->bitboards[n]);
-    eval -= 3 * count_bits(board->bitboards[b]);
-    eval -= 5 * count_bits(board->bitboards[r]);
-    eval -= 10 * count_bits(board->bitboards[q]);
+    eval -= 1 * count_bits(board->bitboards[p_p]);
+    eval -= 3 * count_bits(board->bitboards[p_n]);
+    eval -= 3 * count_bits(board->bitboards[p_b]);
+    eval -= 5 * count_bits(board->bitboards[p_r]);
+    eval -= 10 * count_bits(board->bitboards[p_q]);
 
     return board->side == white ? eval : -eval;
 }
@@ -384,8 +384,8 @@ void nnue_pop_bit(int32_t ptype, int32_t bit, Board *board){
 
     pop_bit(board->bitboards[ptype], bit);
 
-    int32_t w_ksq = w_orient[bsf(board->bitboards[K])];
-    int32_t b_ksq = b_orient[bsf(board->bitboards[k])];
+    int32_t w_ksq = w_orient[bsf(board->bitboards[p_K])];
+    int32_t b_ksq = b_orient[bsf(board->bitboards[p_k])];
 
     int32_t sq = w_orient[bit];
     int32_t pc = NnuePtypes[ptype];
@@ -404,8 +404,8 @@ void nnue_set_bit(int32_t ptype, int32_t bit, Board *board){
     if (!board->nnueUpdate)
         return;
 
-    int32_t w_ksq = w_orient[bsf(board->bitboards[K])];
-    int32_t b_ksq = b_orient[bsf(board->bitboards[k])];
+    int32_t w_ksq = w_orient[bsf(board->bitboards[p_K])];
+    int32_t b_ksq = b_orient[bsf(board->bitboards[p_k])];
 
     int32_t sq = w_orient[bit];
     int32_t pc = NnuePtypes[ptype];

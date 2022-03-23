@@ -267,12 +267,12 @@ int32_t score_move(int32_t move, const int32_t *hashmove, Thread *thread){
 
 
         int32_t start_piece, end_piece;
-        int32_t target_piece = P;
+        int32_t target_piece = p_P;
 
         int32_t target_square = gettarget(move);
 
-        if (board->side == white) {start_piece = p; end_piece = k;}
-        else{start_piece = P; end_piece = K;}
+        if (board->side == white) {start_piece = p_p; end_piece = p_k;}
+        else{start_piece = p_P; end_piece = p_K;}
 
         for (int32_t bb_piece = start_piece; bb_piece < end_piece; bb_piece++){
             if (get_bit(board->bitboards[bb_piece], target_square)){
@@ -282,10 +282,10 @@ int32_t score_move(int32_t move, const int32_t *hashmove, Thread *thread){
         }
 
         if (board->side == white){
-            if ((getpiece(move) != P) && (pawn_mask[white][gettarget(move)] & BP))
+            if ((getpiece(move) != p_P) && (pawn_mask[white][gettarget(move)] & BP))
                 return 10000;
         } else {
-            if ((getpiece(move) != p) && (pawn_mask[black][gettarget(move)] & WP))
+            if ((getpiece(move) != p_p) && (pawn_mask[black][gettarget(move)] & WP))
                 return 10000;
         }
 
@@ -325,7 +325,7 @@ int32_t score_move(int32_t move, const int32_t *hashmove, Thread *thread){
             char *wspart = &moveOrderWorthSearching[pieceCount][piece][target][0];
 
             for (int32_t bb = 0; bb < 14; bb++) {
-                if (bb == P || bb == p || bb == 12 || bb == 13 || wspart[bb] || board->pvnode) {
+                if (bb == p_P || bb == p_p || bb == 12 || bb == 13 || wspart[bb] || board->pvnode) {
 
                     const int16_t *bbPart = &dataPart[bb * 64];
                     U64 bitboard;
@@ -343,13 +343,13 @@ int32_t score_move(int32_t move, const int32_t *hashmove, Thread *thread){
             *hashptr = score;
         }
 
-        if (is_move_direct_check(move, board) && (pieceCount <= 6 || getpiece(move) == Q || getpiece(move) == q))
+        if (is_move_direct_check(move, board) && (pieceCount <= 6 || getpiece(move) == p_Q || getpiece(move) == p_q))
             score += fabs(score)/2;
 
-        if (getpiece(move) == P && !(pastPawnMasks[white][gettarget(move)] & BP))
+        if (getpiece(move) == p_P && !(pastPawnMasks[white][gettarget(move)] & BP))
             score += fabs(score)/2;
 
-        if (getpiece(move) == p && !(pastPawnMasks[black][gettarget(move)] & WP))
+        if (getpiece(move) == p_p && !(pastPawnMasks[black][gettarget(move)] & WP))
             score += fabs(score)/2;
 
         score /= 550;
@@ -485,7 +485,7 @@ static inline int32_t search(int32_t depth, int32_t alpha, int32_t beta, Line *p
     }
 
     //do check extensions before probing hash table
-    int32_t in_check = is_square_attacked(bsf((board->side == white) ? board->bitboards[K] : board->bitboards[k]), (board->side ^ 1), board);
+    int32_t in_check = is_square_attacked(bsf((board->side == white) ? board->bitboards[p_K] : board->bitboards[p_k]), (board->side ^ 1), board);
 
     if (in_check)
         depth++;
@@ -502,11 +502,11 @@ static inline int32_t search(int32_t depth, int32_t alpha, int32_t beta, Line *p
     //find weather this node's move is a past pawn push. If it is, there is not late move reduction.
     int32_t isPastPawnPush = 0;
     if (board->occupancies[both] == (WK | BK | WP | BP)) {
-        if (getpiece(board->prevmove) == P) {
-            if (!(pastPawnMasks[white][gettarget(board->prevmove)] & board->bitboards[p]))
+        if (getpiece(board->prevmove) == p_P) {
+            if (!(pastPawnMasks[white][gettarget(board->prevmove)] & board->bitboards[p_p]))
                 isPastPawnPush = 1;
-        } else if (getpiece(board->prevmove) == P) {
-            if (!(pastPawnMasks[black][gettarget(board->prevmove)] & board->bitboards[P]))
+        } else if (getpiece(board->prevmove) == p_P) {
+            if (!(pastPawnMasks[black][gettarget(board->prevmove)] & board->bitboards[p_P]))
                 isPastPawnPush = 1;
         }
     }
