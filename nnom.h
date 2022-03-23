@@ -7,10 +7,17 @@
 
 #include <stdint.h>
 
+#define IN_SIZE 98304
+#define L1_SIZE 512
+#define L2_SIZE 384
+
 typedef struct NnomData NnomData;
 struct NnomData{
-    uint32_t indicies[32];
+    uint32_t indicies[64];
     uint32_t indexCount;
+
+    int16_t l1[L1_SIZE];
+    int32_t l2[L2_SIZE];
 };
 
 #include "board.h"
