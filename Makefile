@@ -10,7 +10,8 @@ CFILES = main.c\
  moveOrder.c\
  Fathom/*.c\
  nnue.c\
- see.c
+ see.c\
+ nnom.c
 
 AVX2_OBJS = search.c.avx2.o \
        nnue.c.avx2.o \
@@ -25,7 +26,8 @@ AVX2_OBJS = search.c.avx2.o \
        moveOrder.c.avx2.o \
        Fathom/tbchess.c.avx2.o \
        Fathom/tbprobe.c.avx2.o \
-       see.c.avx2.o
+       see.c.avx2.o\
+       nnom.c.avx2.o
 
 AVX_OBJS = search.c.avx.o \
        nnue.c.avx.o \
@@ -40,7 +42,8 @@ AVX_OBJS = search.c.avx.o \
 	   moveOrder.c.avx.o \
 	   Fathom/tbchess.c.avx.o \
 	   Fathom/tbprobe.c.avx.o \
-	   see.c.avx.o
+	   see.c.avx.o\
+	   nnom.c.avx2.o
 
 SSE2_OBJS = search.c.sse2.o \
        nnue.c.sse2.o \
@@ -55,7 +58,8 @@ SSE2_OBJS = search.c.sse2.o \
        moveOrder.c.sse2.o \
        Fathom/tbchess.c.sse2.o \
        Fathom/tbprobe.c.sse2.o \
-       see.c.sse2.o
+       see.c.sse2.o\
+       nnom.c.sse2.o
 
 SSE_OBJS = search.c.sse.o \
        nnue.c.sse.o \
@@ -70,7 +74,8 @@ SSE_OBJS = search.c.sse.o \
 	   moveOrder.c.sse.o \
 	   Fathom/tbchess.c.sse.o \
 	   Fathom/tbprobe.c.sse.o \
-	   see.c.sse.o
+	   see.c.sse.o\
+	   nnom.c.sse.o
 
 POPCNT_OBJS = search.c.popcnt.o \
        nnue.c.popcnt.o \
@@ -85,7 +90,8 @@ POPCNT_OBJS = search.c.popcnt.o \
 	   moveOrder.c.popcnt.o \
 	   Fathom/tbchess.c.popcnt.o \
 	   Fathom/tbprobe.c.popcnt.o \
-	   see.c.popcnt.o
+	   see.c.popcnt.o\
+	   nnom.c.popcnt.o
 
 OS = linux
 RELEASE = false

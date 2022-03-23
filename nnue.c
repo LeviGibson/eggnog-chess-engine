@@ -21,15 +21,15 @@ EvalHashEntry evalHashTable[NnueHashSize];
 
 #define TRANSFORMERSTART ((3 * 4) + 181)
 
-alignas(64) int16_t in_weights[INSIZE * KPSIZE ];
-alignas(64) int8_t l1_weights[L1SIZE * L2SIZE ];
-alignas(64) int8_t l2_weights[L2SIZE * L3SIZE ];
-alignas(64) int8_t l3_weights[L3SIZE * OUTSIZE];
+alignas(64) int16_t in_weights[NNUE_INSIZE * NNUE_KPSIZE ];
+alignas(64) int8_t l1_weights[NNUE_L1SIZE * NNUE_L2SIZE ];
+alignas(64) int8_t l2_weights[NNUE_L2SIZE * NNUE_L3SIZE ];
+alignas(64) int8_t l3_weights[NNUE_L3SIZE * NNUE_OUTSIZE];
 
-alignas(64) int16_t in_biases[KPSIZE ];
-alignas(64) int32_t l1_biases[L2SIZE ];
-alignas(64) int32_t l2_biases[L3SIZE ];
-alignas(64) int32_t l3_biases[OUTSIZE];
+alignas(64) int16_t in_biases[NNUE_KPSIZE ];
+alignas(64) int32_t l1_biases[NNUE_L2SIZE ];
+alignas(64) int32_t l2_biases[NNUE_L3SIZE ];
+alignas(64) int32_t l3_biases[NNUE_OUTSIZE];
 
 void transform_weight_indicies(int8_t arr[], uint32_t dims){
     int8_t tmpArr[dims*32];
@@ -50,25 +50,25 @@ int32_t load_model(const char *path){
 
     //FEATURE TRANSFORMER
     fseek(fin, TRANSFORMERSTART, SEEK_SET);
-    tmp = fread(in_biases, sizeof(int16_t), KPSIZE, fin);
-    tmp = fread(in_weights, sizeof(int16_t), INSIZE * KPSIZE, fin);
+    tmp = fread(in_biases, sizeof(int16_t), NNUE_KPSIZE, fin);
+    tmp = fread(in_weights, sizeof(int16_t), NNUE_INSIZE * NNUE_KPSIZE, fin);
 
     fseek(fin, 4, SEEK_CUR);
 
     //Hidden Layer 1
-    tmp = fread(l1_biases, sizeof (l1_biases[0]), L2SIZE, fin);
-    tmp = fread(l1_weights, sizeof (l1_weights[0]), L1SIZE * L2SIZE, fin);
-    transform_weight_indicies(l1_weights, L1SIZE);
+    tmp = fread(l1_biases, sizeof (l1_biases[0]), NNUE_L2SIZE, fin);
+    tmp = fread(l1_weights, sizeof (l1_weights[0]), NNUE_L1SIZE * NNUE_L2SIZE, fin);
+    transform_weight_indicies(l1_weights, NNUE_L1SIZE);
 
     //Hidden Layer 2
-    tmp = fread(l2_biases, sizeof (l2_biases[0]), L3SIZE, fin);
-    tmp = fread(l2_weights, sizeof (l2_weights[0]), L2SIZE * L3SIZE, fin);
-    transform_weight_indicies(l2_weights, L2SIZE);
+    tmp = fread(l2_biases, sizeof (l2_biases[0]), NNUE_L3SIZE, fin);
+    tmp = fread(l2_weights, sizeof (l2_weights[0]), NNUE_L2SIZE * NNUE_L3SIZE, fin);
+    transform_weight_indicies(l2_weights, NNUE_L2SIZE);
 
     //Output Layer
-    tmp = fread(l3_biases, sizeof (l3_biases[0]), OUTSIZE, fin);
+    tmp = fread(l3_biases, sizeof (l3_biases[0]), NNUE_OUTSIZE, fin);
 
-    tmp = fread(l3_weights, sizeof (l3_weights[0]), L2SIZE * OUTSIZE, fin);
+    tmp = fread(l3_weights, sizeof (l3_weights[0]), NNUE_L2SIZE * NNUE_OUTSIZE, fin);
 
     fclose(fin);
 

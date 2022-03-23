@@ -6,6 +6,7 @@
 #include "transposition.h"
 #include "nnue.h"
 #include "see.h"
+#include "nnom.h"
 
 int main(int argc, char* argv[]) {
     change_to_correct_directory(argv[0]);

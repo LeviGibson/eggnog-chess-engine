@@ -6,39 +6,29 @@
 #define HALFKP_PROBE_PROPOGATE_H
 
 
-#define INSIZE  41024
-#define KPSIZE  256
-#define L1SIZE  512
-#define L2SIZE  32
-#define L3SIZE  32
-#define OUTSIZE 1
+#define NNUE_INSIZE  41024
+#define NNUE_KPSIZE  256
+#define NNUE_L1SIZE  512
+#define NNUE_L2SIZE  32
+#define NNUE_L3SIZE  32
+#define NNUE_OUTSIZE 1
 
 #include "bitboard.h"
 #include <stdalign.h>
-
-alignas(64) int16_t in_weights[INSIZE * KPSIZE ];
-alignas(64) int8_t l1_weights[L1SIZE * L2SIZE ];
-alignas(64) int8_t l2_weights[L2SIZE * L3SIZE ];
-alignas(64) int8_t l3_weights[L3SIZE * OUTSIZE];
-
-alignas(64) int16_t in_biases[KPSIZE ];
-alignas(64) int32_t l1_biases[L2SIZE ];
-alignas(64) int32_t l2_biases[L3SIZE ];
-alignas(64) int32_t l3_biases[OUTSIZE];
 
 int32_t load_model(const char *path);
 
 typedef struct NnueData NnueData;
 
 struct NnueData{
-    int32_t l1[L2SIZE ];
-    int32_t l2[L3SIZE ];
-    int32_t l3[OUTSIZE];
+    int32_t l1[NNUE_L2SIZE ];
+    int32_t l2[NNUE_L3SIZE ];
+    int32_t l3[NNUE_OUTSIZE];
 
     int32_t eval;
 
-    int16_t accumulation[2][KPSIZE];
-    int16_t tmpAccumulation[KPSIZE*2];
+    int16_t accumulation[2][NNUE_KPSIZE];
+    int16_t tmpAccumulation[NNUE_KPSIZE * 2];
 
     uint32_t activeIndicies[2][32];
     uint32_t activeIndexCount[2];
