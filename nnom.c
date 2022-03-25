@@ -12,24 +12,30 @@ alignas(64) int16_t l2_weights[L2_SIZE][L1_SIZE];
 alignas(64) int16_t l1_biases[L1_SIZE];
 alignas(64) int32_t l2_biases[L2_SIZE];
 
-void nnom_refresh_l1(Board *board){
+void nnom_refresh_l1_helper(Board *board){
     NnomData *data = &board->nnom;
-    memcpy(&data->l1, l1_biases, sizeof(data->l1));
+    memcpy(&data->l1[board->side], l1_biases, sizeof(l1_biases));
     generate_nnom_indicies(board);
 
     for (int32_t i = 0; i < data->indexCount; ++i) {
-        uint32_t index = data->indicies[i];
+        uint32_t index = data->indicies[board->side][i];
         for (int32_t j = 0; j < L1_SIZE; ++j) {
-            data->l1[j] += l1_weights[index][j];
+            data->l1[board->side][j] += l1_weights[index][j];
         }
     }
 
     for (int32_t j = 0; j < L1_SIZE; ++j){
-        if (data->l1[j] < 0)
-            data->l1[j] = 0;
-        data->l1[j] /= 64;
+        if (data->l1[board->side][j] < 0)
+            data->l1[board->side][j] = 0;
+        data->l1[board->side][j] /= 64;
     }
+}
 
+void nnom_refresh_l1(Board *board){
+    nnom_refresh_l1_helper(board);
+    board->side ^= 1;
+    nnom_refresh_l1_helper(board);
+    board->side ^= 1;
 }
 
 int32_t get_nnom_score(int move, Board *board){
@@ -44,7 +50,7 @@ int32_t get_nnom_score(int move, Board *board){
     int32_t score = l2_biases[moveIndex];
 
     for (int32_t i = 0; i < L1_SIZE; ++i) {
-        score += l2_weights[moveIndex][i] * data->l1[i];
+        score += l2_weights[moveIndex][i] * data->l1[board->side][i];
     }
 
     return score;
@@ -62,7 +68,7 @@ void get_index(uint32_t  *i1, uint32_t *i2, int32_t p, int32_t sq, int32_t wk, i
     *i2 = bk + (768*p) + (64*sq) + 49152;
 }
 
-void generate_nnom_indicies(Board *board){
+void generate_nnom_indicies_helper(Board *board){
     board->nnom.indexCount = 0;
 
     int32_t wk = bsf(board->bitboards[p_K]);
@@ -86,15 +92,21 @@ void generate_nnom_indicies(Board *board){
             uint32_t i2;
 
             get_index(&i1, &i2, p, square, wk, bk, board->side);
-            board->nnom.indicies[board->nnom.indexCount] = i1;
-            board->nnom.indicies[board->nnom.indexCount+1] = i2;
+            board->nnom.indicies[board->side][board->nnom.indexCount] = i1;
+            board->nnom.indicies[board->side][board->nnom.indexCount+1] = i2;
 
             board->nnom.indexCount += 2;
 
             pop_bit(bb, square);
         }
     }
+}
 
+void generate_nnom_indicies(Board *board){
+    generate_nnom_indicies_helper(board);
+    board->side ^= 1;
+    generate_nnom_indicies_helper(board);
+    board->side ^= 1;
 }
 
 int load_nnom(char *path){

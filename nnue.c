@@ -362,8 +362,6 @@ int32_t nnue_evaluate(Board *board) {
 
 void nnue_pop_bit(int32_t ptype, int32_t bit, Board *board){
 
-    pop_bit(board->bitboards[ptype], bit);
-
     if (!board->nnueUpdate)
         return;
 
@@ -381,8 +379,6 @@ void nnue_pop_bit(int32_t ptype, int32_t bit, Board *board){
 }
 
 void nnue_set_bit(int32_t ptype, int32_t bit, Board *board){
-
-    set_bit(board->bitboards[ptype], bit);
 
     if (!board->nnueUpdate)
         return;

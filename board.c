@@ -584,6 +584,18 @@ void refresh_weak_squares(Board *board){
     *bb = (~*bb) & board->occupancies[black];
 }
 
+void network_pop_bit(int32_t ptype, int32_t bit, Board *board){
+    pop_bit(board->bitboards[ptype], bit);
+    nnue_pop_bit(ptype, bit, board);
+
+}
+
+void network_set_bit(int32_t ptype, int32_t bit, Board *board){
+    set_bit(board->bitboards[ptype], bit);
+    nnue_set_bit(ptype, bit, board);
+
+}
+
 int32_t make_move(int32_t move, int32_t flag, int32_t notquinode, Board *board){
 
     if (flag == all_moves){
@@ -601,23 +613,23 @@ int32_t make_move(int32_t move, int32_t flag, int32_t notquinode, Board *board){
             pop_bit(board->bitboards[ptype], source);
             set_bit(board->bitboards[ptype], target);
         } else {
-            nnue_pop_bit(ptype, source, board);
-            nnue_set_bit(ptype, target, board);
+            network_pop_bit(ptype, source, board);
+            network_set_bit(ptype, target, board);
         }
 
         if (capture){
             if (getenpessant(move)){
                 if (board->side == white){
-                    nnue_pop_bit(p_p, target + 8, board);
+                    network_pop_bit(p_p, target + 8, board);
                 } else {
-                    nnue_pop_bit(p_P, target - 8, board);
+                    network_pop_bit(p_P, target - 8, board);
                 }
             } else {
                 if (board->side == white){
                     for (int32_t piece = p_p; piece <= p_k; piece++) {
                         if (get_bit(board->bitboards[piece], target)) {
 
-                            nnue_pop_bit(piece, target, board);
+                            network_pop_bit(piece, target, board);
 
                             break;
                         }
@@ -626,7 +638,7 @@ int32_t make_move(int32_t move, int32_t flag, int32_t notquinode, Board *board){
                     for (int32_t piece = p_P; piece <= p_K; piece++) {
                         if (get_bit(board->bitboards[piece], target)) {
 
-                            nnue_pop_bit(piece, target, board);
+                            network_pop_bit(piece, target, board);
 
                             break;
                         }
@@ -644,19 +656,19 @@ int32_t make_move(int32_t move, int32_t flag, int32_t notquinode, Board *board){
         if (getcastle(move)){
             if (board->side == white){
                 if (target == 62){
-                    nnue_pop_bit(p_R, 63, board);
-                    nnue_set_bit(p_R, 61, board);
+                    network_pop_bit(p_R, 63, board);
+                    network_set_bit(p_R, 61, board);
                 } else if (target == 58){
-                    nnue_pop_bit(p_R, 56, board);
-                    nnue_set_bit(p_R, 59, board);
+                    network_pop_bit(p_R, 56, board);
+                    network_set_bit(p_R, 59, board);
                 }
             } else {
                 if (target == 6){
-                    nnue_pop_bit(p_r, 7, board);
-                    nnue_set_bit(p_r, 5, board);
+                    network_pop_bit(p_r, 7, board);
+                    network_set_bit(p_r, 5, board);
                 } else if (target == 2){
-                    nnue_pop_bit(p_r, 0, board);
-                    nnue_set_bit(p_r, 3, board);
+                    network_pop_bit(p_r, 0, board);
+                    network_set_bit(p_r, 3, board);
                 }
             }
         }
@@ -670,8 +682,8 @@ int32_t make_move(int32_t move, int32_t flag, int32_t notquinode, Board *board){
 
         int32_t promoted = getpromoted(move);
         if (promoted){
-            nnue_pop_bit(ptype, target, board);
-            nnue_set_bit(promoted, target, board);
+            network_pop_bit(ptype, target, board);
+            network_set_bit(promoted, target, board);
         }
 
         update_occupancies(board);

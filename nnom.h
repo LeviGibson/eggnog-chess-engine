@@ -13,10 +13,12 @@
 
 typedef struct NnomData NnomData;
 struct NnomData{
-    uint32_t indicies[64];
+    uint32_t indicies[2][64];
     uint32_t indexCount;
 
-    int16_t l1[L1_SIZE];
+    //there are two copies of the first layer because of the two perspectives
+    //(white and black)
+    int16_t l1[2][L1_SIZE];
 };
 
 #include "board.h"
