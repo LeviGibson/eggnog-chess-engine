@@ -12,10 +12,10 @@ alignas(64) int16_t l2_weights[L1_SIZE][L2_SIZE];
 alignas(64) int16_t l1_biases[L1_SIZE];
 alignas(64) int32_t l2_biases[L2_SIZE];
 
-void nnom_propogate_l1(Board *board){
+void nnom_refresh_l1(Board *board){
     NnomData *data = &board->nnom;
     memcpy(&data->l1, l1_biases, sizeof(data->l1));
-    memcpy(&data->l2, l2_biases, sizeof(data->l2));
+    generate_nnom_indicies(board);
 
     for (int32_t i = 0; i < data->indexCount; ++i) {
         uint32_t index = data->indicies[i];
@@ -29,6 +29,12 @@ void nnom_propogate_l1(Board *board){
             data->l1[j] = 0;
         data->l1[j] /= 64;
     }
+
+}
+
+void nnom_propogate_l2(Board *board){
+    NnomData *data = &board->nnom;
+    memcpy(&data->l2, l2_biases, sizeof(data->l2));
 
     for (int32_t i = 0; i < L1_SIZE; ++i) {
         for (int32_t j = 0; j < L2_SIZE; ++j) {

@@ -10,7 +10,6 @@
 #include <stdio.h>
 #include <pthread.h>
 
-#define NO_LMR
 #define fabs(x) (((x) > 0) ? (x) : -(x))
 
 int32_t DEF_ASPWINDOW = 1760;
@@ -332,10 +331,8 @@ int32_t score_move(int32_t move, const int32_t *hashmove, Thread *thread){
 //int32_t *hashmove is the move stored in the transposition table from a previous depth
 //pretty much ignore this function it's very boring. The main function is the function above (score_move)
 static inline void sort_moves(MoveList *move_list, int32_t *hashmove, Thread *thread){
-    if (!thread->board.quinode) {
-        generate_nnom_indicies(&thread->board);
-        nnom_propogate_l1(&thread->board);
-    }
+    if (!thread->board.quinode)
+        nnom_propogate_l2(&thread->board);
 
     for (int32_t i = 0; i < move_list->count; i++) {
         move_list->scores[i] = score_move(move_list->moves[i], hashmove, thread);
@@ -602,9 +599,9 @@ static inline int32_t search(int32_t depth, int32_t alpha, int32_t beta, Line *p
         move = legalMoves.moves[moveId];
         //TODO tune this
 #ifndef NO_LMR
-        int margins[3] = {0, 0, 200};
-        if (legalMoveCount && depth <= 2 && (!getcapture(move)) && (!in_check) && !board->pvnode && ((staticeval + (legalMoves.scores[moveId]*64)) + (margins[depth]*64) < alpha) && !is_move_direct_check(move, board))
-            continue;
+//        int margins[3] = {0, 0, 200};
+//        if (legalMoveCount && depth <= 2 && (!getcapture(move)) && (!in_check) && !board->pvnode && ((staticeval + (legalMoves.scores[moveId]*64)) + (margins[depth]*64) < alpha) && !is_move_direct_check(move, board))
+//            continue;
 #endif
 
         //The illigal moves (moving pinned pieces mostly) are not removed during the move generation, they are removed here.

@@ -600,7 +600,6 @@ int32_t make_move(int32_t move, int32_t flag, int32_t notquinode, Board *board){
         if (ptype == p_K || ptype == p_k){
             pop_bit(board->bitboards[ptype], source);
             set_bit(board->bitboards[ptype], target);
-            refresh_accumulator(&board->currentNnue, board);
         } else {
             nnue_pop_bit(ptype, source, board);
             nnue_set_bit(ptype, target, board);
@@ -661,6 +660,13 @@ int32_t make_move(int32_t move, int32_t flag, int32_t notquinode, Board *board){
                 }
             }
         }
+
+        if (ptype == p_K || ptype == p_k && !board->quinode){
+            refresh_accumulator(&board->currentNnue, board);
+        }
+
+        if (!board->quinode)
+            nnom_refresh_l1(board);
 
         int32_t promoted = getpromoted(move);
         if (promoted){

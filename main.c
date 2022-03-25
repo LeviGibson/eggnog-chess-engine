@@ -23,7 +23,7 @@ int main(int argc, char* argv[]) {
     parse_fen(start_position, &UciBoard);
 
     generate_nnom_indicies(&UciBoard);
-    nnom_propogate_l1(&UciBoard);
+    nnom_propogate_l2(&UciBoard);
 
     uci_loop();
 
