@@ -753,6 +753,11 @@ void *search_position(void *arg){
                 floatingMoveTime += floatingMoveTime * ((floatingAspWindow - 25) / 200);
                 moveTime = (int) floatingMoveTime;
             }
+
+            if (board->side == white)
+                moveTime = min(wtime / 2, moveTime);
+            else
+                moveTime = min(btime / 2, moveTime);
         }
 
         prevBestMove = board->prevPv.moves[0];

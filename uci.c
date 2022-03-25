@@ -135,6 +135,9 @@ int32_t depth;
 
 int32_t threadCount = 1;
 
+int32_t wtime = 0;
+int32_t btime = 0;
+
 void parse_go(char *command) {
     char *current_depth = NULL;
     char *perft = NULL;
@@ -142,8 +145,7 @@ void parse_go(char *command) {
     char *current_wtime = NULL;
     char *current_btime = NULL;
 
-    int32_t wtime = 0;
-    int32_t btime = 0;
+
 
     current_depth = strstr(command, "depth");
     if (current_depth) {

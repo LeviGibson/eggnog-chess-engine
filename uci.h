@@ -12,6 +12,9 @@ Board UciBoard;
 int32_t threadCount;
 int32_t moveOverhead;
 
+int32_t wtime;
+int32_t btime;
+
 void change_to_correct_directory(char *argv);
 void parse_position(char *command);
 void parse_go(char *command);
