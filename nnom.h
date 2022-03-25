@@ -23,6 +23,7 @@ struct NnomData{
 #include "board.h"
 
 void generate_nnom_indicies(Board *board);
+void nnom_propogate_l1(Board *board);
 int load_nnom(char *path);
 
 #endif //EGGNOG_CHESS_ENGINE_NNOM_H

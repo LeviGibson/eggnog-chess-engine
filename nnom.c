@@ -6,13 +6,14 @@
 #include <stdio.h>
 #include <stdalign.h>
 
-int16_t l1_weights[IN_SIZE][L1_SIZE];
-int16_t l2_weights[L1_SIZE][L2_SIZE];
+alignas(64) int16_t l1_weights[IN_SIZE][L1_SIZE];
+alignas(64) int16_t l2_weights[L1_SIZE][L2_SIZE];
 
-int16_t l1_biases[L1_SIZE];
-int16_t l2_biases[L2_SIZE];
+alignas(64) int16_t l1_biases[L1_SIZE];
+alignas(64) int32_t l2_biases[L2_SIZE];
 
-void nnom_propogate_l1(NnomData *data){
+void nnom_propogate_l1(Board *board){
+    NnomData *data = &board->nnom;
     memcpy(&data->l1, l1_biases, sizeof(data->l1));
     memcpy(&data->l2, l2_biases, sizeof(data->l2));
 
@@ -26,11 +27,12 @@ void nnom_propogate_l1(NnomData *data){
     for (int32_t j = 0; j < L1_SIZE; ++j){
         if (data->l1[j] < 0)
             data->l1[j] = 0;
+        data->l1[j] /= 128;
     }
 
     for (int32_t i = 0; i < L1_SIZE; ++i) {
         for (int32_t j = 0; j < L2_SIZE; ++j) {
-            data->l2[j] += l2_weights[i][j] * data->l1[i];
+            data->l2[j] += (l2_weights[i][j] * data->l1[i]);
         }
     }
 }
@@ -75,7 +77,6 @@ int load_nnom(char *path){
 
     tmp = fread(l1_biases, sizeof(int16_t), L1_SIZE, fin);
     tmp = fread(l2_biases, sizeof(int16_t), L2_SIZE, fin);
-
 
     return 0;
 }

@@ -176,6 +176,8 @@ int32_t is_move_direct_check(int32_t move, Board *board);
 
 void print_board(Board *board);
 void print_fen(Board *board);
+const int32_t w_orient[64];
+const int32_t b_orient[64];
 
 void parse_fen(char *fen, Board *board);
 

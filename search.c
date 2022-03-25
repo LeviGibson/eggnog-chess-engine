@@ -307,50 +307,59 @@ int32_t score_move(int32_t move, const int32_t *hashmove, Thread *thread){
         int32_t score = 0;
         int32_t pieceCount = count_bits(WB | WN | WR | WQ | BB | BN | BR | BQ);
 
-        int32_t *hashptr = &moveScoreHash[(board->current_zobrist_key ^ get_move_key(move)) % MOVE_HASH_SIZE];
-	    if (*hashptr != NO_MOVE){
-	        score = *hashptr;
-	    } else {
-
-            int32_t piece = getpiece(move);
-            int32_t target = gettarget(move);
-
-
-            //for those who attempt to break this engine, take this :)
-            if (pieceCount > 14)
-                pieceCount = 14;
-            //ha!
-
-            const int16_t *dataPart = &moveOrderData[pieceCount][piece][target][0][0];
-            char *wspart = &moveOrderWorthSearching[pieceCount][piece][target][0];
-
-            for (int32_t bb = 0; bb < 14; bb++) {
-                if (bb == p_P || bb == p_p || bb == 12 || bb == 13 || wspart[bb] || board->pvnode) {
-
-                    const int16_t *bbPart = &dataPart[bb * 64];
-                    U64 bitboard;
-
-                    //there are two other bitboards that represent what squares each side attacks
-                    if (bb < 12)
-                        bitboard = board->bitboards[bb];
-                    else
-                        bitboard = board->unprotectedPieces[bb - 12];
-
-                    score += getScoreFromMoveTable(bitboard, bbPart);
-                }
-            }
-
-            *hashptr = score;
+        int orientedPiece = getpiece(move);
+        int orientedSquare = gettarget(move);
+        if (board->side == black){
+            orientedPiece -= 6;
+            orientedSquare = w_orient[orientedSquare];
         }
 
-        if (is_move_direct_check(move, board) && (pieceCount <= 6 || getpiece(move) == p_Q || getpiece(move) == p_q))
-            score += fabs(score)/2;
+        score = board->nnom.l2[(orientedPiece * 64) + orientedSquare];
 
-        if (getpiece(move) == p_P && !(pastPawnMasks[white][gettarget(move)] & BP))
-            score += fabs(score)/2;
+//        int32_t *hashptr = &moveScoreHash[(board->current_zobrist_key ^ get_move_key(move)) % MOVE_HASH_SIZE];
+//	    if (*hashptr != NO_MOVE){
+//	        score = *hashptr;
+//	    } else {
+//
+//            int32_t piece = getpiece(move);
+//            int32_t target = gettarget(move);
+//
+//
+//            //for those who attempt to break this engine, take this :)
+//            if (pieceCount > 14)
+//                pieceCount = 14;
+//            //ha!
+//
+//            const int16_t *dataPart = &moveOrderData[pieceCount][piece][target][0][0];
+//            char *wspart = &moveOrderWorthSearching[pieceCount][piece][target][0];
+//
+//            for (int32_t bb = 0; bb < 14; bb++) {
+//                if (bb == p_P || bb == p_p || bb == 12 || bb == 13 || wspart[bb] || board->pvnode) {
+//
+//                    const int16_t *bbPart = &dataPart[bb * 64];
+//                    U64 bitboard;
+//
+//                    //there are two other bitboards that represent what squares each side attacks
+//                    if (bb < 12)
+//                        bitboard = board->bitboards[bb];
+//                    else
+//                        bitboard = board->unprotectedPieces[bb - 12];
+//
+//                    score += getScoreFromMoveTable(bitboard, bbPart);
+//                }
+//            }
+//
+//            *hashptr = score;
+//        }
 
-        if (getpiece(move) == p_p && !(pastPawnMasks[black][gettarget(move)] & WP))
-            score += fabs(score)/2;
+//        if (is_move_direct_check(move, board) && (pieceCount <= 6 || getpiece(move) == p_Q || getpiece(move) == p_q))
+//            score += fabs(score)/2;
+//
+//        if (getpiece(move) == p_P && !(pastPawnMasks[white][gettarget(move)] & BP))
+//            score += fabs(score)/2;
+//
+//        if (getpiece(move) == p_p && !(pastPawnMasks[black][gettarget(move)] & WP))
+//            score += fabs(score)/2;
 
         score /= 550;
 
@@ -364,10 +373,16 @@ int32_t score_move(int32_t move, const int32_t *hashmove, Thread *thread){
 }
 
 
+
 //sorts a list of moves
 //int32_t *hashmove is the move stored in the transposition table from a previous depth
 //pretty much ignore this function it's very boring. The main function is the function above (score_move)
 static inline void sort_moves(MoveList *move_list, int32_t *hashmove, Thread *thread){
+    if (!thread->board.quinode) {
+        generate_nnom_indicies(&thread->board);
+        nnom_propogate_l1(&thread->board);
+    }
+
     for (int32_t i = 0; i < move_list->count; i++) {
         move_list->scores[i] = score_move(move_list->moves[i], hashmove, thread);
     }
@@ -632,9 +647,11 @@ static inline int32_t search(int32_t depth, int32_t alpha, int32_t beta, Line *p
     for (uint8_t moveId = 0; moveId < legalMoves.count; moveId++) {
         move = legalMoves.moves[moveId];
         //TODO tune this
+#ifndef NO_LMR
         int margins[3] = {0, 0, 200};
         if (legalMoveCount && depth <= 2 && (!getcapture(move)) && (!in_check) && !board->pvnode && ((staticeval + (legalMoves.scores[moveId]*64)) + (margins[depth]*64) < alpha) && !is_move_direct_check(move, board))
             continue;
+#endif
 
         //The illigal moves (moving pinned pieces mostly) are not removed during the move generation, they are removed here.
         if (make_move(move, all_moves, 1, board)) {
