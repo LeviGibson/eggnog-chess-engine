@@ -27,7 +27,7 @@ void nnom_propogate_l1(Board *board){
     for (int32_t j = 0; j < L1_SIZE; ++j){
         if (data->l1[j] < 0)
             data->l1[j] = 0;
-        data->l1[j] /= 128;
+        data->l1[j] /= 64;
     }
 
     for (int32_t i = 0; i < L1_SIZE; ++i) {

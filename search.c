@@ -303,7 +303,7 @@ int32_t score_move(int32_t move, const int32_t *hashmove, Thread *thread){
             return(7000);
         }
 
-	if (board->quinode){ return 0; }
+        if (board->quinode){ return 0; }
 
         int32_t score = 0;
         int32_t pieceCount = count_bits(WB | WN | WR | WQ | BB | BN | BR | BQ);
@@ -316,13 +316,10 @@ int32_t score_move(int32_t move, const int32_t *hashmove, Thread *thread){
         }
 
         score = board->nnom.l2[(orientedPiece * 64) + orientedSquare];
-        printf("%d\n", score);
-
-        score /= 550;
 
         if (historyCount > 0) {
             float historyscore = (history_moves[getpiece(move)][getsource(move)][gettarget(move)] / (float) historyCount) * (float)historyMoveDivisor;
-            score += (int32_t )historyscore;
+            score += ((int32_t )historyscore) * 10;
         }
 
         return (int)score;
@@ -346,7 +343,7 @@ static inline void sort_moves(MoveList *move_list, int32_t *hashmove, Thread *th
 
     insertion_sort(move_list);
 
-//    if (thread->board.searchDepth <= 6) return;
+//    if (thread->board.quinode) return;
 //    print_fen(&thread->board);
 //    printf("\n");
 //     for (int32_t i = 0; i < move_list->count; i++) {
