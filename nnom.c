@@ -32,6 +32,24 @@ void nnom_refresh_l1(Board *board){
 
 }
 
+int32_t get_nnom_score(int move, Board *board){
+    NnomData *data = &board->nnom;
+    int orientedPiece = getpiece(move);
+    int orientedSquare = gettarget(move);
+    if (board->side == black){
+        orientedPiece -= 6;
+        orientedSquare = w_orient[orientedSquare];
+    }
+    int32_t moveIndex = (orientedPiece * 64) + orientedSquare;
+    int32_t score = l2_biases[moveIndex];
+
+    for (int32_t i = 0; i < L1_SIZE; ++i) {
+        score += l2_weights[i][moveIndex] * data->l1[i];
+    }
+
+    return score;
+}
+
 void nnom_propogate_l2(Board *board){
     NnomData *data = &board->nnom;
     memcpy(&data->l2, l2_biases, sizeof(data->l2));

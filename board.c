@@ -661,11 +661,11 @@ int32_t make_move(int32_t move, int32_t flag, int32_t notquinode, Board *board){
             }
         }
 
-        if (ptype == p_K || ptype == p_k && !board->quinode){
+        if (ptype == p_K || ptype == p_k){
             refresh_accumulator(&board->currentNnue, board);
         }
 
-        if (!board->quinode)
+        if (!board->quinode && board->nnueUpdate)
             nnom_refresh_l1(board);
 
         int32_t promoted = getpromoted(move);

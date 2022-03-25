@@ -22,6 +22,7 @@ struct NnomData{
 
 #include "board.h"
 
+int32_t get_nnom_score(int move, Board *board);
 void generate_nnom_indicies(Board *board);
 void nnom_propogate_l2(Board *board);
 void nnom_refresh_l1(Board *board);

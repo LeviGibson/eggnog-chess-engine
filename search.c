@@ -307,14 +307,7 @@ int32_t score_move(int32_t move, const int32_t *hashmove, Thread *thread){
         int32_t score = 0;
         int32_t pieceCount = count_bits(WB | WN | WR | WQ | BB | BN | BR | BQ);
 
-        int orientedPiece = getpiece(move);
-        int orientedSquare = gettarget(move);
-        if (board->side == black){
-            orientedPiece -= 6;
-            orientedSquare = w_orient[orientedSquare];
-        }
-
-        score = board->nnom.l2[(orientedPiece * 64) + orientedSquare];
+        score = get_nnom_score(move, board);
 
         if (historyCount > 0) {
             float historyscore = (history_moves[getpiece(move)][getsource(move)][gettarget(move)] / (float) historyCount) * (float)historyMoveDivisor;
@@ -331,8 +324,6 @@ int32_t score_move(int32_t move, const int32_t *hashmove, Thread *thread){
 //int32_t *hashmove is the move stored in the transposition table from a previous depth
 //pretty much ignore this function it's very boring. The main function is the function above (score_move)
 static inline void sort_moves(MoveList *move_list, int32_t *hashmove, Thread *thread){
-    if (!thread->board.quinode)
-        nnom_propogate_l2(&thread->board);
 
     for (int32_t i = 0; i < move_list->count; i++) {
         move_list->scores[i] = score_move(move_list->moves[i], hashmove, thread);
