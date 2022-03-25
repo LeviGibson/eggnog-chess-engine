@@ -16,3 +16,4 @@ tune/plot.png
 tune/__pycache__/puzzles.cpython-38.pyc
 bin/a.out
 /moveOrder/moveOrderData.bin
+bin/network.nnom

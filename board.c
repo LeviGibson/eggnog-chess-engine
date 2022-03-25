@@ -587,12 +587,14 @@ void refresh_weak_squares(Board *board){
 void network_pop_bit(int32_t ptype, int32_t bit, Board *board){
     pop_bit(board->bitboards[ptype], bit);
     nnue_pop_bit(ptype, bit, board);
+    nnom_pop_bit(ptype, bit, board);
 
 }
 
 void network_set_bit(int32_t ptype, int32_t bit, Board *board){
     set_bit(board->bitboards[ptype], bit);
     nnue_set_bit(ptype, bit, board);
+    nnom_set_bit(ptype, bit, board);
 
 }
 
@@ -675,10 +677,9 @@ int32_t make_move(int32_t move, int32_t flag, int32_t notquinode, Board *board){
 
         if (ptype == p_K || ptype == p_k){
             refresh_accumulator(&board->currentNnue, board);
+            if (!board->quinode && board->nnueUpdate)
+                nnom_refresh_l1(board);
         }
-
-        if (!board->quinode && board->nnueUpdate)
-            nnom_refresh_l1(board);
 
         int32_t promoted = getpromoted(move);
         if (promoted){

@@ -23,6 +23,8 @@ struct NnomData{
 
 #include "board.h"
 
+void nnom_set_bit(int32_t ptype, int32_t bit, Board *board);
+void nnom_pop_bit(int32_t ptype, int32_t bit, Board *board);
 int32_t get_nnom_score(int move, Board *board);
 void generate_nnom_indicies(Board *board);
 void nnom_refresh_l1(Board *board);

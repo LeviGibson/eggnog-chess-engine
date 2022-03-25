@@ -23,12 +23,6 @@ void nnom_refresh_l1_helper(Board *board){
             data->l1[board->side][j] += l1_weights[index][j];
         }
     }
-
-    for (int32_t j = 0; j < L1_SIZE; ++j){
-        if (data->l1[board->side][j] < 0)
-            data->l1[board->side][j] = 0;
-        data->l1[board->side][j] /= 64;
-    }
 }
 
 void nnom_refresh_l1(Board *board){
@@ -50,11 +44,14 @@ int32_t get_nnom_score(int move, Board *board){
     int32_t score = l2_biases[moveIndex];
 
     for (int32_t i = 0; i < L1_SIZE; ++i) {
-        score += l2_weights[moveIndex][i] * data->l1[board->side][i];
+        int16_t l1value = max(0, data->l1[board->side][i]) / 64;
+        score += l2_weights[moveIndex][i] * l1value;
     }
 
     return score;
 }
+
+
 
 int flipPiecePers[12] = {p_p, p_n, p_b, p_r, p_q, p_k, p_P, p_N, p_B, p_R, p_Q, p_K};
 
@@ -66,6 +63,62 @@ void get_index(uint32_t  *i1, uint32_t *i2, int32_t p, int32_t sq, int32_t wk, i
 
     *i1 = wk + (768*p) + (64*sq);
     *i2 = bk + (768*p) + (64*sq) + 49152;
+}
+
+void nnom_set_bit(int32_t ptype, int32_t bit, Board *board){
+    uint32_t i1;
+    uint32_t i2;
+
+    int32_t wk = bsf(board->bitboards[p_K]);
+    int32_t bk = bsf(board->bitboards[p_k]);
+
+    get_index(&i1, &i2, ptype, bit, wk, bk, white);
+
+    for (int i = 0; i < L1_SIZE; ++i) {
+        board->nnom.l1[white][i] += l1_weights[i1][i];
+        board->nnom.l1[white][i] += l1_weights[i2][i];
+    }
+
+    int32_t tmp = wk;
+    wk = bk;
+    bk = tmp;
+    wk = w_orient[wk];
+    bk = w_orient[bk];
+
+    get_index(&i1, &i2, ptype, bit, wk, bk, black);
+
+    for (int i = 0; i < L1_SIZE; ++i) {
+        board->nnom.l1[black][i] += l1_weights[i1][i];
+        board->nnom.l1[black][i] += l1_weights[i2][i];
+    }
+}
+
+void nnom_pop_bit(int32_t ptype, int32_t bit, Board *board){
+    uint32_t i1;
+    uint32_t i2;
+
+    int32_t wk = bsf(board->bitboards[p_K]);
+    int32_t bk = bsf(board->bitboards[p_k]);
+
+    get_index(&i1, &i2, ptype, bit, wk, bk, white);
+
+    for (int i = 0; i < L1_SIZE; ++i) {
+        board->nnom.l1[white][i] -= l1_weights[i1][i];
+        board->nnom.l1[white][i] -= l1_weights[i2][i];
+    }
+
+    int32_t tmp = wk;
+    wk = bk;
+    bk = tmp;
+    wk = w_orient[wk];
+    bk = w_orient[bk];
+
+    get_index(&i1, &i2, ptype, bit, wk, bk, black);
+
+    for (int i = 0; i < L1_SIZE; ++i) {
+        board->nnom.l1[black][i] -= l1_weights[i1][i];
+        board->nnom.l1[black][i] -= l1_weights[i2][i];
+    }
 }
 
 void generate_nnom_indicies_helper(Board *board){
