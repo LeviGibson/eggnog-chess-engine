@@ -7,7 +7,7 @@
 #include <stdalign.h>
 
 alignas(64) int16_t l1_weights[IN_SIZE][L1_SIZE];
-alignas(64) int16_t l2_weights[L1_SIZE][L2_SIZE];
+alignas(64) int16_t l2_weights[L2_SIZE][L1_SIZE];
 
 alignas(64) int16_t l1_biases[L1_SIZE];
 alignas(64) int32_t l2_biases[L2_SIZE];
@@ -44,7 +44,7 @@ int32_t get_nnom_score(int move, Board *board){
     int32_t score = l2_biases[moveIndex];
 
     for (int32_t i = 0; i < L1_SIZE; ++i) {
-        score += l2_weights[i][moveIndex] * data->l1[i];
+        score += l2_weights[moveIndex][i] * data->l1[i];
     }
 
     return score;

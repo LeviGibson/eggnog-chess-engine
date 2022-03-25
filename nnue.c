@@ -364,6 +364,9 @@ void nnue_pop_bit(int32_t ptype, int32_t bit, Board *board){
 
     pop_bit(board->bitboards[ptype], bit);
 
+    if (!board->nnueUpdate)
+        return;
+
     int32_t w_ksq = w_orient[bsf(board->bitboards[p_K])];
     int32_t b_ksq = b_orient[bsf(board->bitboards[p_k])];
 
