@@ -22,9 +22,6 @@ int main(int argc, char* argv[]) {
     load_nnom("network.nnom");
     parse_fen(start_position, &UciBoard);
 
-    generate_nnom_indicies(&UciBoard);
-    nnom_propogate_l2(&UciBoard);
-
     uci_loop();
 
     transposition_free();
