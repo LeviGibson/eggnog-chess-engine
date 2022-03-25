@@ -71,7 +71,7 @@ static inline void nnom_add_index(int16_t *restrict a, const int16_t *restrict b
     for (int i = 0; i < L1_SIZE; i += 16) {
         __m256i _a = _mm256_loadu_si256(&a[i]);
         __m256i _b = _mm256_loadu_si256(&b[i]);
-        _mm256_store_si256((__m256i *) &a[i], _mm256_add_epi16(_a, _b));
+        _mm256_storeu_si256((__m256i *) &a[i], _mm256_add_epi16(_a, _b));
     }
 #else
     for (int i = 0; i < L1_SIZE; ++i){
@@ -85,7 +85,7 @@ static inline void nnom_subtract_index(int16_t *restrict a, const int16_t *restr
     for (int i = 0; i < L1_SIZE; i += 16) {
         __m256i _a = _mm256_loadu_si256(&a[i]);
         __m256i _b = _mm256_loadu_si256(&b[i]);
-        _mm256_store_si256((__m256i *) &a[i], _mm256_sub_epi16(_a, _b));
+        _mm256_storeu_si256((__m256i *) &a[i], _mm256_sub_epi16(_a, _b));
     }
 #else
     for (int i = 0; i < L1_SIZE; ++i){
