@@ -42,7 +42,7 @@ void transform_weight_indicies(int8_t arr[], uint32_t dims){
     }
 }
 
-int32_t load_model(const char *path){
+int32_t load_nnue(const char *path){
     //avoid compiler warnings
     unsigned long tmp;
 

@@ -15,7 +15,7 @@ int main(int argc, char* argv[]) {
     reinit_transposition();
     init_see();
 
-    load_model("nn-eba324f53044.nnue");
+    load_nnue("nn-eba324f53044.nnue");
     load_nnom("network.nnom");
     parse_fen(start_position, &UciBoard);
 

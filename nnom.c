@@ -5,6 +5,7 @@
 #include "nnom.h"
 #include <stdio.h>
 #include <stdalign.h>
+#include <immintrin.h>
 
 alignas(64) int16_t l1_weights[IN_SIZE][L1_SIZE];
 alignas(64) int16_t l2_weights[L2_SIZE][L1_SIZE];
@@ -65,6 +66,34 @@ void get_index(uint32_t  *i1, uint32_t *i2, int32_t p, int32_t sq, int32_t wk, i
     *i2 = bk + (768*p) + (64*sq) + 49152;
 }
 
+static inline void nnom_add_index(int16_t *restrict a, const int16_t *restrict b){
+#ifdef AVX2
+    for (int i = 0; i < L1_SIZE; i += 16) {
+        __m256i _a = _mm256_loadu_si256(&a[i]);
+        __m256i _b = _mm256_loadu_si256(&b[i]);
+        _mm256_store_si256((__m256i *) &a[i], _mm256_add_epi16(_a, _b));
+    }
+#else
+    for (int i = 0; i < L1_SIZE; ++i){
+        a[i] += b[i];
+    }
+#endif
+}
+
+static inline void nnom_subtract_index(int16_t *restrict a, const int16_t *restrict b){
+#ifdef AVX2
+    for (int i = 0; i < L1_SIZE; i += 16) {
+        __m256i _a = _mm256_loadu_si256(&a[i]);
+        __m256i _b = _mm256_loadu_si256(&b[i]);
+        _mm256_store_si256((__m256i *) &a[i], _mm256_sub_epi16(_a, _b));
+    }
+#else
+    for (int i = 0; i < L1_SIZE; ++i){
+        a[i] -= b[i];
+    }
+#endif
+}
+
 void nnom_set_bit(int32_t ptype, int32_t bit, Board *board){
     uint32_t i1;
     uint32_t i2;
@@ -74,10 +103,8 @@ void nnom_set_bit(int32_t ptype, int32_t bit, Board *board){
 
     get_index(&i1, &i2, ptype, bit, wk, bk, white);
 
-    for (int i = 0; i < L1_SIZE; ++i) {
-        board->nnom.l1[white][i] += l1_weights[i1][i];
-        board->nnom.l1[white][i] += l1_weights[i2][i];
-    }
+    nnom_add_index(board->nnom.l1[white], l1_weights[i1]);
+    nnom_add_index(board->nnom.l1[white], l1_weights[i2]);
 
     int32_t tmp = wk;
     wk = bk;
@@ -87,10 +114,8 @@ void nnom_set_bit(int32_t ptype, int32_t bit, Board *board){
 
     get_index(&i1, &i2, ptype, bit, wk, bk, black);
 
-    for (int i = 0; i < L1_SIZE; ++i) {
-        board->nnom.l1[black][i] += l1_weights[i1][i];
-        board->nnom.l1[black][i] += l1_weights[i2][i];
-    }
+    nnom_add_index(board->nnom.l1[black], l1_weights[i1]);
+    nnom_add_index(board->nnom.l1[black], l1_weights[i2]);
 }
 
 void nnom_pop_bit(int32_t ptype, int32_t bit, Board *board){
@@ -102,10 +127,8 @@ void nnom_pop_bit(int32_t ptype, int32_t bit, Board *board){
 
     get_index(&i1, &i2, ptype, bit, wk, bk, white);
 
-    for (int i = 0; i < L1_SIZE; ++i) {
-        board->nnom.l1[white][i] -= l1_weights[i1][i];
-        board->nnom.l1[white][i] -= l1_weights[i2][i];
-    }
+    nnom_subtract_index(board->nnom.l1[white], l1_weights[i1]);
+    nnom_subtract_index(board->nnom.l1[white], l1_weights[i2]);
 
     int32_t tmp = wk;
     wk = bk;
@@ -115,10 +138,8 @@ void nnom_pop_bit(int32_t ptype, int32_t bit, Board *board){
 
     get_index(&i1, &i2, ptype, bit, wk, bk, black);
 
-    for (int i = 0; i < L1_SIZE; ++i) {
-        board->nnom.l1[black][i] -= l1_weights[i1][i];
-        board->nnom.l1[black][i] -= l1_weights[i2][i];
-    }
+    nnom_subtract_index(board->nnom.l1[black], l1_weights[i1]);
+    nnom_subtract_index(board->nnom.l1[black], l1_weights[i2]);
 }
 
 void generate_nnom_indicies_helper(Board *board){

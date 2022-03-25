@@ -16,7 +16,7 @@
 #include "bitboard.h"
 #include <stdalign.h>
 
-int32_t load_model(const char *path);
+int32_t load_nnue(const char *path);
 
 typedef struct NnueData NnueData;
 
