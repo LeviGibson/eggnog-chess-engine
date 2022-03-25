@@ -2,7 +2,6 @@
 #include "bitboard.h"
 #include "board.h"
 #include "uci.h"
-#include "moveOrder.h"
 #include "transposition.h"
 #include "nnue.h"
 #include "see.h"
@@ -13,10 +12,8 @@ int main(int argc, char* argv[]) {
 
     init_bitboards();
     init_zobrist_keys();
-    init_move_table();
     reinit_transposition();
     init_see();
-    search_init();
 
     load_model("nn-eba324f53044.nnue");
     load_nnom("network.nnom");

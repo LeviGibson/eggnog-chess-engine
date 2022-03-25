@@ -7,7 +7,6 @@ CFILES = main.c\
  search.c\
  timeman.c\
  transposition.c\
- moveOrder.c\
  Fathom/*.c\
  nnue.c\
  see.c\
@@ -23,7 +22,6 @@ AVX2_OBJS = search.c.avx2.o \
        uci.c.avx2.o \
        timeman.c.avx2.o \
        transposition.c.avx2.o \
-       moveOrder.c.avx2.o \
        Fathom/tbchess.c.avx2.o \
        Fathom/tbprobe.c.avx2.o \
        see.c.avx2.o\
@@ -39,7 +37,6 @@ AVX_OBJS = search.c.avx.o \
 	   uci.c.avx.o \
 	   timeman.c.avx.o \
 	   transposition.c.avx.o \
-	   moveOrder.c.avx.o \
 	   Fathom/tbchess.c.avx.o \
 	   Fathom/tbprobe.c.avx.o \
 	   see.c.avx.o\
@@ -55,7 +52,6 @@ SSE2_OBJS = search.c.sse2.o \
        uci.c.sse2.o \
        timeman.c.sse2.o \
        transposition.c.sse2.o \
-       moveOrder.c.sse2.o \
        Fathom/tbchess.c.sse2.o \
        Fathom/tbprobe.c.sse2.o \
        see.c.sse2.o\
@@ -71,7 +67,6 @@ SSE_OBJS = search.c.sse.o \
 	   uci.c.sse.o \
 	   timeman.c.sse.o \
 	   transposition.c.sse.o \
-	   moveOrder.c.sse.o \
 	   Fathom/tbchess.c.sse.o \
 	   Fathom/tbprobe.c.sse.o \
 	   see.c.sse.o\
@@ -87,7 +82,6 @@ POPCNT_OBJS = search.c.popcnt.o \
 	   uci.c.popcnt.o \
 	   timeman.c.popcnt.o \
 	   transposition.c.popcnt.o \
-	   moveOrder.c.popcnt.o \
 	   Fathom/tbchess.c.popcnt.o \
 	   Fathom/tbprobe.c.popcnt.o \
 	   see.c.popcnt.o\

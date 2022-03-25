@@ -5,7 +5,6 @@
 #include "Fathom/tbprobe.h"
 #include "syzygy.h"
 #include "uci.h"
-#include "moveOrder.h"
 #include "see.h"
 #include <stdio.h>
 #include <pthread.h>
@@ -108,140 +107,6 @@ U64 pastPawnMasks[2][64] = {
          0x0ULL, 0x0ULL, 0x0ULL, 0x0ULL,}
 };
 
-void print_m256(__m256i _x){
-    U64 *x = (U64*)&_x;
-    for (int32_t i = 0; i < 4; ++i) {
-        for (int32_t j = 0; j < 64; ++j) {
-            if (j % 16 == 0)
-                printf("\n");
-            printf("%d ", get_bit(x[i], j) ? 1 : 0);
-        }
-    }
-
-    printf("\n\n");
-}
-
-#ifdef AVX2
-uint16_t andmask[16] = {1, 1 << 1, 1 << 2, 1 << 3, 1 << 4, 1 << 5, 1 << 6, 1 << 7,
-                       1 << 8, 1 << 9, 1 << 10, 1 << 11, 1 << 12, 1 << 13, 1 << 14, 1 << 15};
-
-__m256i inverse_maskmove_epi16(U64 x){
-    __m256i _and = _mm256_loadu_si256((const void *) andmask);
-    int16_t x16 = *(int16_t*)&x;
-    __m256i _mask = _mm256_set1_epi16(x16);
-    _mask = _mm256_and_si256(_mask, _and);
-    _mask = _mm256_cmpeq_epi16(_mask, _and);
-    return _mask;
-}
-
-int16_t hadd_epi16(__m256i x) {
-    const __m128i hiQuad = (__m128i)_mm256_extractf128_ps((__m256)x, 1);
-    const __m128i loQuad = (__m128i)_mm256_castps256_ps128((__m256)x);
-    const __m128i sumQuad = _mm_add_epi16(loQuad, hiQuad);
-    const __m128i hiDual = (__m128i)_mm_movehl_ps((__m128)sumQuad, (__m128)sumQuad);
-    const __m128i sumDual = _mm_add_epi16(sumQuad, hiDual);
-    return _mm_extract_epi16(sumDual, 0) + _mm_extract_epi16(sumDual, 1) + _mm_extract_epi16(sumDual, 2) + _mm_extract_epi16(sumDual, 3);
-}
-
-
-#elif defined(AVX)
-
-uint16_t andmask[16] = {1, 1 << 1, 1 << 2, 1 << 3, 1 << 4, 1 << 5, 1 << 6, 1 << 7,
-                       1 << 8, 1 << 9, 1 << 10, 1 << 11, 1 << 12, 1 << 13, 1 << 14, 1 << 15};
-
-int32_t bitshifts[16] = {0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15};
-
-__m256i cmpeq(__m256i x, __m256i y){
-    __m128i x2 = (__m128i)_mm256_extractf128_ps((__m256)x, 1);
-    __m128i x1 = (__m128i)_mm256_castps256_ps128((__m256)x);
-
-    __m128i y2 = (__m128i)_mm256_extractf128_ps((__m256)y, 1);
-    __m128i y1 = (__m128i)_mm256_castps256_ps128((__m256)y);
-
-    x1 = _mm_cmpeq_epi16(x1, y1);
-    x2 = _mm_cmpeq_epi16(x2, y2);
-
-    __m256i c = (__m256i)_mm256_castps128_ps256((__m128)x1);
-    c = (__m256i)_mm256_insertf128_ps((__m256)c, (__m128)x2, 1);
-
-    return c;
-}
-
-__m256i inverse_maskmove_epi16(U64 x){
-    __m256i _and = _mm256_loadu_si256((const void *) andmask);
-    int16_t x16 = *(int16_t*)&x;
-    __m256i _mask = _mm256_set1_epi16(x16);
-    _mask = (__m256i)_mm256_and_ps((__m256)_mask, (__m256)_and);
-    _mask = cmpeq(_mask, _and);
-
-    return _mask;
-}
-
-int16_t hadd_epi16(__m256i x) {
-    const __m128i hiQuad = (__m128i)_mm256_extractf128_ps((__m256)x, 1);
-    const __m128i loQuad = (__m128i)_mm256_castps256_ps128((__m256)x);
-    const __m128i sumQuad = _mm_add_epi16(loQuad, hiQuad);
-    const __m128i hiDual = (__m128i)_mm_movehl_ps((__m128)sumQuad, (__m128)sumQuad);
-    const __m128i sumDual = _mm_add_epi16(sumQuad, hiDual);
-    return _mm_extract_epi16(sumDual, 0) + _mm_extract_epi16(sumDual, 1) + _mm_extract_epi16(sumDual, 2) + _mm_extract_epi16(sumDual, 3);
-}
-
-#endif
-
-int16_t getScoreFromMoveTable(U64 bitboard, const int16_t *bbPart){
-
-#ifdef AVX2
-    bitboard = ~bitboard;
-        __m256i score = _mm256_set1_epi16(0);
-
-        for (int32_t i = 0; i < 64; i += 16) {
-            __m256i _x = _mm256_loadu_si256((const void *) &bbPart[i]);
-            _x = _mm256_xor_si256(_x, inverse_maskmove_epi16(bitboard >> i));
-
-            score = _mm256_add_epi16(_x, score);
-        }
-
-        return hadd_epi16(score);
-
-#elif defined(AVX)
-    bitboard = ~bitboard;
-    int16_t score = 0;
-
-    for (int32_t i = 0; i < 64; i += 16) {
-        __m256i _x = _mm256_loadu_si256((const void *) &bbPart[i]);
-        _x = (__m256i)_mm256_xor_ps((__m256)_x, (__m256)inverse_maskmove_epi16(bitboard >> i));
-
-        score += hadd_epi16(_x);
-    }
-
-    return score;
-#else
-
-    int16_t score = 0;
-
-    for (int32_t i = 0; i < 64; ++i) {
-        if (get_bit(bitboard, i)){
-            score += bbPart[i];
-        } else {
-            score -= bbPart[i];
-        }
-    }
-
-    return score;
-
-#endif
-
-}
-
-#define MOVE_HASH_SIZE 200000
-int32_t moveScoreHash[MOVE_HASH_SIZE];
-
-void search_init(){
-    for (int i = 0; i < MOVE_HASH_SIZE; ++i) {
-        moveScoreHash[i] = NO_MOVE;
-    }
-}
-
 //Board is included in Thread *thread
 //returns the score of a move, integer.
 //int32_t *hashmove is  the best move stored in the hash table (from a previous depth)
@@ -304,10 +169,7 @@ int32_t score_move(int32_t move, const int32_t *hashmove, Thread *thread){
 
         if (board->quinode){ return 0; }
 
-        int32_t score = 0;
-        int32_t pieceCount = count_bits(WB | WN | WR | WQ | BB | BN | BR | BQ);
-
-        score = get_nnom_score(move, board);
+        int32_t score = get_nnom_score(move, board);
 
         if (historyCount > 0) {
             float historyscore = (history_moves[getpiece(move)][getsource(move)][gettarget(move)] / (float) historyCount) * (float)historyMoveDivisor;
@@ -317,8 +179,6 @@ int32_t score_move(int32_t move, const int32_t *hashmove, Thread *thread){
         return (int)score;
     }
 }
-
-
 
 //sorts a list of moves
 //int32_t *hashmove is the move stored in the transposition table from a previous depth
