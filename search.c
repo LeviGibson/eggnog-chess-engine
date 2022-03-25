@@ -10,6 +10,7 @@
 #include <stdio.h>
 #include <pthread.h>
 
+#define NO_LMR
 #define fabs(x) (((x) > 0) ? (x) : -(x))
 
 int32_t DEF_ASPWINDOW = 1760;
@@ -315,51 +316,7 @@ int32_t score_move(int32_t move, const int32_t *hashmove, Thread *thread){
         }
 
         score = board->nnom.l2[(orientedPiece * 64) + orientedSquare];
-
-//        int32_t *hashptr = &moveScoreHash[(board->current_zobrist_key ^ get_move_key(move)) % MOVE_HASH_SIZE];
-//	    if (*hashptr != NO_MOVE){
-//	        score = *hashptr;
-//	    } else {
-//
-//            int32_t piece = getpiece(move);
-//            int32_t target = gettarget(move);
-//
-//
-//            //for those who attempt to break this engine, take this :)
-//            if (pieceCount > 14)
-//                pieceCount = 14;
-//            //ha!
-//
-//            const int16_t *dataPart = &moveOrderData[pieceCount][piece][target][0][0];
-//            char *wspart = &moveOrderWorthSearching[pieceCount][piece][target][0];
-//
-//            for (int32_t bb = 0; bb < 14; bb++) {
-//                if (bb == p_P || bb == p_p || bb == 12 || bb == 13 || wspart[bb] || board->pvnode) {
-//
-//                    const int16_t *bbPart = &dataPart[bb * 64];
-//                    U64 bitboard;
-//
-//                    //there are two other bitboards that represent what squares each side attacks
-//                    if (bb < 12)
-//                        bitboard = board->bitboards[bb];
-//                    else
-//                        bitboard = board->unprotectedPieces[bb - 12];
-//
-//                    score += getScoreFromMoveTable(bitboard, bbPart);
-//                }
-//            }
-//
-//            *hashptr = score;
-//        }
-
-//        if (is_move_direct_check(move, board) && (pieceCount <= 6 || getpiece(move) == p_Q || getpiece(move) == p_q))
-//            score += fabs(score)/2;
-//
-//        if (getpiece(move) == p_P && !(pastPawnMasks[white][gettarget(move)] & BP))
-//            score += fabs(score)/2;
-//
-//        if (getpiece(move) == p_p && !(pastPawnMasks[black][gettarget(move)] & WP))
-//            score += fabs(score)/2;
+        printf("%d\n", score);
 
         score /= 550;
 

@@ -37,7 +37,14 @@ void nnom_propogate_l1(Board *board){
     }
 }
 
+int flipPiecePers[12] = {p_p, p_n, p_b, p_r, p_q, p_k, p_P, p_N, p_B, p_R, p_Q, p_K};
+
 void get_index(uint32_t  *i1, uint32_t *i2, int32_t p, int32_t sq, int32_t wk, int32_t bk, int32_t side){
+    if (side == black){
+        p = flipPiecePers[p];
+        sq = w_orient[sq];
+    }
+
     *i1 = wk + (768*p) + (64*sq);
     *i2 = bk + (768*p) + (64*sq) + 49152;
 }
@@ -47,6 +54,15 @@ void generate_nnom_indicies(Board *board){
 
     int32_t wk = bsf(board->bitboards[p_K]);
     int32_t bk = bsf(board->bitboards[p_k]);
+
+    if (board->side == black){
+        wk = w_orient[wk];
+        bk = w_orient[bk];
+
+        int32_t tmp = wk;
+        wk = bk;
+        bk = tmp;
+    }
 
     for (int p = 0; p < 12; ++p) {
         U64 bb = board->bitboards[p];
