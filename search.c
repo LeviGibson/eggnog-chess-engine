@@ -454,6 +454,9 @@ static inline int32_t search(int32_t depth, int32_t alpha, int32_t beta, Line *p
         if (legalMoveCount && depth <= 2 && (!getcapture(move)) && (!in_check) && !board->pvnode && ((staticeval + (legalMoves.scores[moveId])) + (margins[depth]*64) < alpha) && !is_move_direct_check(move, board))
             continue;
 #endif
+        //since king moves are super expensive (for the neural networks) many of them are discarded at depth 1.
+        if (depth == 1 && !board->pvnode && legalMoves.scores[moveId] < -1000 && (getpiece(move) == p_K || getpiece(move) == p_k))
+            continue;
 
         //The illigal moves (moving pinned pieces mostly) are not removed during the move generation, they are removed here.
         if (make_move(move, all_moves, 1, board)) {
