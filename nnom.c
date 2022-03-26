@@ -32,8 +32,8 @@ int32_t calculate_l2_value(const int16_t *restrict l1, int32_t index){
     __m256i _0 = _mm256_setzero_si256();
 
     for (int32_t i = 0; i < L1_SIZE; i += 16){
-        __m256i _values = _mm256_loadu_si256((const __m256i_u *) &l1[i]);
-        __m256i _weights = _mm256_loadu_si256((const __m256i_u *) &l2_weights[index][i]);
+        __m256i _values = _mm256_loadu_si256(&l1[i]);
+        __m256i _weights = _mm256_loadu_si256(&l2_weights[index][i]);
 
         _values = _mm256_max_epi16(_values, _0);
         _values = _mm256_srli_epi16(_values, 6);
