@@ -13,24 +13,46 @@ alignas(64) int16_t l2_weights[L2_SIZE][L1_SIZE];
 alignas(64) int16_t l1_biases[L1_SIZE];
 alignas(64) int32_t l2_biases[L2_SIZE];
 
-void nnom_refresh_l1_helper(Board *board){
-    NnomData *data = &board->nnom;
-    memcpy(&data->l1[board->side], l1_biases, sizeof(l1_biases));
-    generate_nnom_indicies(board);
+#define AVX2
 
-    for (int32_t i = 0; i < data->indexCount; ++i) {
-        uint32_t index = data->indicies[board->side][i];
-        for (int32_t j = 0; j < L1_SIZE; ++j) {
-            data->l1[board->side][j] += l1_weights[index][j];
-        }
-    }
+#ifdef AVX2
+int16_t hadd_epi16(__m256i x) {
+    const __m128i hiQuad = (__m128i)_mm256_extractf128_ps((__m256)x, 1);
+    const __m128i loQuad = (__m128i)_mm256_castps256_ps128((__m256)x);
+    const __m128i sumQuad = _mm_add_epi16(loQuad, hiQuad);
+    const __m128i hiDual = (__m128i)_mm_movehl_ps((__m128)sumQuad, (__m128)sumQuad);
+    const __m128i sumDual = _mm_add_epi16(sumQuad, hiDual);
+    return _mm_extract_epi16(sumDual, 0) + _mm_extract_epi16(sumDual, 1) + _mm_extract_epi16(sumDual, 2) + _mm_extract_epi16(sumDual, 3);
 }
+#endif
 
-void nnom_refresh_l1(Board *board){
-    nnom_refresh_l1_helper(board);
-    board->side ^= 1;
-    nnom_refresh_l1_helper(board);
-    board->side ^= 1;
+int32_t calculate_l2_value(const int16_t *restrict l1, int32_t index){
+#ifdef AVX2
+    __m256i _sum = _mm256_setzero_si256();
+    __m256i _0 = _mm256_setzero_si256();
+
+    for (int32_t i = 0; i < L1_SIZE; i += 16){
+        __m256i _values = _mm256_loadu_si256((const __m256i_u *) &l1[i]);
+        __m256i _weights = _mm256_loadu_si256((const __m256i_u *) &l2_weights[index][i]);
+
+        _values = _mm256_max_epi16(_values, _0);
+        _values = _mm256_srli_epi16(_values, 6);
+
+        _values = _mm256_mullo_epi16(_values, _weights);
+        _sum = _mm256_add_epi16(_sum, _values);
+    }
+
+    return l2_biases[index] + hadd_epi16(_sum);
+#else
+    int32_t score = l2_biases[index];
+
+    for (int32_t i = 0; i < L1_SIZE; ++i) {
+        int16_t l1value = max(0, l1[i]) / 64;
+        score += l2_weights[index][i] * l1value;
+    }
+
+    return score;
+#endif
 }
 
 int32_t get_nnom_score(int move, Board *board){
@@ -41,18 +63,12 @@ int32_t get_nnom_score(int move, Board *board){
         orientedPiece -= 6;
         orientedSquare = w_orient[orientedSquare];
     }
-    int32_t moveIndex = (orientedPiece * 64) + orientedSquare;
-    int32_t score = l2_biases[moveIndex];
 
-    for (int32_t i = 0; i < L1_SIZE; ++i) {
-        int16_t l1value = max(0, data->l1[board->side][i]) / 64;
-        score += l2_weights[moveIndex][i] * l1value;
-    }
+    int32_t moveIndex = (orientedPiece * 64) + orientedSquare;
+    int32_t score = calculate_l2_value(data->l1[board->side], moveIndex);
 
     return score;
 }
-
-
 
 int flipPiecePers[12] = {p_p, p_n, p_b, p_r, p_q, p_k, p_P, p_N, p_B, p_R, p_Q, p_K};
 
@@ -140,6 +156,24 @@ void nnom_pop_bit(int32_t ptype, int32_t bit, Board *board){
 
     nnom_subtract_index(board->nnom.l1[black], l1_weights[i1]);
     nnom_subtract_index(board->nnom.l1[black], l1_weights[i2]);
+}
+
+void nnom_refresh_l1_helper(Board *board){
+    NnomData *data = &board->nnom;
+    memcpy(&data->l1[board->side], l1_biases, sizeof(l1_biases));
+    generate_nnom_indicies(board);
+
+    for (int32_t i = 0; i < data->indexCount; ++i) {
+        uint32_t index = data->indicies[board->side][i];
+        nnom_add_index(data->l1[board->side], l1_weights[index]);
+    }
+}
+
+void nnom_refresh_l1(Board *board){
+    nnom_refresh_l1_helper(board);
+    board->side ^= 1;
+    nnom_refresh_l1_helper(board);
+    board->side ^= 1;
 }
 
 void generate_nnom_indicies_helper(Board *board){
