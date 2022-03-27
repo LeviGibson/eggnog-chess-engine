@@ -453,7 +453,7 @@ static inline void generate_king_moves(MoveList *legalMoves, Board *board){
 
     //castling
     if (board->side == white){
-        if (board->castle & wk){
+        if (board->castle & castle_wk){
             //0x6000000000000000ULL
             //(1ULL << f1) | (1ULL << g1)))
             if (!(board->occupancies[both] & 0x6000000000000000ULL)){
@@ -463,7 +463,7 @@ static inline void generate_king_moves(MoveList *legalMoves, Board *board){
                 }
             }
         }
-        if (board->castle & (wq)){
+        if (board->castle & (castle_wq)){
             //0xe00000000000000ULL
             //((1ULL << d1) | (1ULL << c1) | (1ULL << b1))
             if (!(board->occupancies[both] & 0xe00000000000000ULL)){
@@ -474,7 +474,7 @@ static inline void generate_king_moves(MoveList *legalMoves, Board *board){
             }
         }
     }else{
-        if (board->castle & bk){
+        if (board->castle & castle_bk){
             //0x60ULL
             //((1ULL << f8) | (1ULL << g8))
             if (!(board->occupancies[both] & 0x60ULL)){
@@ -484,7 +484,7 @@ static inline void generate_king_moves(MoveList *legalMoves, Board *board){
                 }
             }
         }
-        if (board->castle & (bq)){
+        if (board->castle & (castle_bq)){
             //0xeULL
             //((1ULL << d8) | (1ULL << c8) | (1ULL << b8))
             if (!(board->occupancies[both] & 0xeULL)){
@@ -1013,10 +1013,10 @@ void parse_fen(char *fen, Board *board)
     {
         switch (*fen)
         {
-            case 'K': board->castle |= wk; break;
-            case 'Q': board->castle |= wq; break;
-            case 'k': board->castle |= bk; break;
-            case 'q': board->castle |= bq; break;
+            case 'K': board->castle |= castle_wk; break;
+            case 'Q': board->castle |= castle_wq; break;
+            case 'k': board->castle |= castle_bk; break;
+            case 'q': board->castle |= castle_bq; break;
             case '-': break;
         }
 

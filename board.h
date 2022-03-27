@@ -19,7 +19,7 @@ typedef struct Board Board;
 #define tricky_position "rnbq1k1r/pp1Pbppp/2p5/8/2B5/8/PPP1NnPP/RNBQK2R w KQ - 1 8  "
 #define killer_position "rnbqkb1r/pp1p1pPp/8/2p1pP2/1P1P4/3P3P/P1P1P3/RNBQKBNR w KQkq e6 0 1"
 
-enum{wk = 1, wq = 2, bk = 4, bq = 8};
+enum{castle_wk = 1, castle_wq = 2, castle_bk = 4, castle_bq = 8};
 enum {all_moves, only_captures};
 
 #define WK board->bitboards[p_K]
