@@ -29,18 +29,7 @@ alignas(64) int32_t nnue_l2_biases[NNUE_L2SIZE ];
 alignas(64) int32_t nnue_l3_biases[NNUE_L3SIZE ];
 alignas(64) int32_t nnue_l4_biases[NNUE_L4SIZE];
 
-void transform_weight_indicies(int8_t arr[], uint32_t dims){
-    int8_t tmpArr[dims*32];
-    memcpy(tmpArr, arr, sizeof tmpArr);
-
-    for (int32_t r = 0; r < 32; ++r) {
-        for (int32_t c = 0; c < dims; ++c) {
-            arr[(c * 32) + r] = tmpArr[(dims*r) + c];
-        }
-    }
-}
-
-int32_t load_nnue(const char *path){
+int32_t load_nnue(const char *path) {
     //avoid compiler warnings
     unsigned long tmp;
 
@@ -49,14 +38,14 @@ int32_t load_nnue(const char *path){
     //FEATURE TRANSFORMER
 
     tmp = fread(nnue_l1_weights, sizeof(int16_t), NNUE_INSIZE * NNUE_KPSIZE, fin);
-    tmp = fread(nnue_l2_weights, sizeof (nnue_l2_weights[0]), NNUE_L1SIZE * NNUE_L2SIZE, fin);
-    tmp = fread(nnue_l3_weights, sizeof (nnue_l3_weights[0]), NNUE_L2SIZE * NNUE_L3SIZE, fin);
-    tmp = fread(nnue_l4_weights, sizeof (nnue_l4_weights[0]), NNUE_L2SIZE * NNUE_L4SIZE, fin);
+    tmp = fread(nnue_l2_weights, sizeof(nnue_l2_weights[0]), NNUE_L1SIZE * NNUE_L2SIZE, fin);
+    tmp = fread(nnue_l3_weights, sizeof(nnue_l3_weights[0]), NNUE_L2SIZE * NNUE_L3SIZE, fin);
+    tmp = fread(nnue_l4_weights, sizeof(nnue_l4_weights[0]), NNUE_L2SIZE * NNUE_L4SIZE, fin);
 
     tmp = fread(nnue_l1_biases, sizeof(int16_t), NNUE_KPSIZE, fin);
-    tmp = fread(nnue_l2_biases, sizeof (nnue_l2_biases[0]), NNUE_L2SIZE, fin);
-    tmp = fread(nnue_l3_biases, sizeof (nnue_l3_biases[0]), NNUE_L3SIZE, fin);
-    tmp = fread(nnue_l4_biases, sizeof (nnue_l4_biases[0]), NNUE_L4SIZE, fin);
+    tmp = fread(nnue_l2_biases, sizeof(nnue_l2_biases[0]), NNUE_L2SIZE, fin);
+    tmp = fread(nnue_l3_biases, sizeof(nnue_l3_biases[0]), NNUE_L3SIZE, fin);
+    tmp = fread(nnue_l4_biases, sizeof(nnue_l4_biases[0]), NNUE_L4SIZE, fin);
 
     fclose(fin);
 
@@ -66,26 +55,6 @@ int32_t load_nnue(const char *path){
 
     return 0;
 }
-
-enum {
-    PS_W_PAWN = 0,
-    PS_B_PAWN = 1 * 64,
-    PS_W_KNIGHT = 2 * 64,
-    PS_B_KNIGHT = 3 * 64,
-    PS_W_BISHOP = 4 * 64,
-    PS_B_BISHOP = 5 * 64,
-    PS_W_ROOK = 6 * 64,
-    PS_B_ROOK = 7 * 64,
-    PS_W_QUEEN = 8 * 64,
-    PS_B_QUEEN = 9 * 64,
-};
-
-uint32_t PieceToIndex[2][14] = {
-        {0, 0, PS_W_QUEEN, PS_W_ROOK, PS_W_BISHOP, PS_W_KNIGHT, PS_W_PAWN,
-                0, PS_B_QUEEN, PS_B_ROOK, PS_B_BISHOP, PS_B_KNIGHT, PS_B_PAWN, 0},
-        {0, 0, PS_B_QUEEN, PS_B_ROOK, PS_B_BISHOP, PS_B_KNIGHT, PS_B_PAWN,
-                0, PS_W_QUEEN, PS_W_ROOK, PS_W_BISHOP, PS_W_KNIGHT, PS_W_PAWN, 0}
-};
 
 int32_t flip_piece_pers[12] = {p_p, p_n, p_b, p_r, p_q, p_k, p_P, p_N, p_B, p_R, p_Q, p_K};
 
@@ -184,12 +153,12 @@ void refresh_accumulator(NnueData *data, Board *board) {
 void clamp_layer(int32_t *layer){
 #ifdef AVX2
 
-    __m256i _8128 = _mm256_set1_epi32(8128);
+    __m256i _16256 = _mm256_set1_epi32(16256);
     __m256i _0 = _mm256_set1_epi32(0);
 
     for (int32_t i = 0; i < 32; i += 8) {
         __m256i _x = _mm256_load_si256((void*)&layer[i]);
-        _x = _mm256_min_epi32(_x, _8128);
+        _x = _mm256_min_epi32(_x, _16256);
         _x = _mm256_max_epi32(_x, _0);
         _x = _mm256_srli_epi32(_x, 7);
 
@@ -199,7 +168,7 @@ void clamp_layer(int32_t *layer){
 #else
 
     for (int32_t i = 0; i < 32; ++i) {
-        layer[i] = clamp(layer[i], 0, 8128);
+        layer[i] = clamp(layer[i], 0, 16256);
         layer[i] /= 128;
     }
 
