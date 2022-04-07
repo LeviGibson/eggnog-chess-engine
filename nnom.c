@@ -79,7 +79,7 @@ void get_index(uint32_t  *i1, uint32_t *i2, int32_t p, int32_t sq, int32_t wk, i
     }
 
     *i1 = wk + (768*p) + (64*sq);
-    *i2 = bk + (768*p) + (64*sq) + 49152;
+    *i2 = w_orient[bk] + (768*flipPiecePers[p]) + (64*w_orient[sq]) + 49152;
 }
 
 static inline void nnom_add_index(int16_t *restrict a, const int16_t *restrict b){

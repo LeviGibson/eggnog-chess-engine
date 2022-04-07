@@ -1050,5 +1050,6 @@ void parse_fen(char *fen, Board *board)
     board->kpExtended = 0;
 
     refresh_accumulator(&board->currentNnue, board);
+    nnom_refresh_l1(board);
     refresh_weak_squares(board);
 }
