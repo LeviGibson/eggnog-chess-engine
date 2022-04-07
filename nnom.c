@@ -13,8 +13,6 @@ alignas(64) int16_t l2_weights[L2_SIZE][L1_SIZE];
 alignas(64) int16_t l1_biases[L1_SIZE];
 alignas(64) int32_t l2_biases[L2_SIZE];
 
-#define AVX2
-
 #ifdef AVX2
 int16_t hadd_epi16(__m256i x) {
     const __m128i hiQuad = (__m128i)_mm256_extractf128_ps((__m256)x, 1);
