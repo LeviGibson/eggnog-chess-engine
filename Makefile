@@ -117,8 +117,8 @@ endif
 release:
 	mkdir ./bin/eggnog-windows
 	mkdir ./bin/eggnog-linux
-	cp ./bin/moveOrderData.bin ./bin/eggnog-windows/
-	cp ./bin/moveOrderData.bin ./bin/eggnog-linux/
+	cp ./bin/network.nnom ./bin/eggnog-windows/
+	cp ./bin/network.nnom ./bin/eggnog-linux/
 	cp ./bin/nn-eba324f53044.nnue ./bin/eggnog-linux/
 	cp ./bin/nn-eba324f53044.nnue ./bin/eggnog-windows/
 
