@@ -13,7 +13,7 @@ alignas(64) int16_t l2_weights[L2_SIZE][L1_SIZE];
 alignas(64) int16_t l1_biases[L1_SIZE];
 alignas(64) int32_t l2_biases[L2_SIZE];
 
-#ifdef AVX2
+#if defined(AVX2) || defined(AVX)
 int16_t hadd_epi16(__m256i x) {
     const __m128i hiQuad = (__m128i)_mm256_extractf128_ps((__m256)x, 1);
     const __m128i loQuad = (__m128i)_mm256_castps256_ps128((__m256)x);
@@ -25,7 +25,7 @@ int16_t hadd_epi16(__m256i x) {
 #endif
 
 int32_t calculate_l2_value(const int16_t *restrict l1, int32_t index){
-#ifdef AVX2
+#if defined(AVX2) || defined(AVX)
     __m256i _sum = _mm256_setzero_si256();
     __m256i _0 = _mm256_setzero_si256();
 
@@ -81,7 +81,7 @@ void get_index(uint32_t  *i1, uint32_t *i2, int32_t p, int32_t sq, int32_t wk, i
 }
 
 static inline void nnom_add_index(int16_t *restrict a, const int16_t *restrict b){
-#ifdef AVX2
+#if defined(AVX2) || defined(AVX)
     for (int i = 0; i < L1_SIZE; i += 16) {
         __m256i _a = _mm256_loadu_si256(&a[i]);
         __m256i _b = _mm256_loadu_si256(&b[i]);
@@ -95,7 +95,7 @@ static inline void nnom_add_index(int16_t *restrict a, const int16_t *restrict b
 }
 
 static inline void nnom_subtract_index(int16_t *restrict a, const int16_t *restrict b){
-#ifdef AVX2
+#if defined(AVX2) || defined(AVX)
     for (int i = 0; i < L1_SIZE; i += 16) {
         __m256i _a = _mm256_loadu_si256(&a[i]);
         __m256i _b = _mm256_loadu_si256(&b[i]);
