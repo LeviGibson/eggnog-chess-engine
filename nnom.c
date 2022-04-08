@@ -109,6 +109,9 @@ static inline void nnom_subtract_index(int16_t *restrict a, const int16_t *restr
 }
 
 void nnom_set_bit(int32_t ptype, int32_t bit, Board *board){
+    if (board->quinode)
+        return;
+
     uint32_t i1;
     uint32_t i2;
 
@@ -133,6 +136,9 @@ void nnom_set_bit(int32_t ptype, int32_t bit, Board *board){
 }
 
 void nnom_pop_bit(int32_t ptype, int32_t bit, Board *board){
+    if (board->quinode)
+        return;
+
     uint32_t i1;
     uint32_t i2;
 
