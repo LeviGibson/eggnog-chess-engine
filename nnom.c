@@ -163,6 +163,9 @@ void nnom_pop_bit(int32_t ptype, int32_t bit, Board *board){
 }
 
 void nnom_refresh_l1_helper(Board *board){
+    if (board->quinode)
+        return;
+
     NnomData *data = &board->nnom;
     memcpy(&data->l1[board->side], l1_biases, sizeof(l1_biases));
     generate_nnom_indicies(board);
