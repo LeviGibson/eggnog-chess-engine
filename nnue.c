@@ -58,11 +58,6 @@ int32_t load_nnue(const char *path) {
 
 int32_t flip_piece_pers[12] = {p_p, p_n, p_b, p_r, p_q, p_k, p_P, p_N, p_B, p_R, p_Q, p_K};
 
-static inline void make_indicies(int32_t *i1, int32_t *i2, int32_t p, int32_t sq, int32_t wksq, int32_t bksq) {
-    *i1 = (wksq + (768*p) + (64*sq));
-    *i2 = w_orient[bksq] + (768*flip_piece_pers[p]) + (64*w_orient[sq]);
-}
-
 static inline void append_index(int32_t c, int32_t index, NnueData *data) {
     data->activeIndicies[c][data->activeIndexCount[c]++] = index;
 }
@@ -71,21 +66,16 @@ void append_active_indicies(NnueData *data, Board *board) {
     data->activeIndexCount[black] = 0;
     data->activeIndexCount[white] = 0;
 
-    int32_t w_ksq = bsf(board->bitboards[p_K]);
-    int32_t b_ksq = bsf(board->bitboards[p_k]);
-
     for (int32_t ptype = p_P; ptype < p_k; ++ptype) {
 
         U64 bitboard = board->bitboards[ptype];
         while (bitboard) {
             int32_t sq = bsf(bitboard);
 
-            int32_t i1;
-            int32_t i2;
-            make_indicies(&i1, &i2, ptype, sq, w_ksq, b_ksq);
-
-            append_index(white, i1, data);
-            append_index(black, i2, data);
+            if (ptype < 6)
+                append_index(white, ptype*64 + sq, data);
+            else
+                append_index(black, (ptype-6)*64 + w_orient[sq], data);
 
             pop_bit(bitboard, sq);
         }
@@ -94,13 +84,13 @@ void append_active_indicies(NnueData *data, Board *board) {
 
 //vectorised by the compiler
 void add_index(int16_t *restrict acc, uint32_t index, uint32_t c) {
-    uint32_t offset = 256 * index;
+    uint32_t offset = NNUE_KPSIZE * index;
     int16_t *restrict w = nnue_l1_weights + offset;
-    acc += 256*c;
+    acc += NNUE_KPSIZE*c;
 
 #ifdef AVX2
 
-    for (int32_t j = 0 ; j < 256 ; j += 16) {
+    for (int32_t j = 0 ; j < NNUE_KPSIZE ; j += 16) {
         __m256i _x = _mm256_loadu_si256((void*)&acc[j]);
         __m256i _y = _mm256_loadu_si256((void*)&w[j]);
         _mm256_storeu_si256((__m256i*)&acc[j], _mm256_add_epi16(_x, _y));
@@ -108,7 +98,7 @@ void add_index(int16_t *restrict acc, uint32_t index, uint32_t c) {
 
 #else
 
-    for (uint16_t j = 0; j < 256; j++)
+    for (uint16_t j = 0; j < NNUE_KPSIZE; j++)
         acc[j] += w[j];
 
 #endif
@@ -116,13 +106,13 @@ void add_index(int16_t *restrict acc, uint32_t index, uint32_t c) {
 
 //vectorised by the compiler
 void subtract_index(int16_t *restrict acc, uint32_t index, uint32_t c) {
-    uint32_t offset = 256 * index;
+    uint32_t offset = NNUE_KPSIZE * index;
     int16_t *restrict w = nnue_l1_weights + offset;
-    acc += 256*c;
+    acc += NNUE_KPSIZE*c;
 
 #ifdef AVX2
 
-    for (int32_t j = 0 ; j < 256 ; j += 16) {
+    for (int32_t j = 0 ; j < NNUE_KPSIZE ; j += 16) {
         __m256i _x = _mm256_loadu_si256((void*)&acc[j]);
         __m256i _y = _mm256_loadu_si256((void*)&w[j]);
         _mm256_storeu_si256((__m256i*)&acc[j], _mm256_sub_epi16(_x, _y));
@@ -130,7 +120,7 @@ void subtract_index(int16_t *restrict acc, uint32_t index, uint32_t c) {
 
 #else
 
-    for (uint16_t j = 0; j < 256; j++)
+    for (uint16_t j = 0; j < NNUE_KPSIZE; j++)
         acc[j] -= w[j];
 
 #endif
@@ -140,7 +130,7 @@ void refresh_accumulator(NnueData *data, Board *board) {
     append_active_indicies(data, board);
 
     for (uint32_t c = 0; c < 2; c++) {
-        memcpy(data->accumulation[c], nnue_l1_biases, 256 * sizeof(int16_t));
+        memcpy(data->accumulation[c], nnue_l1_biases, NNUE_KPSIZE * sizeof(int16_t));
 
         for (size_t k = 0; k < data->activeIndexCount[c]; k++) {
             uint32_t index = data->activeIndicies[c][k];
@@ -181,7 +171,7 @@ void clamp_accumulator(int16_t *acc){
     __m256i _127 = _mm256_set1_epi16(127);
     __m256i _0 = _mm256_set1_epi16(0);
 
-    for (int32_t i = 0; i < 512; i += 16) {
+    for (int32_t i = 0; i < NNUE_KPSIZE; i += 16) {
         __m256i _x = _mm256_load_si256((void*)&acc[i]);
         _x = _mm256_min_epi16(_x, _127);
         _x = _mm256_max_epi16(_x, _0);
@@ -190,7 +180,7 @@ void clamp_accumulator(int16_t *acc){
 
 #else
 
-    for (int32_t i = 0; i < 512; ++i) {
+    for (int32_t i = 0; i < NNUE_KPSIZE; ++i) {
         acc[i] = clamp(acc[i], 0, 127);
     }
 
@@ -230,7 +220,7 @@ void propogate_l1(NnueData *data) {
 
     clamp_accumulator(tmpAccum);
 
-    for (int32_t i = 0; i < 512; ++i) {
+    for (int32_t i = 0; i < NNUE_L1SIZE; ++i) {
         if (tmpAccum[i]) {
             int32_t offset = 32 * i;
             propogate_neuron(tmpAccum[i], &nnue_l2_weights[offset], data->l2);
@@ -288,10 +278,11 @@ int32_t nnue_evaluate(Board *board) {
 //    if (evalHashTable[hashIndex].key == board->current_zobrist_key){
 //        data->eval = hashptr->eval;
 //    } else {
-        propogate_l1(data);
-        propogate_l2(data);
-        propogate_l3(data);
-        data->eval = (board->side == white) ? data->l4[0] : -data->l4[0];
+    refresh_accumulator(data, board);
+    propogate_l1(data);
+    propogate_l2(data);
+    propogate_l3(data);
+    data->eval = (board->side == white) ? data->l4[0] : -data->l4[0];
 
 //        hashptr->eval = data->eval;
 //        hashptr->key = board->current_zobrist_key;
@@ -316,19 +307,10 @@ void nnue_pop_bit(int32_t ptype, int32_t bit, Board *board){
     if (!board->nnueUpdate)
         return;
 
-    int32_t w_ksq = w_orient[bsf(board->bitboards[p_K])];
-    int32_t b_ksq = b_orient[bsf(board->bitboards[p_k])];
-
-    int32_t sq = w_orient[bit];
-    int32_t pc = ptype;
-
-    int32_t wi;
-    int32_t bi;
-
-    make_indicies(&wi, &bi, pc, sq, w_ksq, b_ksq);
-
-    subtract_index(board->currentNnue.accumulation[0], wi, white);
-    subtract_index(board->currentNnue.accumulation[0], bi, black);
+    if (ptype < 6)
+        subtract_index(board->currentNnue.accumulation[0], ptype*64 + bit, white);
+    else
+        subtract_index(board->currentNnue.accumulation[0], (ptype-6)*64 + w_orient[bit], black);
 }
 
 void nnue_set_bit(int32_t ptype, int32_t bit, Board *board){
@@ -336,17 +318,8 @@ void nnue_set_bit(int32_t ptype, int32_t bit, Board *board){
     if (!board->nnueUpdate)
         return;
 
-    int32_t w_ksq = w_orient[bsf(board->bitboards[p_K])];
-    int32_t b_ksq = b_orient[bsf(board->bitboards[p_k])];
-
-    int32_t sq = w_orient[bit];
-    int32_t pc = ptype;
-
-    int32_t wi;
-    int32_t bi;
-
-    make_indicies(&wi, &bi, pc, sq, w_ksq, b_ksq);
-
-    add_index(board->currentNnue.accumulation[0], wi, white);
-    add_index(board->currentNnue.accumulation[0], bi, black);
+    if (ptype < 6)
+        add_index(board->currentNnue.accumulation[0], ptype*64 + bit, white);
+    else
+        add_index(board->currentNnue.accumulation[0], (ptype-6)*64 + w_orient[bit], black);
 }
