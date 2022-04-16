@@ -141,6 +141,9 @@ sse2: $(SSE2_OBJS)
 	$(CC) $(OBJS) $(SSE2_OBJS) $(LINK_OPTS) -o $(FILE)-sse2-$(OS)$(EXECUTABLE_FILENAME)
 popcnt: $(POPCNT_OBJS)
 	$(CC) $(OBJS) $(POPCNT_OBJS) $(LINK_OPTS) -o $(FILE)-popcnt-$(OS)$(EXECUTABLE_FILENAME)
+r:
+	make avx2
+	./bin/eggnog-chess-engine-avx2-linux
 
 %.c.avx2.o: %.c
 	$(CC) $< $(COMMONFLAGS) -D AVX2 -mavx2 -c -o $@

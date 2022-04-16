@@ -271,23 +271,23 @@ int32_t materialScore(Board *board){
 
 int32_t nnue_evaluate(Board *board) {
 
-//    uint32_t hashIndex = board->current_zobrist_key % (NnueHashSize);
-//    EvalHashEntry *hashptr = &evalHashTable[hashIndex];
+   uint32_t hashIndex = board->current_zobrist_key % (NnueHashSize);
+   EvalHashEntry *hashptr = &evalHashTable[hashIndex];
     NnueData *data = &board->currentNnue;
 
-//    if (evalHashTable[hashIndex].key == board->current_zobrist_key){
-//        data->eval = hashptr->eval;
-//    } else {
+   if (evalHashTable[hashIndex].key == board->current_zobrist_key){
+       data->eval = hashptr->eval;
+   } else {
     propogate_l1(data);
     propogate_l2(data);
     propogate_l3(data);
     data->eval = (board->side == white) ? data->l4[0] : -data->l4[0];
 
-//        hashptr->eval = data->eval;
-//        hashptr->key = board->current_zobrist_key;
-//    }
+       hashptr->eval = data->eval;
+       hashptr->key = board->current_zobrist_key;
+   }
 
-    //convert winning advantages into material rather than activity
+// convert winning advantages into material rather than activity
 //    if (data->eval > (180*64) && (board->side == board->searchColor)){
 //        int32_t mat = materialScore(board);
 //        mat = mat > 0 ? mat + 1 : 1;
