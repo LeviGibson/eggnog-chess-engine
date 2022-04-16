@@ -171,7 +171,7 @@ void clamp_accumulator(int16_t *acc){
     __m256i _127 = _mm256_set1_epi16(127);
     __m256i _0 = _mm256_set1_epi16(0);
 
-    for (int32_t i = 0; i < NNUE_KPSIZE; i += 16) {
+    for (int32_t i = 0; i < NNUE_L1SIZE; i += 16) {
         __m256i _x = _mm256_load_si256((void*)&acc[i]);
         _x = _mm256_min_epi16(_x, _127);
         _x = _mm256_max_epi16(_x, _0);
@@ -215,8 +215,8 @@ static inline void propogate_neuron(const int16_t a, const int8_t *b, int32_t *r
 void propogate_l1(NnueData *data) {
     int16_t *tmpAccum = data->l1;
 
-    memcpy(tmpAccum, data->accumulation, sizeof data->l1);
-    memcpy(data->l2, nnue_l2_biases, sizeof nnue_l2_biases);
+    memcpy(tmpAccum, data->accumulation, sizeof(data->l1));
+    memcpy(data->l2, nnue_l2_biases, sizeof(nnue_l2_biases));
 
     clamp_accumulator(tmpAccum);
 
@@ -278,7 +278,6 @@ int32_t nnue_evaluate(Board *board) {
 //    if (evalHashTable[hashIndex].key == board->current_zobrist_key){
 //        data->eval = hashptr->eval;
 //    } else {
-    refresh_accumulator(data, board);
     propogate_l1(data);
     propogate_l2(data);
     propogate_l3(data);
