@@ -198,7 +198,7 @@ static inline void sort_moves(MoveList *move_list, int32_t *hashmove, Thread *th
 //         print_move(move_list->moves[i]);
 //         printf(" : %d\n", move_list->scores[i]);
 //     }
-//
+
 //     printf("\n");
 }
 
@@ -455,7 +455,7 @@ static inline int32_t search(int32_t depth, int32_t alpha, int32_t beta, Line *p
             continue;
 #endif
         //since king moves are super expensive (for the neural networks) many of them are discarded at depth 1.
-        if (depth == 1 && !board->pvnode && legalMoves.scores[moveId] < -1000 && (getpiece(move) == p_K || getpiece(move) == p_k))
+        if (depth == 1 && !board->pvnode && !in_check && legalMoves.scores[moveId] < -2700 && (getpiece(move) == p_K || getpiece(move) == p_k))
             continue;
 
         //The illigal moves (moving pinned pieces mostly) are not removed during the move generation, they are removed here.
