@@ -198,7 +198,7 @@ static inline void sort_moves(MoveList *move_list, int32_t *hashmove, Thread *th
 //         print_move(move_list->moves[i]);
 //         printf(" : %d\n", move_list->scores[i]);
 //     }
-
+//
 //     printf("\n");
 }
 
@@ -468,7 +468,7 @@ static inline int32_t search(int32_t depth, int32_t alpha, int32_t beta, Line *p
                 eval = -search(depth - 1, -beta, -alpha, &line, thread);
             } else {
                 //Late Move Reduction
-                if ((depth >= 3) && (legalMoves.scores[moveId] < 5000) && (in_check == 0) && (getcapture(move) == 0) && (!isPastPawnPush)) {
+                if ((depth >= 3) && (legalMoves.scores[moveId] < -3000) && (in_check == 0) && (getcapture(move) == 0) && (!isPastPawnPush)) {
 #ifndef NO_LMR
                     eval = -search(depth - 2, -alpha - 1, -alpha, &line, thread);
 #else
