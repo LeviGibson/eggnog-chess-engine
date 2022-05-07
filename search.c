@@ -6,10 +6,9 @@
 #include "syzygy.h"
 #include "uci.h"
 #include "see.h"
+#include "moveorder.h"
 #include <stdio.h>
 #include <pthread.h>
-
-#define fabs(x) (((x) > 0) ? (x) : -(x))
 
 int32_t DEF_ASPWINDOW = 1760;
 
@@ -25,51 +24,11 @@ long nodes = 0;
 long qnodes = 0;
 long tbHits = 0;
 
-const int32_t mvv_lva[12][12] = {
-        15, 25, 35, 45, 55, 65,  15, 25, 35, 45, 55, 65,
-        14, 24, 34, 44, 54, 64,  14, 24, 34, 44, 54, 64,
-        13, 23, 33, 43, 53, 63,  13, 23, 33, 43, 53, 63,
-        12, 22, 32, 42, 52, 62,  12, 22, 32, 42, 52, 62,
-        11, 21, 31, 41, 51, 61,  11, 21, 31, 41, 51, 61,
-        10, 20, 30, 40, 50, 60,  10, 20, 30, 40, 50, 60,
-
-        15, 25, 35, 45, 55, 65,  15, 25, 35, 45, 55, 65,
-        14, 24, 34, 44, 54, 64,  14, 24, 34, 44, 54, 64,
-        13, 23, 33, 43, 53, 63,  13, 23, 33, 43, 53, 63,
-        12, 22, 32, 42, 52, 62,  12, 22, 32, 42, 52, 62,
-        11, 21, 31, 41, 51, 61,  11, 21, 31, 41, 51, 61,
-        10, 20, 30, 40, 50, 60,  10, 20, 30, 40, 50, 60
-};
-
-int32_t historyCount;
-int32_t killer_moves[MAX_PLY][2];
-float history_moves[12][64][64];
-
 typedef struct MoveEval MoveEval;
-
 struct MoveEval{
     int32_t move;
     int32_t eval;
 };
-
-static inline void swap(int* a, int* b) {
-    int32_t t = *a;
-    *a = *b;
-    *b = t;
-}
-
-void insertion_sort(MoveList *movearr){
-    int32_t i = 1;
-    while (i < movearr->count){
-        int32_t j = i;
-        while (j > 0 && movearr->scores[j-1] < movearr->scores[j]) {
-            swap(&movearr->scores[j], &movearr->scores[j - 1]);
-            swap(&movearr->moves[j], &movearr->moves[j - 1]);
-            j--;
-        }
-        i++;
-    }
-}
 
 U64 pastPawnMasks[2][64] = {
         {0x0ULL, 0x0ULL, 0x0ULL, 0x0ULL,
@@ -107,100 +66,7 @@ U64 pastPawnMasks[2][64] = {
          0x0ULL, 0x0ULL, 0x0ULL, 0x0ULL,}
 };
 
-//Board is included in Thread *thread
-//returns the score of a move, integer.
-//int32_t *hashmove is  the best move stored in the hash table (from a previous depth)
-int32_t score_move(int32_t move, const int32_t *hashmove, Thread *thread){
-    Board *board = &thread->board;
 
-    if (thread->found_pv){
-        if (move == board->prevPv.moves[board->ply]){
-            thread->found_pv = 0;
-            return 200000;
-        }
-    }
-
-    for (int32_t i = 0; i < 4; i++) {
-        if (hashmove[i] == -15 || hashmove[i] == 0)
-            break;
-        if (hashmove[i] == move) {
-            return 100000 - i;
-        }
-    }
-
-    if (getcapture(move)){
-
-
-        int32_t start_piece, end_piece;
-        int32_t target_piece = p_P;
-
-        int32_t target_square = gettarget(move);
-
-        if (board->side == white) {start_piece = p_p; end_piece = p_k;}
-        else{start_piece = p_P; end_piece = p_K;}
-
-        for (int32_t bb_piece = start_piece; bb_piece < end_piece; bb_piece++){
-            if (get_bit(board->bitboards[bb_piece], target_square)){
-                target_piece = bb_piece;
-                break;
-            }
-        }
-
-        if (board->side == white){
-            if ((getpiece(move) != p_P) && (pawn_mask[white][gettarget(move)] & BP))
-                return 10000;
-        } else {
-            if ((getpiece(move) != p_p) && (pawn_mask[black][gettarget(move)] & WP))
-                return 10000;
-        }
-
-        int32_t val = seeCapture(move, board);
-        if (board->quinode)
-            return val + mvv_lva[getpiece(move)][target_piece];
-        return val + mvv_lva[getpiece(move)][target_piece] + 10000;
-
-    } else {
-        if (move == killer_moves[board->ply][0]){
-            return(8000);
-        }
-        if (move == killer_moves[board->ply][1]){
-            return(7000);
-        }
-
-        if (board->quinode){ return 0; }
-
-        int32_t score = get_nnom_score(move, board);
-
-        if (historyCount > 0) {
-            float historyscore = (history_moves[getpiece(move)][getsource(move)][gettarget(move)] / (float) historyCount) * (float)historyMoveDivisor;
-            score += ((int32_t )historyscore) * 10;
-        }
-
-        return (int)score;
-    }
-}
-
-//sorts a list of moves
-//int32_t *hashmove is the move stored in the transposition table from a previous depth
-//pretty much ignore this function it's very boring. The main function is the function above (score_move)
-static inline void sort_moves(MoveList *move_list, int32_t *hashmove, Thread *thread){
-
-    for (int32_t i = 0; i < move_list->count; i++) {
-        move_list->scores[i] = score_move(move_list->moves[i], hashmove, thread);
-    }
-
-    insertion_sort(move_list);
-
-//    if (thread->board.quinode) return;
-//    print_fen(&thread->board);
-//    printf("\n");
-//     for (int32_t i = 0; i < move_list->count; i++) {
-//         print_move(move_list->moves[i]);
-//         printf(" : %d\n", move_list->scores[i]);
-//     }
-//
-//     printf("\n");
-}
 
 static inline int32_t quiesce(int32_t alpha, int32_t beta, Thread *thread) {
     Board *board = &thread->board;
@@ -468,8 +334,9 @@ static inline int32_t search(int32_t depth, int32_t alpha, int32_t beta, Line *p
                 eval = -search(depth - 1, -beta, -alpha, &line, thread);
             } else {
                 //Late Move Reduction
-                if ((depth >= 3) && (legalMoves.scores[moveId] < -3000) && (in_check == 0) && (getcapture(move) == 0) && (!isPastPawnPush)) {
+                if ((depth >= 3) && (legalMoves.scores[moveId] < -1000) && (in_check == 0) && (getcapture(move) == 0) && (!isPastPawnPush)) {
 #ifndef NO_LMR
+//                    board->depthAdjuster -=
                     eval = -search(depth - 2, -alpha - 1, -alpha, &line, thread);
 #else
                     eval = alpha + 1;

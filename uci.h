@@ -5,7 +5,6 @@
 
 int32_t uci_move_sequence_length;
 int32_t dynamicTimeManagment;
-int32_t historyMoveDivisor;
 int32_t tuneParameter;
 
 Board UciBoard;

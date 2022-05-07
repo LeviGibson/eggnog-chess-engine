@@ -155,6 +155,7 @@ typedef struct {
 #define min(x, y) ((y) > (x) ? (x) : (y))
 #endif
 
+#define MAX_PLY 64
 #define CHECKMATE_SCORE 4900000
 
 int32_t piece_at(int32_t square, Board *board);

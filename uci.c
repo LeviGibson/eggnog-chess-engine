@@ -16,7 +16,6 @@
 pthread_t searchthread;
 int32_t dynamicTimeManagment = 0;
 int32_t moveOverhead = 0;
-int32_t historyMoveDivisor = 1400;
 int32_t tuneParameter = 1;
 
 void change_to_correct_directory(char *argv){
