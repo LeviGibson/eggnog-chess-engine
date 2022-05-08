@@ -334,10 +334,10 @@ static inline int32_t search(int32_t depth, int32_t alpha, int32_t beta, Line *p
                 eval = -search(depth - 1, -beta, -alpha, &line, thread);
             } else {
                 //Late Move Reduction
-                if ((depth >= 3) && (legalMoves.scores[moveId] < -1000) && (in_check == 0) && (getcapture(move) == 0) && (!isPastPawnPush)) {
+                if ((depth >= 3) && (legalMoves.scores[moveId] < 0) && (in_check == 0) && (getcapture(move) == 0) && (!isPastPawnPush)) {
 #ifndef NO_LMR
-//                    board->depthAdjuster -=
-                    eval = -search(depth - 2, -alpha - 1, -alpha, &line, thread);
+                    board->depthAdjuster += (float )legalMoves.scores[moveId] / 4000;
+                    eval = -search(depth - 1, -alpha - 1, -alpha, &line, thread);
 #else
                     eval = alpha + 1;
 #endif
