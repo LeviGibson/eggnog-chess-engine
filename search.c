@@ -112,7 +112,7 @@ static inline int32_t quiesce(int32_t alpha, int32_t beta, Thread *thread) {
     for (int32_t moveId = 0; moveId < legalMoves.count; moveId++){
         int32_t move = legalMoves.moves[moveId];
 
-        if (legalMoves.scores[moveId] <= -220)
+        if (legalMoves.scores[moveId] <= -300)
             continue;
 
         if (make_move(move, only_captures, 0, board)){
