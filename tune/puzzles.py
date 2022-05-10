@@ -7,7 +7,9 @@ logging.basicConfig(level=logging.CRITICAL)
 def run(value : int):
 
     #download this large file with `wget https://database.lichess.org/lichess_db_puzzle.csv.bz2`
-    data = pickle.load(open("data.bin", 'rb'))
+    inf = open("data.bin", 'rb')
+    inf.seek(0)
+    data = pickle.load(inf)
 
     engine = chess.engine.SimpleEngine.popen_uci("../bin/eggnog-chess-engine-avx2-linux")
     engine.configure({"Tune" : value})
