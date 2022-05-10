@@ -109,7 +109,7 @@ static inline void nnom_subtract_index(int16_t *restrict a, const int16_t *restr
 }
 
 void nnom_set_bit(int32_t ptype, int32_t bit, Board *board){
-    if (board->quinode)
+    if (board->quinode || board->seeNode)
         return;
 
     uint32_t i1;
@@ -135,8 +135,11 @@ void nnom_set_bit(int32_t ptype, int32_t bit, Board *board){
     nnom_add_index(board->nnom.l1[black], l1_weights[i2]);
 }
 
+//info score cp 16 depth 9 seldepth 22 nodes 179630 nps 343460 qnodes 84616 tbhits 0 time 523 pv c2c4 c7c5 b1c3 e7e5 g2g3 b8c6 f1g2 g8f6
+//info score cp 16 depth 9 seldepth 22 nodes 179630 nps 346776 qnodes 84616 tbhits 0 time 518 pv c2c4 c7c5 b1c3 e7e5 g2g3 b8c6 f1g2 g8f6 
+
 void nnom_pop_bit(int32_t ptype, int32_t bit, Board *board){
-    if (board->quinode)
+    if (board->quinode || board->seeNode)
         return;
 
     uint32_t i1;

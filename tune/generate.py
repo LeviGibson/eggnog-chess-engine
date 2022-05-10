@@ -6,7 +6,7 @@ import numpy as np
 import pickle
 
 stockfish = Stockfish(path="./sf14")
-# stockfish.set_depth(12)
+stockfish.set_depth(15)
 
 def sigmoid(x : float):
     return 1/(1+pow(2.71828, -x))

@@ -113,6 +113,7 @@ int32_t see(int32_t square, int32_t beta, Board *board){
 
     if (move != NO_MOVE){
         copy_board();
+        board->seeNode = 1;
 
         int32_t pieceCapturedValue = pieceValues[piece_at(square, board)];
         int32_t success = make_move(move, all_moves, 0, board);

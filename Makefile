@@ -10,7 +10,8 @@ CFILES = main.c\
  Fathom/*.c\
  nnue.c\
  see.c\
- nnom.c
+ nnom.c\
+ moveorder.c
 
 AVX2_OBJS = search.c.avx2.o \
        nnue.c.avx2.o \
