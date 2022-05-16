@@ -314,6 +314,11 @@ static inline int32_t search(int32_t depth, int32_t alpha, int32_t beta, Line *p
     //Looping over all the legal moves
     for (uint8_t moveId = 0; moveId < legalMoves.count; moveId++) {
         move = legalMoves.moves[moveId];
+
+        if (legalMoveCount && legalMoves.scores[moveId] < -4500 && depth > 4) {
+            continue;
+        }
+
         //TODO tune this
 #ifndef NO_LMR
         int margins[3] = {0, 0, 200};
