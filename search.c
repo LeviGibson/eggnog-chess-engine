@@ -315,8 +315,13 @@ static inline int32_t search(int32_t depth, int32_t alpha, int32_t beta, Line *p
     for (uint8_t moveId = 0; moveId < legalMoves.count; moveId++) {
         move = legalMoves.moves[moveId];
 
-        if (legalMoveCount && legalMoves.scores[moveId] < -4500 && depth > 4) {
-            continue;
+        if (legalMoveCount && depth > 4) {
+            if (legalMoves.scores[moveId] < -4000)
+                board->depthAdjuster -= 4;
+            if (legalMoves.scores[moveId] < -3500)
+                board->depthAdjuster -= 3;
+            if (legalMoves.scores[moveId] < -3200)
+                board->depthAdjuster -= 2;
         }
 
         //TODO tune this
