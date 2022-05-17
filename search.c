@@ -24,12 +24,6 @@ long nodes = 0;
 long qnodes = 0;
 long tbHits = 0;
 
-typedef struct MoveEval MoveEval;
-struct MoveEval{
-    int32_t move;
-    int32_t eval;
-};
-
 U64 pastPawnMasks[2][64] = {
         {0x0ULL, 0x0ULL, 0x0ULL, 0x0ULL,
          0x0ULL, 0x0ULL, 0x0ULL, 0x0ULL,
@@ -145,6 +139,14 @@ void find_pv(MoveList *moves, Thread *thread){
     }
 }
 
+void shift_moveeval(MoveEval *ptr){
+    ptr->move[5] = ptr->move[4];
+    ptr->move[4] = ptr->move[3];
+    ptr->move[3] = ptr->move[2];
+    ptr->move[2] = ptr->move[1];
+    ptr->move[1] = ptr->move[0];
+}
+
 //the main search function
 //don't call this directly. Call search_position().
 static inline int32_t search(int32_t depth, int32_t alpha, int32_t beta, Line *pline, Thread *thread) {
@@ -240,7 +242,6 @@ static inline int32_t search(int32_t depth, int32_t alpha, int32_t beta, Line *p
         } else {
             int32_t move = get_root_move(board);
             if (move != 0) {
-
                 if (tbres == TB_WIN)
                     return CHECKMATE_SCORE - board->ply;
                 if (tbres == TB_DRAW)
@@ -309,7 +310,7 @@ static inline int32_t search(int32_t depth, int32_t alpha, int32_t beta, Line *p
 
     int32_t legalMoveCount = 0;
     int32_t move;
-    MoveEval best = {.move = NO_MOVE, .eval = -100000000};
+    MoveEval best = {.move = {NO_MOVE, NO_MOVE, NO_MOVE, NO_MOVE, NO_MOVE, NO_MOVE}, .eval = -100000000};
 
     //Looping over all the legal moves
     for (uint8_t moveId = 0; moveId < legalMoves.count; moveId++) {
@@ -370,7 +371,8 @@ static inline int32_t search(int32_t depth, int32_t alpha, int32_t beta, Line *p
             //best.eval is the best move found so far (different from alpha, because best.eval does not inherit values from parent nodes.)
             if (eval > best.eval) {
 
-                best.move = move;
+                shift_moveeval(&best);
+                best.move[0] = move;
                 best.eval = eval;
 
                 if (eval > alpha) {

@@ -53,7 +53,7 @@ int32_t score_move(int32_t move, const int32_t *hashmove, Thread *thread){
         }
     }
 
-    for (int32_t i = 0; i < 4; i++) {
+    for (int32_t i = 0; i < 6; i++) {
         if (hashmove[i] == -15 || hashmove[i] == 0)
             break;
         if (hashmove[i] == move) {

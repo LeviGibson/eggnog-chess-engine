@@ -107,7 +107,7 @@ int32_t ProbeHash(int32_t depth, int32_t alpha, int32_t beta, int32_t *move, Lin
     return ret;
 }
 
-void RecordHash(int32_t depth, int32_t val, int32_t best, int32_t hashf, Line *pline, Board *board){
+void RecordHash(int32_t depth, int32_t val, MoveEval *best, int32_t hashf, Line *pline, Board *board){
     if ((val != 0) && (val < 4500000) && (val > -450000)) {
         uint32_t index = board->current_zobrist_key % tt_size;
 
@@ -120,12 +120,13 @@ void RecordHash(int32_t depth, int32_t val, int32_t best, int32_t hashf, Line *p
         phashe->depth = depth;
         phashe->line = NULL;
 
-        if (phashe->best[0] != best){
-            phashe->best[3] = phashe->best[2];
-            phashe->best[2] = phashe->best[1];
-            phashe->best[1] = phashe->best[0];
-            phashe->best[0] = best;
-        }
+//        if (phashe->best[0] != best){
+//            phashe->best[3] = phashe->best[2];
+//            phashe->best[2] = phashe->best[1];
+//            phashe->best[1] = phashe->best[0];
+//            phashe->best[0] = best;
+//        }
+        memcpy(&phashe->best[0], &best->move[0], sizeof(best->move));
 
         if (threadCount > 1 && depth > 1 && pline != NULL) {
             lock(&lmcLock);
