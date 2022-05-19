@@ -85,6 +85,9 @@ static inline int32_t quiesce(int32_t alpha, int32_t beta, Thread *thread) {
         return beta;
     }
 
+    if (stand_pat < alpha - 975*64)
+        return alpha;
+
     if (alpha <= stand_pat){
         alpha = stand_pat;
     }
