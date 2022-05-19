@@ -95,8 +95,8 @@ static inline int32_t quiesce(int32_t alpha, int32_t beta, Thread *thread) {
     U64 old_occupancies = board->occupancies[white] | board->occupancies[black];
     board->occupancies[both] = old_occupancies;
 
-    copy_board();
     board->quinode = 1;
+    copy_board();
 
     int32_t tmp[4] = {0,0,0,0};
 
@@ -117,9 +117,9 @@ static inline int32_t quiesce(int32_t alpha, int32_t beta, Thread *thread) {
             if (score >= beta){
                 return beta;
             }
-
-            if (score > alpha)
+            if (score > alpha) {
                 alpha = score;
+            }
         }
     }
 
@@ -265,8 +265,10 @@ static inline int32_t search(int32_t depth, int32_t alpha, int32_t beta, Line *p
     line.length = 0;
 
     if (depth <= 0) {
+        int32_t qui = quiesce(alpha, beta, thread);
         pline->length = 0;
-        return quiesce(alpha, beta, thread);
+        board->quinode = 0;
+        return qui;
     }
 
     //Null Move Pruning
