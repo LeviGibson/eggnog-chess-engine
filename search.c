@@ -400,7 +400,7 @@ static inline int32_t search(int32_t depth, int32_t alpha, int32_t beta, Line *p
                         historyCount += depth * depth * legalMoveCount;
                     }
 
-                    RecordHash(depth, beta, best.move, hashfBETA, pline, board);
+                    RecordHash(depth, beta, &best, hashfBETA, pline, board);
 
                     return beta;
                 }
@@ -418,7 +418,7 @@ static inline int32_t search(int32_t depth, int32_t alpha, int32_t beta, Line *p
         }
     }
 
-    RecordHash(depth, alpha, best.move, hashf, pline, board);
+    RecordHash(depth, alpha, &best, hashf, pline, board);
     return alpha;
 
 }
