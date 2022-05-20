@@ -2,6 +2,8 @@ import chess.engine
 import pickle
 import logging
 
+import matplotlib.pyplot as plt
+
 logging.basicConfig(level=logging.CRITICAL)
 
 def run(value : int):
@@ -19,21 +21,31 @@ def run(value : int):
     score = 0
     scorecount = 0
 
+    allscores = []
+
     for sample in data:
-        board.set_fen(sample[0])
+        try:
+            board.set_fen(sample[0])
 
-        moves : list = sample[1]
-        evals = sample[2]
+            moves : list = sample[1]
+            evals = sample[2]
 
-        result = engine.play(board, chess.engine.Limit(time=.35))
-        move = result.move
-        index = moves.index(move)
-        score += evals[index]
-        print(scorecount)
-        scorecount+=1
+            result = engine.play(board, chess.engine.Limit(time=.35))
+            move = result.move
+            index = moves.index(move)
+            score += evals[index]
+            scorecount+=1
+            # print(scorecount, score/scorecount)
+            allscores.append(score/scorecount)
+            if scorecount > 100:
+                break
+        except:
+            pass
 
     engine.quit()
-    return score / len(data)
+    # plt.plot(allscores)
+    # plt.show()
+    return score / scorecount
 
 if __name__ == '__main__':
-    run(2000)
+    print(run(2000))

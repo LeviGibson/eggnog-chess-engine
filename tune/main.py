@@ -3,30 +3,34 @@ import threading
 import numpy as np
 import matplotlib.pyplot as plt
 
-p1 = 600
-p2 = 25
+p1 = 1600
+p2 = 100
 
-threadCount = 12
+threadCount = 4
 threadsFinished = 0
 
-scores = np.zeros((p1 // p2))
+testingvalue = 900
+
+scores = np.zeros(((p1-testingvalue) // p2))
 threads = []
 
-testingvalue = 0
-
 def run(x, y):
-    scores[y] = puzzles.run(x)
+    z = puzzles.run(x)
+    scores[y] = z
+    print(y, x, z)
 
-for i in range(p1//p2):
+finalIndex = (p1-testingvalue)//p2 - 1
+
+for i in range((p1-testingvalue)//p2):
     index = i - threadsFinished
     threads.append(threading.Thread(target=run, args=[testingvalue, i]))
     threads[index].start()
     testingvalue += p2
 
-    if (i and i % threadCount == 0) or i == (p1//p2)-1:
+    if (i and i % threadCount == 0) or (i == finalIndex):
         for t in threads:
             t.join()
-            threadsFinished+=1
+            threadsFinished += 1
         threads.clear()
 
 plt.plot(scores)
