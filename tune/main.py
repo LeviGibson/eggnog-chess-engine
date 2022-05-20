@@ -3,13 +3,13 @@ import threading
 import numpy as np
 import matplotlib.pyplot as plt
 
-p1 = 1600
-p2 = 100
+p1 = 8
+p2 = 1
 
-threadCount = 4
+threadCount = 8
 threadsFinished = 0
 
-testingvalue = 900
+testingvalue = 1
 
 scores = np.zeros(((p1-testingvalue) // p2))
 threads = []

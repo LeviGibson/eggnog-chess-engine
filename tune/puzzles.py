@@ -35,10 +35,10 @@ def run(value : int):
             index = moves.index(move)
             score += evals[index]
             scorecount+=1
-            # print(scorecount, score/scorecount)
+            print(scorecount, score/scorecount)
             allscores.append(score/scorecount)
-            if scorecount > 100:
-                break
+            # if scorecount > 100:
+            #     break
         except:
             pass
 
