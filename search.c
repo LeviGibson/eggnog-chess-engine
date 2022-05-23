@@ -334,9 +334,9 @@ static inline int32_t search(int32_t depth, int32_t alpha, int32_t beta, Line *p
 
         //TODO tune this
 #ifndef NO_LMR
-        int margins[3] = {0, 0, 200};
-        if (legalMoveCount && depth <= 2 && (!getcapture(move)) && (!in_check) && !board->pvnode && ((staticeval + (legalMoves.scores[moveId])) + (margins[depth]*64) < alpha) && !is_move_direct_check(move, board))
+        if (legalMoveCount && depth <= 2 && (!getcapture(move)) && (!in_check) && !board->pvnode && ((staticeval + (legalMoves.scores[moveId] / 2)) < alpha) && !is_move_direct_check(move, board))
             continue;
+
 #endif
         //since king moves are super expensive (for the neural networks) many of them are discarded at depth 1.
         if (depth == 1 && !board->pvnode && !in_check && legalMoves.scores[moveId] < -2700 && (getpiece(move) == p_K || getpiece(move) == p_k))
@@ -377,7 +377,6 @@ static inline int32_t search(int32_t depth, int32_t alpha, int32_t beta, Line *p
 
             //best.eval is the best move found so far (different from alpha, because best.eval does not inherit values from parent nodes.)
             if (eval > best.eval) {
-
                 shift_moveeval(&best);
                 best.move[0] = move;
                 best.eval = eval;
