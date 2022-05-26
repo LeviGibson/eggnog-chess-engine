@@ -594,6 +594,7 @@ void *search_position(void *arg){
 
             thread.follow_pv = 1;
             thread.found_pv = 0;
+            thread.board.depthAdjuster = 0;
 
             if (currentDepth > 2)
                 aspwindow *= 2;
