@@ -78,6 +78,7 @@ struct Board{
     Line prevPv;
 
     float depthAdjuster;
+    uint8_t mustFinishNextDepth;
     uint8_t quinode;
     uint8_t kpExtended;
 
