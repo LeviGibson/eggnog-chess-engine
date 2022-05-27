@@ -488,6 +488,30 @@ int32_t willMakeNextDepth(int32_t curd, const float *times){
     return (timepred < (timeleft * 2)) ? 1 : 0;
 }
 
+//This function allocates memory for `HelperThread *threads`, so don't do it yourself.
+void generate_threads(HelperThread **threads, int32_t *numThreads, Thread *thread){
+    Board *board = &thread->board;
+    int32_t tmp[4] = {0,0,0,0};
+    MoveList legalMoves;
+    generate_moves(&legalMoves, board);
+    generate_only_legal_moves(&legalMoves, board);
+    sort_moves(&legalMoves, tmp, thread);
+    *numThreads = threadCount < legalMoves.count ? (int) threadCount : (int) legalMoves.count;
+
+    *threads = malloc(sizeof(HelperThread) * threadCount);
+
+    if (threadCount > 1) {
+        memset(*threads, 0, sizeof (HelperThread) * (*numThreads));
+
+        for (int32_t i = 0; i < *numThreads; ++i) {
+            (*threads)[i].args = (struct NegamaxArgs) {.pline = &(*threads)[i].line, .thread.board = *board};
+            make_move(legalMoves.moves[i], all_moves, 1, &(*threads)[i].args.thread.board);
+
+            pthread_create(&(*threads)[i].pthread, NULL, (void *(*)(void *)) negamax_thread, &(*threads)[i].args);
+        }
+    }
+}
+
 //the main interface function for the search.
 void *search_position(void *arg){
     //Table bases
@@ -542,27 +566,11 @@ void *search_position(void *arg){
     float depthTime[MAX_PLY];
     memset(depthTime, 0, sizeof depthTime);
 
-    int32_t tmp[4] = {0,0,0,0};
     reset_hash_table();
 
-    MoveList legalMoves;
-    generate_moves(&legalMoves, board);
-    generate_only_legal_moves(&legalMoves, board);
-    sort_moves(&legalMoves, tmp, &thread);
-    int32_t numThreads = threadCount < legalMoves.count ? (int) threadCount : (int) legalMoves.count;
-    HelperThread threads[numThreads];
-
-    if (threadCount > 1) {
-
-        memset(&threads, 0, sizeof threads);
-
-        for (int32_t i = 0; i < numThreads; ++i) {
-            threads[i].args = (struct NegamaxArgs) {.pline = &threads[i].line, .thread.board = *board};
-            make_move(legalMoves.moves[i], all_moves, 1, &threads[i].args.thread.board);
-
-            pthread_create(&threads[i].pthread, NULL, (void *(*)(void *)) negamax_thread, &threads[i].args);
-        }
-    }
+    HelperThread *threads = NULL;
+    int32_t numThreads;
+    generate_threads(&threads, &numThreads, &thread);
 
 #ifdef NO_LMR
     printf("info string This build is without Late Move Reduction, and should be used for debugging purposes only.\n");
@@ -680,6 +688,8 @@ void *search_position(void *arg){
 
         stop = originalStop;
     }
+
+    free(threads);
 
     dynamicTimeManagment = 0;
     tbsearch = 0;
