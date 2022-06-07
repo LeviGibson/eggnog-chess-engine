@@ -1049,7 +1049,6 @@ void parse_fen(char *fen, Board *board)
     board->depthAdjuster = 0;
     board->kpExtended = 0;
     board->seeNode = 0;
-    board->mustFinishNextDepth = 0;
 
     refresh_accumulator(&board->currentNnue, board);
     nnom_refresh_l1(board);

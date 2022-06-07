@@ -158,10 +158,8 @@ static inline int32_t search(int32_t depth, int32_t alpha, int32_t beta, Line *p
     //general maintenence
     nodes++;
 
-    if (nodes % 2048 == 0 &&
-        !thread->board.mustFinishNextDepth) {
+    if (nodes % 2048 == 0)
         communicate();
-    }
 
     if (stop) {
         return 0;
@@ -586,7 +584,7 @@ void *search_position(void *arg){
         thread.found_pv = 0;
         thread.board.depthAdjuster = 0;
 
-        if (dynamicTimeManagment && !willMakeNextDepth(currentDepth, depthTime) && !board->mustFinishNextDepth)
+        if (dynamicTimeManagment && !willMakeNextDepth(currentDepth, depthTime))
             break;
 
         depthTime[currentDepth] = (float )get_time_ms();
@@ -641,11 +639,8 @@ void *search_position(void *arg){
         if (dynamicTimeManagment) {
             if (board->prevPv.moves[0] == prevBestMove) {
                 moveTime -= (moveTime / 12);
-                board->mustFinishNextDepth = 0;
             } else {
-                moveTime += (moveTime / 20);
-                printf("Hello World\n");
-                board->mustFinishNextDepth = 1;
+                moveTime += (moveTime / 10);
             }
 
             if (abs(nmRes)/60 < 180) {
