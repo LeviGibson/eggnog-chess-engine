@@ -323,14 +323,14 @@ static inline int32_t search(int32_t depth, int32_t alpha, int32_t beta, Line *p
     for (uint8_t moveId = 0; moveId < legalMoves.count; moveId++) {
         move = legalMoves.moves[moveId];
 
-        if (legalMoveCount && depth > 3) {
-            if (legalMoves.scores[moveId] < -3000)
-                board->depthAdjuster -= 4;
-            if (legalMoves.scores[moveId] < -2500)
-                board->depthAdjuster -= 3;
-            if (legalMoves.scores[moveId] < -2000)
-                board->depthAdjuster -= 2;
-        }
+//        if (legalMoveCount && depth > 3) {
+//            if (legalMoves.scores[moveId] < -3000)
+//                board->depthAdjuster -= 4;
+//            if (legalMoves.scores[moveId] < -2500)
+//                board->depthAdjuster -= 3;
+//            if (legalMoves.scores[moveId] < -2000)
+//                board->depthAdjuster -= 2;
+//        }
 
         //TODO tune this
 #ifndef NO_LMR
