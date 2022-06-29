@@ -7,6 +7,7 @@
 #include "uci.h"
 #include "see.h"
 #include "moveorder.h"
+#include <math.h>
 #include <stdio.h>
 #include <pthread.h>
 
@@ -647,7 +648,7 @@ void *search_position(void *arg){
                 float floatingAspWindow = (float) aspwindow / 60;
                 float floatingMoveTime = (float) moveTime;
 
-                floatingMoveTime += floatingMoveTime * ((floatingAspWindow - 25) / 200);
+                floatingMoveTime += floatingMoveTime * (sqrtf(floatingAspWindow) / 100);
                 moveTime = (int) floatingMoveTime;
             }
 
