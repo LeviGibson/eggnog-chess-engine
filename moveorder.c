@@ -2,6 +2,7 @@
 // Created by levigibson on 5/7/22.
 //
 
+#include <stdio.h>
 #include "moveorder.h"
 #include "see.h"
 

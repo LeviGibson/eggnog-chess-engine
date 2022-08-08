@@ -7,7 +7,7 @@
 
 #include <stdint.h>
 
-#define IN_SIZE 98304
+#define IN_SIZE (12*64)
 #define L1_SIZE 512
 #define L2_SIZE 384
 
