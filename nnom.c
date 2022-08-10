@@ -25,7 +25,7 @@ int16_t hadd_epi16(__m256i x) {
 #endif
 
 int32_t calculate_l2_value(const int16_t *restrict l1, int32_t index){
-#if defined(AVX2) || defined(AVX)
+#if defined(AVX2)
     __m256i _sum = _mm256_setzero_si256();
     __m256i _0 = _mm256_setzero_si256();
 
@@ -83,7 +83,7 @@ void get_index(uint32_t  *i1, int32_t p, int32_t sq, int32_t wk, int32_t bk, int
 }
 
 static inline void nnom_add_index(int16_t *restrict a, const int16_t *restrict b){
-#if defined(AVX2) || defined(AVX)
+#if defined(AVX2)
     for (int i = 0; i < L1_SIZE; i += 16) {
         __m256i _a = _mm256_loadu_si256(&a[i]);
         __m256i _b = _mm256_loadu_si256(&b[i]);
@@ -97,7 +97,7 @@ static inline void nnom_add_index(int16_t *restrict a, const int16_t *restrict b
 }
 
 static inline void nnom_subtract_index(int16_t *restrict a, const int16_t *restrict b){
-#if defined(AVX2) || defined(AVX)
+#if defined(AVX2)
     for (int i = 0; i < L1_SIZE; i += 16) {
         __m256i _a = _mm256_loadu_si256(&a[i]);
         __m256i _b = _mm256_loadu_si256(&b[i]);
