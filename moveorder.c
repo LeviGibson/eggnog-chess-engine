@@ -50,7 +50,7 @@ int32_t score_move(int32_t move, const int32_t *hashmove, Thread *thread){
     if (thread->found_pv){
         if (move == board->prevPv.moves[board->ply]){
             thread->found_pv = 0;
-            return 200000;
+            return 4000000;
         }
     }
 
@@ -58,7 +58,7 @@ int32_t score_move(int32_t move, const int32_t *hashmove, Thread *thread){
         if (hashmove[i] == -15 || hashmove[i] == 0)
             break;
         if (hashmove[i] == move) {
-            return 100000 - i;
+            return 2000000 - i;
         }
     }
 
@@ -91,14 +91,14 @@ int32_t score_move(int32_t move, const int32_t *hashmove, Thread *thread){
         int32_t val = seeCapture(move, board);
         if (board->quinode)
             return val + mvv_lva[getpiece(move)][target_piece];
-        return val + mvv_lva[getpiece(move)][target_piece] + 10000;
+        return val + mvv_lva[getpiece(move)][target_piece] + 1000000;
 
     } else {
         if (move == killer_moves[board->ply][0]){
-            return(8000);
+            return(800000);
         }
         if (move == killer_moves[board->ply][1]){
-            return(7000);
+            return(700000);
         }
 
         if (board->quinode){ return 0; }
