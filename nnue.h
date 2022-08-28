@@ -7,8 +7,8 @@
 
 
 #define NNUE_INSIZE  (768+12+1)
-#define NNUE_L1SIZE  256
-#define NNUE_KPSIZE  256
+#define NNUE_L1SIZE  128
+#define NNUE_KPSIZE  128
 #define NNUE_L2SIZE  32
 #define NNUE_L3SIZE  32
 #define NNUE_OUTSIZE 1
