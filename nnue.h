@@ -6,9 +6,9 @@
 #define HALFKP_PROBE_PROPOGATE_H
 
 
-#define NNUE_INSIZE  41024
-#define NNUE_KPSIZE  256
-#define NNUE_L1SIZE  512
+#define NNUE_INSIZE  (768+12+1)
+#define NNUE_L1SIZE  128
+#define NNUE_KPSIZE  128
 #define NNUE_L2SIZE  32
 #define NNUE_L3SIZE  32
 #define NNUE_OUTSIZE 1
@@ -27,11 +27,11 @@ struct NnueData{
 
     int32_t eval;
 
-    int16_t accumulation[2][NNUE_KPSIZE];
-    int16_t tmpAccumulation[NNUE_KPSIZE * 2];
+    int16_t accumulation[NNUE_KPSIZE];
+    int16_t tmpAccumulation[NNUE_KPSIZE];
 
-    uint32_t activeIndicies[2][32];
-    uint32_t activeIndexCount[2];
+    uint32_t activeIndicies[32];
+    uint32_t activeIndexCount;
 };
 
 #include "board.h"
