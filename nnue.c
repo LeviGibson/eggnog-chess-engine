@@ -314,7 +314,7 @@ int32_t nnue_evaluate(Board *board) {
         propogate_l2(data);
         propogate_l3(data);
 
-        int eval = (int)(((float)data->l3[0] / 127) * 100);
+        int eval = (int)(((((float)data->l3[0] / 127) / 127) * 100) * 64);
 
         data->eval = (board->side == white) ? eval : -eval;
 
