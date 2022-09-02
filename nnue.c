@@ -314,7 +314,7 @@ int32_t nnue_evaluate(Board *board) {
         propogate_l2(data);
         propogate_l3(data);
 
-        int eval = (int)(((((float)data->l3[0] / 127) / 127) * 100) * 64);
+        int eval = (int)(((((float)data->l3[0] / 127) / 127) * 410) * 64);
 
         data->eval = (board->side == white) ? eval : -eval;
 
@@ -323,11 +323,11 @@ int32_t nnue_evaluate(Board *board) {
     }
 
 //    convert winning advantages into material rather than activity
-    if (data->eval > (300*64) && (board->side == board->searchColor)){
+    if (data->eval > (400*64) && (board->side == board->searchColor)){
         int32_t mat = materialScore(board);
         mat = mat > 0 ? mat + 1 : 1;
         data->eval *= mat;
-    } else if (data->eval < (300*64) && (board->side != board->searchColor)){
+    } else if (data->eval < (400*64) && (board->side != board->searchColor)){
         int32_t mat = -materialScore(board);
         mat = mat > 0 ? mat + 1 : 1;
         data->eval *= mat;
