@@ -338,7 +338,7 @@ int32_t nnue_evaluate(Board *board) {
 
 void nnue_pop_bit(int32_t ptype, int32_t bit, Board *board){
 
-    if (!board->nnueUpdate)
+    if (!board->networkUpdate)
         return;
 
     int32_t w_ksq = w_orient[bsf(board->bitboards[p_K])];
@@ -354,7 +354,7 @@ void nnue_pop_bit(int32_t ptype, int32_t bit, Board *board){
 
 void nnue_set_bit(int32_t ptype, int32_t bit, Board *board){
 
-    if (!board->nnueUpdate)
+    if (!board->networkUpdate)
         return;
 
     int32_t w_ksq = w_orient[bsf(board->bitboards[p_K])];

@@ -142,7 +142,7 @@ int32_t seeCapture(int32_t move, Board *board){
         return 0;
 
     copy_board();
-    board->nnueUpdate = 0;
+    board->networkUpdate = 0;
 
     int32_t capturedPieceValue = pieceValues[piece_at(gettarget(move), board)];
     int32_t success = make_move(move, all_moves, 0, board);

@@ -62,7 +62,7 @@ struct Board{
 
     U64 current_zobrist_key;
 
-    uint8_t nnueUpdate;
+    uint8_t networkUpdate;
     uint8_t seeNode;
     NnueData currentNnue;
     NnomData nnom;
