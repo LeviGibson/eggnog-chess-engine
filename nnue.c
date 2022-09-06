@@ -189,7 +189,7 @@ void clamp_accumulator(int16_t *acc){
 
 #else
 
-    for (int32_t i = 0; i < 512; ++i) {
+    for (int32_t i = 0; i < L1_SIZE; ++i) {
         acc[i] = clamp(acc[i], 0, 127);
     }
 
