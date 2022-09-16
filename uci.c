@@ -165,7 +165,7 @@ void parse_go(char *command) {
     current_timelimit = strstr(command, "movetime");
     if (current_timelimit) {
         depth = MAX_PLY;
-        moveTime = atoi(current_timelimit + 9);
+        moveTime = atoi(current_timelimit + 9) - moveOverhead;
     }
 
     char *infinite = strstr(command, "infinite");
