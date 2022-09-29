@@ -534,56 +534,6 @@ const int32_t castling_right_table[64] = {
         13, 15, 15, 15, 12, 15, 15, 14
 };
 
-void refresh_weak_squares(Board *board){
-    U64 *wb = &board->unprotectedPieces[white];
-    U64 *bb = &board->unprotectedPieces[black];
-
-    *wb = 0ULL;
-    *bb = 0ULL;
-
-    for (int32_t pt = 0; pt < 12; ++pt) {
-
-        U64 bitboard = board->bitboards[pt];
-        if (!bitboard) continue;
-
-        int32_t bitcount = count_bits(bitboard);
-
-        for (int32_t i = 0; i < bitcount; ++i) {
-            int32_t square = bsf(bitboard);
-
-            if (pt == p_P)
-                *wb |= pawn_mask[white][square];
-            if (pt == p_N)
-                *wb |= knight_mask[square];
-            if (pt == p_B)
-                *wb |= get_bishop_attacks(square, board->occupancies[both]);
-            if (pt == p_R)
-                *wb |= get_rook_attacks(square, board->occupancies[both]);
-            if (pt == p_K)
-                *wb |= king_mask[square];
-            if (pt == p_Q)
-                *wb |= get_bishop_attacks(square, board->occupancies[both]) | get_rook_attacks(square, board->occupancies[both]);
-            if (pt == p_p)
-                *bb |= pawn_mask[black][square];
-            if (pt == p_n)
-                *bb |= knight_mask[square];
-            if (pt == p_b)
-                *bb |= get_bishop_attacks(square, board->occupancies[both]);
-            if (pt == p_r)
-                *bb |= get_rook_attacks(square, board->occupancies[both]);
-            if (pt == p_k)
-                *bb |= king_mask[square];
-            if (pt == p_q)
-                *bb |= get_rook_attacks(square, board->occupancies[both]) | get_bishop_attacks(square, board->occupancies[both]);
-
-            pop_bit(bitboard, square);
-        }
-    }
-
-    *wb = (~*wb) & board->occupancies[white];
-    *bb = (~*bb) & board->occupancies[black];
-}
-
 void network_pop_bit(int32_t ptype, int32_t bit, Board *board){
     pop_bit(board->bitboards[ptype], bit);
     nnue_pop_bit(ptype, bit, board);
@@ -724,9 +674,6 @@ int32_t make_move(int32_t move, int32_t flag, int32_t notquinode, Board *board){
             return 0;
         }
     }
-
-    if (notquinode)
-        refresh_weak_squares(board);
 
     board->prevmove = move;
 
@@ -1054,5 +1001,4 @@ void parse_fen(char *fen, Board *board)
 
     refresh_accumulator(&board->currentNnue, board);
     nnom_refresh_l1(board);
-    refresh_weak_squares(board);
 }
