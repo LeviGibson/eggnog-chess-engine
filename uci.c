@@ -237,7 +237,7 @@ void uci_loop() {
         }
         if (strncmp(input, "uci", 3) == 0) {
             printf("id name Eggnog Chess\n");
-            printf("id name Levi Gibson\n");
+            printf("id author Levi Gibson\n");
             printf("option name SyzygyPath type string default <empty>\n");
             printf("option name Threads type spin default 1 min 1 max 512\n");
             printf("option name Move Overhead type spin default 0 min 0 max 5000\n");
