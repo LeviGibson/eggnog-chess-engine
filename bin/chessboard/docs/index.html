@@ -1,0 +1,61 @@
+<html>
+  <head>
+    <title>Chess board</title>
+    
+    <!-- Bootstrap -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    
+  </head>
+  <body>
+    <div class="row mt-5" style="position: absolute; left: 20%;">
+      <div align="center">
+        <!-- Chess board view -->
+        <div id="chessboard"></div>
+        
+        <!-- Controls -->
+        <div class="btn-group col mt-2 mb-2" style="width: 450px;">
+          <button class="btn btn-outline-secondary" onclick="board.first_move()"><strong><<</strong></button>
+          <button class="btn btn-outline-secondary" onclick="board.undo_move()"><strong><</strong></button>
+          <button class="btn btn-outline-secondary" onclick="board.redo_move()"><strong>></strong></button>
+          <button class="btn btn-outline-secondary" onclick="board.last_move()"><strong>>></strong></button>
+        </div>
+        
+      </div>
+
+      <div class="col" >
+        <!-- FEN -->
+        <div class="input-group" style="width: 420px;">
+          <input id="fen" type="text" class="form-control" placeholder="FEN" >
+          <div class="input-group-append">
+            <button onclick="board.set_fen(document.getElementById('fen').value)" class="btn btn-outline-success">Set</button>
+          </div>
+        </div>
+        
+        <!-- MOVES -->
+        <textarea id="moves" name="text" class="form-control mt-2" placeholder="Moves" style="width: 420px; height: 372px;"></textarea>
+        <button onclick="board.read_moves(document.getElementById('moves').value)" class="col btn btn-outline-success mt-2">Set</button>
+      </div>
+
+    </div>
+
+    <!-- Chess board script -->
+    <script src="chessboard.js"></script>
+    
+    <script>
+      // create engine instance
+      var board = new Board();
+      //var board = new Board(400, '#eee', '#aaa', '#444');
+      //board.tests();
+      //board.print_board();
+      //board.set_fen('r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1 ');
+
+    </script>
+  </body>
+</html>
+
+
+
+
+
+
+
