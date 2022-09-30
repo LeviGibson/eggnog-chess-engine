@@ -1,3 +1,5 @@
+#!/bin/bash
+
 CFILES = main.c\
  syzygy.c\
  bitboard.c\
@@ -96,7 +98,7 @@ POPCNT_OBJS = search.c.popcnt.o \
 OS = linux
 RELEASE = false
 FILE = ./bin/eggnog-chess-engine
-COMMONFLAGS = -O3 -fcommon
+COMMONFLAGS = -fcommon -g -DWASM
 
 ifeq ($(RELEASE), true)
 COMMONFLAGS = -O3 -fcommon -DRELEASE
@@ -149,7 +151,7 @@ popcnt: $(POPCNT_OBJS)
 	$(CC) $(OBJS) $(POPCNT_OBJS) $(LINK_OPTS) -o $(FILE)-popcnt-$(OS)$(EXECUTABLE_FILENAME)
 
 %.c.avx2.o: %.c
-	$(CC) $< $(COMMONFLAGS) -D AVX2 -mavx2 -c -o $@
+	$(CC) $< $(COMMONFLAGS) -DWASM -c -o $@
 %.c.sse.o: %.c
 	$(CC) $< $(COMMONFLAGS) -D SSE -msse -c -o $@
 %.c.sse2.o: %.c
@@ -162,16 +164,19 @@ mingw:
 	make OS=win
 mingwj:
 	make OS=win -j
-debug:
-	$(CC) $(FILES) -pthread -o $(FILE)-debug
 gdb:
 	$(CC) $(COMMONFLAGS) -DAVX2 -mavx2 $(LINK_OPTS) $(CFILES) -g
 	mv ./a.out ./bin/a.out
 prof:
 	$(CC) -pg $(LINK_OPTS) -fcommon -DAVX2 -mavx2 -O3 $(CFILES) -o $(FILE)-prof
+wasm:
+#-sEXPORTED_FUNCTIONS=parse_go
+	emcc -s TOTAL_MEMORY=45875200 -O3 -sASSERTIONS -sALLOW_MEMORY_GROWTH -sWASM_BIGINT -lm -DWASM -fcommon $(CFILES) -o $(FILE).html --embed-file ./bin/network.nnue
 clean:
 	rm -f ./bin/a.out ./bin/gmon.out
 	rm -f ./bin/eggnog-chess-engine*
 	rm -f *.s
 	rm -f *.o nnue/*.o Fathom/*.o
 	rm -f $(AVX2_OBJS) $(AVX_OBJS) $(SSE2_OBJS) $(SSE_OBJS) $(POPCNT_OBJS)
+
+# emcc -s TOTAL_MEMORY=45875200 -lpthread -lm -DWASM -fcommon -O3 main.c syzygy.c bitboard.c board.c perft.c uci.c search.c timeman.c transposition.c Fathom/*.c nnue.c see.c nnom.c moveorder.c -o ./bin/eggnog-chess-engine.html

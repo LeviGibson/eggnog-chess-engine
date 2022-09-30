@@ -9,17 +9,21 @@
 #include "moveorder.h"
 #include <math.h>
 #include <stdio.h>
+
+#ifndef WASM
 #include <pthread.h>
+#endif
 
 int32_t DEF_ASPWINDOW = 1760;
 
 #define DEF_ALPHA (-5000000)
 #define DEF_BETA (5000000)
 
-int32_t aspwindow;
+int32_t aspwindow = 0;
 int32_t tbsearch = 0;
 
 int32_t selDepth = 0;
+int32_t stop = 0;
 
 long nodes = 0;
 long qnodes = 0;
@@ -437,6 +441,7 @@ struct NegamaxArgs{
     Thread thread;
 };
 
+#ifndef WASM
 typedef struct HelperThread HelperThread;
 struct HelperThread{
     pthread_t pthread;
@@ -459,6 +464,32 @@ void negamax_thread(void *args){
             return;
     }
 }
+
+//This function allocates memory for `HelperThread *threads`, so don't do it yourself.
+void generate_threads(HelperThread **threads, int32_t *numThreads, Thread *thread){
+    Board *board = &thread->board;
+    int32_t tmp[4] = {0,0,0,0};
+    MoveList legalMoves;
+    generate_moves(&legalMoves, board);
+    generate_only_legal_moves(&legalMoves, board);
+    sort_moves(&legalMoves, tmp, thread);
+    *numThreads = threadCount < legalMoves.count ? (int) threadCount : (int) legalMoves.count;
+
+    *threads = malloc(sizeof(HelperThread) * threadCount);
+
+    if (threadCount > 1) {
+        memset(*threads, 0, sizeof (HelperThread) * (*numThreads));
+
+        for (int32_t i = 0; i < *numThreads; ++i) {
+            (*threads)[i].args = (struct NegamaxArgs) {.pline = &(*threads)[i].line, .thread.board = *board};
+            make_move(legalMoves.moves[i], all_moves, 1, &(*threads)[i].args.thread.board);
+
+            pthread_create(&(*threads)[i].pthread, NULL, (void *(*)(void *)) negamax_thread, &(*threads)[i].args);
+        }
+    }
+}
+
+#endif
 
 //This function predicts how long it will take to make it to the next depth (iterative deepening)
 //if the time is not within the time limit, stop searching
@@ -489,32 +520,26 @@ int32_t willMakeNextDepth(int32_t curd, const float *times){
     return (timepred < (timeleft * 2)) ? 1 : 0;
 }
 
-//This function allocates memory for `HelperThread *threads`, so don't do it yourself.
-void generate_threads(HelperThread **threads, int32_t *numThreads, Thread *thread){
-    Board *board = &thread->board;
-    int32_t tmp[4] = {0,0,0,0};
-    MoveList legalMoves;
-    generate_moves(&legalMoves, board);
-    generate_only_legal_moves(&legalMoves, board);
-    sort_moves(&legalMoves, tmp, thread);
-    *numThreads = threadCount < legalMoves.count ? (int) threadCount : (int) legalMoves.count;
-
-    *threads = malloc(sizeof(HelperThread) * threadCount);
-
-    if (threadCount > 1) {
-        memset(*threads, 0, sizeof (HelperThread) * (*numThreads));
-
-        for (int32_t i = 0; i < *numThreads; ++i) {
-            (*threads)[i].args = (struct NegamaxArgs) {.pline = &(*threads)[i].line, .thread.board = *board};
-            make_move(legalMoves.moves[i], all_moves, 1, &(*threads)[i].args.thread.board);
-
-            pthread_create(&(*threads)[i].pthread, NULL, (void *(*)(void *)) negamax_thread, &(*threads)[i].args);
-        }
-    }
-}
+#ifndef WASM
+#define send_move(move) printf("bestmove ");\
+    print_move(move);\
+    printf("\n");                     \
+    return NULL
+#else
+#define send_move(move) return move
+#endif
 
 //the main interface function for the search.
+#ifndef WASM
 void *search_position(void *arg){
+#else
+int32_t search_position(int32_t depth){
+#endif
+
+#ifndef WASM
+    int32_t depth = *(int*)arg;
+#endif
+
     //Table bases
 
     Thread thread;
@@ -522,17 +547,13 @@ void *search_position(void *arg){
 
     memcpy(board, &UciBoard, sizeof(Board));
 
-    int32_t depth = *(int*)arg;
 
     if (get_wdl(board) != TB_RESULT_FAILED) {
         int32_t move = get_root_move(board);
 
         //this is shit code but thats okay its not my fault :)
         if (move != 0) {
-            printf("bestmove ");
-            print_move(move);
-            printf("\n");
-            return NULL;
+            send_move(move);
         } else{
             tbsearch = 1;
         }
@@ -569,9 +590,11 @@ void *search_position(void *arg){
 
     reset_hash_table();
 
+    #ifndef WASM
     HelperThread *threads = NULL;
     int32_t numThreads;
     generate_threads(&threads, &numThreads, &thread);
+    #endif
 
 #ifdef NO_LMR
     printf("info string This build is without Late Move Reduction, and should be used for debugging purposes only.\n");
@@ -607,8 +630,9 @@ void *search_position(void *arg){
 
             if (currentDepth > 2)
                 aspwindow *= 2;
-
+#ifndef WASM
             printf("info string aspiration research. Window = %d\n", aspwindow/64);
+#endif
 
             alpha = DEF_ALPHA;
             beta = DEF_BETA;
@@ -660,6 +684,7 @@ void *search_position(void *arg){
 
         prevBestMove = board->prevPv.moves[0];
 
+// #ifndef WASM
         printf("info score %s %d depth %d seldepth %d nodes %ld nps %ld qnodes %ld tbhits %ld time %d pv ",
                (abs(eval) > 4000000) ? "mate" : "cp" , (abs(eval) > 4000000) ? (4900000 - abs(eval)) * (eval / abs(eval)) : eval/64,
                currentDepth, selDepth, nodes, ((nodes*1000)/(max(1, get_time_ms() - startingTime))), qnodes, tbHits, (get_time_ms() - startingTime));
@@ -672,6 +697,7 @@ void *search_position(void *arg){
         }
 
         printf("\n");
+// #endif
 
         if ((abs(eval) > 3000000)){
             break;
@@ -679,6 +705,7 @@ void *search_position(void *arg){
 
     }
 
+    #ifndef WASM
     if (threadCount > 1) {
         int32_t originalStop = stop;
 
@@ -689,15 +716,12 @@ void *search_position(void *arg){
 
         stop = originalStop;
     }
-
+    
     free(threads);
+    #endif
 
     dynamicTimeManagment = 0;
     tbsearch = 0;
 
-    printf("bestmove ");
-    print_move(board->prevPv.moves[0]);
-    printf("\n");
-
-    return NULL;
+    send_move(board->prevPv.moves[0]);
 }

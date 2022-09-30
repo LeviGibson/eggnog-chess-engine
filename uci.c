@@ -10,10 +10,17 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <pthread.h>
 #include <unistd.h>
 
+#ifndef WASM
+#include <pthread.h>
 pthread_t searchthread;
+#else
+#include <emscripten.h>
+
+#endif
+
+
 int32_t dynamicTimeManagment = 0;
 int32_t moveOverhead = 0;
 int32_t tuneParameter = 1;
@@ -130,21 +137,22 @@ void parse_position(char *command) {
     UciBoard.searchColor = UciBoard.side;
 }
 
-int32_t depth;
+int32_t depth = 0;
+Board UciBoard = {};
 
 int32_t threadCount = 1;
 
 int32_t wtime = 0;
 int32_t btime = 0;
 
-void parse_go(char *command) {
+
+#ifndef WASM
+int32_t parse_go(char *command) {
     char *current_depth = NULL;
     char *perft = NULL;
     char *current_timelimit = NULL;
     char *current_wtime = NULL;
     char *current_btime = NULL;
-
-
 
     current_depth = strstr(command, "depth");
     if (current_depth) {
@@ -159,7 +167,7 @@ void parse_go(char *command) {
     if (perft){
         depth = atoi(perft + 6);
         perft_test(depth, &UciBoard);
-        return;
+        return 0;
     }
 
     current_timelimit = strstr(command, "movetime");
@@ -191,7 +199,41 @@ void parse_go(char *command) {
     if(!searchthread){
         printf("Failed to create searchthread");
     }
+    return 0;
 }
+#else
+EMSCRIPTEN_KEEPALIVE
+int32_t parse_go(int32_t time) {
+    depth = MAX_PLY;
+    moveTime = time;
+
+    int32_t move = search_position(depth);
+    print_move(move);
+    printf("\n");
+    return move;
+}
+
+EMSCRIPTEN_KEEPALIVE
+int32_t wasm_make_move(int32_t from, int32_t to) {
+    MoveList moves;
+    generate_moves(&moves, &UciBoard);
+    for (int i = 0; i < moves.count; i++){
+        int32_t move = moves.moves[i];
+        if (getsource(move) == from && gettarget(move) == to){
+            make_move(move, all_moves, 1, &UciBoard);
+            break;
+        }
+    }
+}
+
+EMSCRIPTEN_KEEPALIVE
+int32_t wasm_reset_board(){
+    parse_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1", &UciBoard);
+}
+
+#endif
+
+#ifndef WASM
 
 void uci_loop() {
     setbuf(stdin, NULL);
@@ -281,4 +323,6 @@ void uci_loop() {
 
     }
 }
+
+#endif //#ifndef WASM
 

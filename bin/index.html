@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<style>
+    #centersplit{
+        /* padding: 5%; */
+        border-spacing: 20px;
+    }
+    
+    /* #chessboard{
+        -webkit-transform:rotate(180deg);
+    } */
+
+    button{
+        width: 100%;
+        height: 60px;
+    }
+
+    div.scrollable {
+        width: 100%;
+        height: 100%;
+        max-height:600px;
+        margin: 0;
+        padding: 0;
+        overflow: scroll;
+        background-color: #656ca5;
+    }
+
+    body {
+        background-color: #575E92;
+    }
+
+
+</style>
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Eggnog Chess Engine</title>
+</head>
+<body>
+    <script type="text/javascript" src="eggnog-chess-engine.js"></script>
+    <table id="centersplit">
+        <tr>
+            <td style="width: 50%;">
+                <div style="display: flex; justify-content: center;">
+                    <table>
+                        <tr>
+                            
+                            <td colspan=2>
+                                <div id="chessboard"></div>
+                            </td>
+                        
+                        </tr>
+
+                        <tr>
+                            <td style="width:50%">
+                                <button onclick="flip();">Flip</button>
+                            </td>
+                            <td style="width:50%">
+                                <button onclick="reset();">Reset</button>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+
+            </td>
+            <td>
+                <div class=scrollable>
+                <h1 id="eggnog-chess-engine">eggnog-chess-engine</h1>
+                <p><a href="https://lichess.org/@/eggnog-chess-engine">Challenge me on Lichess</a></p>
+                <p>eggnog-chess-engine is an NNUE-based chess engine written by Levi Gibson.</p>
+                <h2 id="build">Build</h2>
+                <p>Find out which instruction set you have <a href="https://www.intel.com/content/www/us/en/support/articles/000057621/processors.html">here</a>.</p>
+                <p>build for all CPUs:</p>
+                <p>linux:<code>make</code></p>
+                <p>mac:<code>make OS=mac</code></p>
+                <p>windows:<code>make OS=win</code></p>
+                <h3 id="build-for-spesific-instruction-set">build for spesific instruction set</h3>
+                <p><code>make avx2</code></p>
+                <p><code>make popcnt</code></p>
+                <p><code>make avx</code></p>
+                <p><code>make sse</code></p>
+                <p><code>make sse2</code></p>
+                <h2 id="run">Run</h2>
+                <p>eggnog-chess-engine uses the UCI protocol. It must be run with a GUI such as <a href="http://www.playwitharena.de/">Arena</a>.</p>
+                <p>If you move the executable (bin/eggnog-chess-engine-xxx) to a different folder, be sure to move these files as well:</p>
+                <pre><code>bin/network<span class="hljs-selector-class">.nnue</span>
+                bin/network.nnom
+                </code></pre><h2 id="nnue">NNUE</h2>
+                <p>eggnog-chess-engine uses a strage but functional type of NNUE.
+                Instead of using HalfKp or somthing similar, the positions of the pieces are fed directly to the neural network as a sparse array.
+                There is another set of features that traditional NNUE does not have, which is the side to move, and the material count.
+                The accumulator is much smaller than a traditional NNUE accumulator. It is only 128 neurons.
+                Training code for the eggnog NNUE can be found <a href="https://github.com/LeviGibson/nnue-trainer-2.git">here</a>.</p>
+                <h2 id="nnom">NNOM</h2>
+                <p>eggnog-chess-engine uses NNOM, or Move Ordering Neural Network. It functions very simialrly to NNUE, but only has one hidden layer. 
+                The only hidden layer is updated the same wasy as NNUE. 
+                labels are 384 (6*64) values, each corrosponding to a move.
+                Only the output neurons that correspond to legal moves are calculated. 
+                This makes the process of running NNOM as quick as updating the first layer, and calculating a few output neurons.
+                Training code for the eggnog NNOM can be found <a href="https://github.com/LeviGibson/nnom-trainer.git">here</a>.</p>
+                </div>
+            </td>
+        </tr>
+    </table>
+    
+    <script src="chessboard/src/chessboard.js"></script>
+    <script>
+        const squareNames = ["a8", "b8", "c8", "d8", "e8", "f8", "g8", "h8", "a7", "b7", "c7", "d7", "e7", "f7", "g7", "h7", "a6", "b6", "c6", "d6", "e6", "f6", "g6", "h6", "a5", "b5", "c5", "d5", "e5", "f5", "g5", "h5", "a4", "b4", "c4", "d4", "e4", "f4", "g4", "h4", "a3", "b3", "c3", "d3", "e3", "f3", "g3", "h3", "a2", "b2", "c2", "d2", "e2", "f2", "g2", "h2", "a1", "b1", "c1", "d1", "e1", "f1", "g1", "h1"];
+
+        function playBestMove(){
+            
+
+            let intMove = _parse_go(1000);
+            let from = intMove & 0x3f;
+            let to = ((0xfc0 & (intMove)) >> 6);
+
+            board.read_moves(squareNames[from] + squareNames[to]);
+            _wasm_make_move(from, to);
+
+            return squareNames[from] + squareNames[to];
+        }
+
+        function reset(){
+            _wasm_reset_board();
+            board.set_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
+        }
+
+        var board = Board();
+        
+        function move_event(move_str){
+            move_str = move_str.substr(0, 4);
+            fr = squareNames.indexOf(move_str.substr(0, 2));
+            to = squareNames.indexOf(move_str.substr(2, 2));
+
+            _wasm_make_move(fr, to);
+            playBestMove();
+        }
+
+        function flip(){
+            let element = document.querySelector('#chessboard');
+            if (element.style.cssText == ""){
+                element.style.cssText = "-webkit-transform:rotate(180deg);"
+            } else {
+                element.style.cssText = ""
+            }
+
+            board.flip_board();
+
+            playBestMove();
+        }
+        
+    </script>
+
+</body>
+</html>

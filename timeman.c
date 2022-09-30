@@ -5,7 +5,8 @@
 #include <math.h>
 #include <stdio.h>
 
-int32_t startingTime;
+int32_t startingTime = 0;
+int32_t moveTime = 0;
 
 void start_time() {
     startingTime = get_time_ms();

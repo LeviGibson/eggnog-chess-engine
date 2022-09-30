@@ -7,13 +7,13 @@
 #include <stdalign.h>
 #include <immintrin.h>
 
-alignas(64) int16_t l1_weights[IN_SIZE][L1_SIZE];
-alignas(64) int16_t l2_weights[L2_SIZE][L1_SIZE];
+alignas(64) int16_t l1_weights[IN_SIZE][L1_SIZE] = {};
+alignas(64) int16_t l2_weights[L2_SIZE][L1_SIZE] = {};
 
-alignas(64) int16_t l1_biases[L1_SIZE];
-alignas(64) int32_t l2_biases[L2_SIZE];
+alignas(64) int16_t l1_biases[L1_SIZE] = {};
+alignas(64) int32_t l2_biases[L2_SIZE] = {};
 
-#if defined(AVX2) || defined(AVX)
+#if defined(AVX2)
 int16_t hadd_epi16(__m256i x) {
     const __m128i hiQuad = (__m128i)_mm256_extractf128_ps((__m256)x, 1);
     const __m128i loQuad = (__m128i)_mm256_castps256_ps128((__m256)x);

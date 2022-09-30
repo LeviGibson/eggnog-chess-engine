@@ -39,11 +39,11 @@ const int32_t b_orient[64] = {
         63, 62, 61, 60, 59, 58, 57, 56
 };
 
-U64 piece_keys[12][64];
-U64 castle_keys[16];
-U64 enpessent_keys[64];
-U64 side_keys[2];
-U64 move_keys[4096];
+U64 piece_keys[12][64] = {};
+U64 castle_keys[16] = {};
+U64 enpessent_keys[64] = {};
+U64 side_keys[2] = {};
+U64 move_keys[4096] = {};
 
 void init_zobrist_keys(){
     for (int32_t piece = p_P; piece <= p_k; piece++){

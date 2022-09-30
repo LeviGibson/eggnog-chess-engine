@@ -6,6 +6,10 @@
 #include "moveorder.h"
 #include "see.h"
 
+int32_t historyCount = 0;
+int32_t killer_moves[MAX_PLY][2] = {};
+float history_moves[12][64][64] = {};
+
 static inline void swap(int* a, int* b) {
     int32_t t = *a;
     *a = *b;

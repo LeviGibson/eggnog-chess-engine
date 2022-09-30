@@ -16,8 +16,14 @@ int32_t btime;
 
 void change_to_correct_directory(char *argv);
 void parse_position(char *command);
-void parse_go(char *command);
-void uci_loop();
+
+// #ifndef WASM
+// int32_t parse_go(char *command);
+// void uci_loop();
+// #else
+int32_t parse_go(int32_t time);
+// #endif
+
 int32_t parse_move(char * move_string);
 
 #endif

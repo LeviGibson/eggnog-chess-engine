@@ -5,6 +5,7 @@
 #include "bitboard.h"
 #include <immintrin.h>
 
+
 #ifdef WIN64
 #include <sysinfoapi.h>
 #else

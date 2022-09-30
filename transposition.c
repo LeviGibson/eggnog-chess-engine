@@ -3,7 +3,11 @@
 //
 
 #include <stdio.h>
+
+#ifndef WASM
 #include <pthread.h>
+#endif
+
 #include "transposition.h"
 #include "board.h"
 #include "uci.h"
@@ -12,7 +16,8 @@ HASHE *hash_table = NULL;
 int32_t *lines = NULL;
 int32_t lineMoveCount = 0;
 
-pthread_mutex_t lmcLock;
+#ifndef WASM
+pthread_mutex_t lmcLock = {};
 pthread_mutex_t *ttLocks = NULL;
 
 void lock(pthread_mutex_t *lock){
@@ -24,6 +29,8 @@ void unlock(pthread_mutex_t *lock){
     if (threadCount > 1)
         pthread_mutex_unlock(lock);
 }
+
+#endif
 
 void reset_hash_table(){
     memset(hash_table, 0, sizeof(HASHE)*tt_size);
@@ -38,17 +45,20 @@ void reinit_transposition(){
 
     if (lines){
         free(lines);
+#ifndef WASM
         free(ttLocks);
+#endif
     }
 
     hash_table = malloc(sizeof(HASHE)*tt_size);
     lines = malloc(sizeof(int32_t)*tt_size*6);
+#ifndef WASM
     ttLocks = malloc(sizeof (pthread_mutex_t)*tt_size);
-
     pthread_mutex_init(&lmcLock, NULL);
     for (int32_t i = 0; i < tt_size; ++i) {
         pthread_mutex_init(&ttLocks[i], NULL);
     }
+#endif
 
     reset_hash_table();
 }
@@ -57,10 +67,12 @@ void transposition_free(){
     free(lines);
     free(hash_table);
 
+    #ifndef WASM
     pthread_mutex_destroy(&lmcLock);
     for (int32_t i = 0; i < tt_size; ++i) {
         pthread_mutex_destroy(&ttLocks[i]);
     }
+    #endif
 }
 
 void recover_line(int32_t depth, HASHE *phashe, Line *pline, int32_t alpha, int32_t *ret, Board *board){
@@ -80,7 +92,9 @@ int32_t ProbeHash(int32_t depth, int32_t alpha, int32_t beta, int32_t *move, Lin
     HASHE * phashe = &hash_table[index];
     int32_t ret = valUNKNOWN;
 
+    #ifndef WASM
     lock(&ttLocks[index]);
+    #endif
 
     if (phashe->key == board->current_zobrist_key) {
         memcpy(move, phashe->best, sizeof(phashe->best));
@@ -102,7 +116,9 @@ int32_t ProbeHash(int32_t depth, int32_t alpha, int32_t beta, int32_t *move, Lin
         }
     }
 
+#ifndef WASM
     unlock(&ttLocks[index]);
+#endif
 
     return ret;
 }
@@ -111,7 +127,9 @@ void RecordHash(int32_t depth, int32_t val, MoveEval *best, int32_t hashf, Line 
     if ((val != 0) && (val < 4500000) && (val > -450000)) {
         uint32_t index = board->current_zobrist_key % tt_size;
 
+#ifndef WASM
         lock(&ttLocks[index]);
+#endif
 
         HASHE *phashe = &hash_table[index];
         phashe->key = board->current_zobrist_key;
@@ -129,7 +147,9 @@ void RecordHash(int32_t depth, int32_t val, MoveEval *best, int32_t hashf, Line 
         memcpy(&phashe->best[0], &best->move[0], sizeof(best->move));
 
         if (threadCount > 1 && depth > 1 && pline != NULL) {
+#ifndef WASM
             lock(&lmcLock);
+#endif
 
             if (lineMoveCount > (tt_linesize - 20)){
                 printf("info string hash table reset\n");
@@ -141,10 +161,14 @@ void RecordHash(int32_t depth, int32_t val, MoveEval *best, int32_t hashf, Line 
             memcpy(&lines[lineMoveCount + 1], &pline->moves, sizeof(int) * pline->length);
             lineMoveCount += pline->length + 1;
 
+#ifndef WASM
             unlock(&lmcLock);
+#endif
         }
 
+#ifndef WASM
         unlock(&ttLocks[index]);
+#endif
     }
 }
 

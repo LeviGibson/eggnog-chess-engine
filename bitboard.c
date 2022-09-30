@@ -459,8 +459,11 @@ const U64 not_h_file = 9187201950435737471ULL;
 const U64 not_hg_file = 4557430888798830399ULL;
 const U64 not_ab_file = 18229723555195321596ULL;
 
-U64 rook_attacks[64][4096];
-U64 bishop_attacks[64][512];
+U64 rook_attacks[64][4096] = {};
+U64 bishop_attacks[64][512] = {};
+
+U64 bishop_relevant_occupancies[64] = {};
+U64 rook_relevant_occupancies[64] = {};
 
 /**
 void init_knight_mask(){

@@ -7,7 +7,7 @@
 #include "search.h"
 
 #define hash_size 500000
-int8_t hash[hash_size];
+int8_t hash[hash_size] = {};
 
 int32_t can_piece_move_to(int32_t from, int32_t to, Board *board){
     copy_board();

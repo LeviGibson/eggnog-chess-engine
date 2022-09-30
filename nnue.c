@@ -17,19 +17,19 @@ struct EvalHashEntry{
 };
 
 #define NnueHashSize 1000000
-EvalHashEntry evalHashTable[NnueHashSize];
+EvalHashEntry evalHashTable[NnueHashSize] = {};
 
 #define TRANSFORMERSTART ((3 * 4) + 181)
 
-alignas(64) int16_t nnue_in_weights[NNUE_INSIZE * NNUE_KPSIZE ];
-alignas(64) int8_t nnue_l1_weights[NNUE_L1SIZE * NNUE_L2SIZE ];
-alignas(64) int8_t nnue_l2_weights[NNUE_L2SIZE * NNUE_L3SIZE ];
-alignas(64) int16_t nnue_l3_weights[NNUE_L3SIZE * NNUE_OUTSIZE];
+alignas(64) int16_t nnue_in_weights[NNUE_INSIZE * NNUE_KPSIZE ] = {};
+alignas(64) int8_t nnue_l1_weights[NNUE_L1SIZE * NNUE_L2SIZE ] = {};
+alignas(64) int8_t nnue_l2_weights[NNUE_L2SIZE * NNUE_L3SIZE ] = {};
+alignas(64) int16_t nnue_l3_weights[NNUE_L3SIZE * NNUE_OUTSIZE] = {};
 
-alignas(64) int16_t nnue_in_biases[NNUE_KPSIZE ];
-alignas(64) int32_t nnue_l1_biases[NNUE_L2SIZE ];
-alignas(64) int32_t nnue_l2_biases[NNUE_L3SIZE ];
-alignas(64) int32_t nnue_l3_biases[NNUE_OUTSIZE];
+alignas(64) int16_t nnue_in_biases[NNUE_KPSIZE ] = {};
+alignas(64) int32_t nnue_l1_biases[NNUE_L2SIZE ] = {};
+alignas(64) int32_t nnue_l2_biases[NNUE_L3SIZE ] = {};
+alignas(64) int32_t nnue_l3_biases[NNUE_OUTSIZE] = {};
 
 void transform_weight_indicies(int8_t arr[], uint32_t dims){
     int8_t tmpArr[dims*32];
@@ -189,7 +189,7 @@ void clamp_accumulator(int16_t *acc){
 
 #else
 
-    for (int32_t i = 0; i < 512; ++i) {
+    for (int32_t i = 0; i < L1_SIZE; ++i) {
         acc[i] = clamp(acc[i], 0, 127);
     }
 
