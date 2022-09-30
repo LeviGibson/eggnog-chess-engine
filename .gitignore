@@ -1,7 +1,6 @@
 .idea
 .vscode
 bin/gmon.out
-bin/eggnog-chess-engine*
 *.o
 nnue/*.o
 Fathom/*.o
