@@ -222,24 +222,8 @@ static inline void propogate_neuron(const int16_t a, const int8_t *b, int32_t *r
 }
 
 void add_extra_feautres(NnueData *data, Board *board){
-    int32_t features[12+1];
-    memset(features, 0, sizeof(features));
-
-    for (int pt = 0; pt <= p_k; ++pt) {
-        U64 bitboard = board->bitboards[pt];
-        while (bitboard){
-            features[pt] += 1;
-            pop_bit(bitboard, bsf(bitboard));
-        }
-    }
-
-    features[12] = !board->side;
-
-
-    for (int i = 0; i < 13; ++i) {
-        for (int j = 0; j < features[i]; ++j) {
-            add_index(data->tmpAccumulation, 768+i);
-        }
+    if (board->side == white){
+        add_index(data->tmpAccumulation, 768);
     }
 }
 
