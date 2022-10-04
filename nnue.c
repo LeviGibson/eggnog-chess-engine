@@ -37,7 +37,7 @@ void transform_weight_indicies(int8_t arr[], uint32_t dims){
 
     for (int32_t r = 0; r < 32; ++r) {
         for (int32_t c = 0; c < dims; ++c) {
-            arr[(c * 32) + r] = tmpArr[(dims*r) + c];
+            arr[(r * dims) + c] = tmpArr[(c*32) + r];
         }
     }
 }
@@ -66,6 +66,9 @@ int32_t load_nnue(const char *path){
     for (int32_t i = 0; i < NnueHashSize; ++i) {
         evalHashTable[i].eval = NO_EVAL;
     }
+
+    transform_weight_indicies(nnue_l1_weights, NNUE_L1SIZE);
+    transform_weight_indicies(nnue_l2_weights, NNUE_L2SIZE);
 
     return 0;
 }
@@ -196,29 +199,29 @@ void clamp_accumulator(int16_t *acc){
 #endif
 }
 
-static inline void propogate_neuron(const int16_t a, const int8_t *b, int32_t *restrict c) {
 
-#ifdef AVX2
-    __m256i va = _mm256_set1_epi16(a);
-
-    for (int32_t i = 0 ; i < 32 ; i += 16) {
+static inline void propogate_to_neuron(const int16_t* a, const int8_t *b, int16_t *c){
+    #ifdef AVX2
+    for (int32_t i = 0; i < 32; i+=16) {
+        __m256i va = _mm256_loadu_si256((__m256i*)&a[i]);
         __m256i vb = _mm256_cvtepi8_epi16( _mm_load_si128((__m128i*)&b[i]) );
-        __m256i prod = _mm256_mullo_epi16(va, vb);
+        vb = _mm256_madd_epi16(vb, va);
+        
+        int32_t *ivb = (int32_t*)&vb;
 
-        __m256i v1 = _mm256_cvtepi16_epi32((__m128i)_mm256_castps256_ps128((__m256)prod));
-        __m256i v2 = _mm256_cvtepi16_epi32((__m128i)_mm256_extractf128_ps((__m256)prod, 1));
+        *c += ivb[0];
+        *c += ivb[1];
+        *c += ivb[2];
+        *c += ivb[3];
 
-        __m256i sum1 = _mm256_add_epi32(v1, _mm256_loadu_si256((const __m256i*)&c[i]));
-        __m256i sum2 = _mm256_add_epi32(v2, _mm256_loadu_si256((const __m256i*)&c[i+8]));
-
-        _mm256_storeu_si256((__m256i*)&c[i], sum1);
-        _mm256_storeu_si256((__m256i*)&c[i+8], sum2);
+        *c += ivb[4];
+        *c += ivb[5];
+        *c += ivb[6];
+        *c += ivb[7];
     }
-#else
-    for (int32_t i = 0; i < 32; ++i)
-        c[i] += a * b[i];
-#endif
-
+    #endif
+    
+    
 }
 
 void add_extra_feautres(NnueData *data, Board *board){
@@ -236,11 +239,16 @@ void propogate_l1(NnueData *data, Board *board) {
 
     memcpy(data->l1, nnue_l1_biases, sizeof nnue_l1_biases);
 
-    for (int32_t i = 0; i < NNUE_L1SIZE; ++i) {
-        if (tmpAccum[i]) {
-            int32_t offset = 32 * i;
-            propogate_neuron(tmpAccum[i], &nnue_l1_weights[offset], data->l1);
+    for (int32_t i = 0; i < NNUE_L2SIZE; ++i) {
+        for (int j = 0; j < NNUE_L1SIZE; j++){
+            data->l1[i] += tmpAccum[j] * nnue_l1_weights[(i*NNUE_L1SIZE) + j];
         }
+
+        // if()
+        // propogate_to_neuron(&tmpAccum[0], &nnue_l1_weights[i*NNUE_L1SIZE], &data->l1[i]);
+        // propogate_to_neuron(&tmpAccum[32], &nnue_l1_weights[i*NNUE_L1SIZE+32], &data->l1[i]);
+        // propogate_to_neuron(&tmpAccum[64], &nnue_l1_weights[i*NNUE_L1SIZE+64], &data->l1[i]);
+        // propogate_to_neuron(&tmpAccum[96], &nnue_l1_weights[i*NNUE_L1SIZE+96], &data->l1[i]);
     }
 
     clamp_layer(data->l1);
@@ -249,12 +257,12 @@ void propogate_l1(NnueData *data, Board *board) {
 void propogate_l2(NnueData *data){
     memcpy(data->l2, nnue_l2_biases, sizeof nnue_l2_biases);
 
-    for (int32_t o = 0; o < 32; ++o) {
-        if (!data->l1[o])
-            continue;
-
-        int32_t offset = 32 * o;
-        propogate_neuron((short )data->l1[o], &nnue_l2_weights[offset], data->l2);
+    for (int32_t i = 0; i < NNUE_L3SIZE; ++i) {
+        for (int j = 0; j < NNUE_L2SIZE; j++){
+            data->l2[i] += data->l1[j] * nnue_l2_weights[(i*NNUE_L1SIZE) + j];
+        }
+        //info score cp 24 depth 10 seldepth 21 nodes 400914 nps 618694 qnodes 222014 tbhits 0 time 648 pv e2e4 d7d5 e4d5 g8f6 d2d4 f6d5 h2h4 e7e5 c1g5 f8e7
+        // propogate_to_neuron(&data->l1[0], &nnue_l2_weights[i*NNUE_L1SIZE], &data->l2[i]);
     }
 
     clamp_layer(data->l2);
