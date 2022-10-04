@@ -199,8 +199,10 @@ void clamp_accumulator(int16_t *acc){
 #endif
 }
 
+//info score cp 24 depth 10 seldepth 21 nodes 400914 nps 717198 qnodes 222014 tbhits 0 time 559 pv e2e4 d7d5 e4d5 g8f6 d2d4 f6d5 h2h4 e7e5 c1g5 f8e7
+//info score cp 48 depth 10 seldepth 19 nodes 162967 nps 993701 qnodes 77801 tbhits 0 time 164 pv e2e4 d7d5 e4d5 g8f6 d2d4 a7a6 d1f3 c7c6 d5c6
 
-static inline void propogate_to_neuron(const int16_t* a, const int8_t *b, int16_t *c){
+static inline void propogate_to_neuron(const int16_t* a, const int8_t *b, int32_t *c){
     #ifdef AVX2
     for (int32_t i = 0; i < 32; i+=16) {
         __m256i va = _mm256_loadu_si256((__m256i*)&a[i]);
@@ -240,29 +242,28 @@ void propogate_l1(NnueData *data, Board *board) {
     memcpy(data->l1, nnue_l1_biases, sizeof nnue_l1_biases);
 
     for (int32_t i = 0; i < NNUE_L2SIZE; ++i) {
-        for (int j = 0; j < NNUE_L1SIZE; j++){
-            data->l1[i] += tmpAccum[j] * nnue_l1_weights[(i*NNUE_L1SIZE) + j];
-        }
+        // for (int j = 0; j < NNUE_L1SIZE; j++){
+        //     data->l1[i] += tmpAccum[j] * nnue_l1_weights[(i*NNUE_L1SIZE) + j];
+        // }
 
-        // if()
-        // propogate_to_neuron(&tmpAccum[0], &nnue_l1_weights[i*NNUE_L1SIZE], &data->l1[i]);
-        // propogate_to_neuron(&tmpAccum[32], &nnue_l1_weights[i*NNUE_L1SIZE+32], &data->l1[i]);
-        // propogate_to_neuron(&tmpAccum[64], &nnue_l1_weights[i*NNUE_L1SIZE+64], &data->l1[i]);
-        // propogate_to_neuron(&tmpAccum[96], &nnue_l1_weights[i*NNUE_L1SIZE+96], &data->l1[i]);
+        propogate_to_neuron(&tmpAccum[0], &nnue_l1_weights[i*NNUE_L1SIZE], &data->l1[i]);
+        propogate_to_neuron(&tmpAccum[32], &nnue_l1_weights[i*NNUE_L1SIZE+32], &data->l1[i]);
+        propogate_to_neuron(&tmpAccum[64], &nnue_l1_weights[i*NNUE_L1SIZE+64], &data->l1[i]);
+        propogate_to_neuron(&tmpAccum[96], &nnue_l1_weights[i*NNUE_L1SIZE+96], &data->l1[i]);
     }
 
     clamp_layer(data->l1);
+    for (int32_t i = 0; i < NNUE_L2SIZE; i++) {
+        data->small_l1[i] = (int16_t)data->l1[i];
+    }
+    
 }
 
 void propogate_l2(NnueData *data){
     memcpy(data->l2, nnue_l2_biases, sizeof nnue_l2_biases);
 
     for (int32_t i = 0; i < NNUE_L3SIZE; ++i) {
-        for (int j = 0; j < NNUE_L2SIZE; j++){
-            data->l2[i] += data->l1[j] * nnue_l2_weights[(i*NNUE_L1SIZE) + j];
-        }
-        //info score cp 24 depth 10 seldepth 21 nodes 400914 nps 618694 qnodes 222014 tbhits 0 time 648 pv e2e4 d7d5 e4d5 g8f6 d2d4 f6d5 h2h4 e7e5 c1g5 f8e7
-        // propogate_to_neuron(&data->l1[0], &nnue_l2_weights[i*NNUE_L1SIZE], &data->l2[i]);
+        propogate_to_neuron(&data->small_l1[0], &nnue_l2_weights[i*NNUE_L2SIZE], &data->l2[i]);
     }
 
     clamp_layer(data->l2);
