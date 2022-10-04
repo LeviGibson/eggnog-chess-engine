@@ -25,7 +25,8 @@ struct NnueData{
     int32_t l3[NNUE_L3SIZE ];
     int32_t l4[NNUE_OUTSIZE];
     
-    int16_t small_l2[NNUE_L2SIZE ];
+    uint8_t small_l2[NNUE_L2SIZE ];
+    uint8_t small_l1[NNUE_L1SIZE ];
 
     int32_t eval;
 

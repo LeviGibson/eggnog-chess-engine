@@ -202,29 +202,21 @@ void clamp_accumulator(int16_t *acc){
 //info score cp 24 depth 10 seldepth 21 nodes 400914 nps 717198 qnodes 222014 tbhits 0 time 559 pv e2e4 d7d5 e4d5 g8f6 d2d4 f6d5 h2h4 e7e5 c1g5 f8e7
 //info score cp 48 depth 10 seldepth 19 nodes 162967 nps 993701 qnodes 77801 tbhits 0 time 164 pv e2e4 d7d5 e4d5 g8f6 d2d4 a7a6 d1f3 c7c6 d5c6
 
-static inline void propogate_to_neuron(const int16_t* a, const int8_t *b, int32_t *c){
+
+static inline void propogate_neuron(const uint8_t* source, const int8_t* weights, int32_t *out){
     #ifdef AVX2
-    for (int32_t i = 0; i < 32; i+=16) {
-        __m256i va = _mm256_loadu_si256((__m256i*)&a[i]);
-        __m256i vb = _mm256_cvtepi8_epi16( _mm_load_si128((__m128i*)&b[i]) );
-        vb = _mm256_madd_epi16(vb, va);
+        __m256i va = _mm256_loadu_si256((__m256i*)source);
+        __m256i vb = _mm256_loadu_si256((__m256i*)weights);
+        __m256i prod = _mm256_maddubs_epi16(va, vb);
+
+        int16_t* iprod = (int16_t*)&prod;
+        for (int8_t i = 0; i < 16; i++) {
+            *out += iprod[i];
+        }
         
-        int32_t *ivb = (int32_t*)&vb;
-
-        *c += ivb[0];
-        *c += ivb[1];
-        *c += ivb[2];
-        *c += ivb[3];
-
-        *c += ivb[4];
-        *c += ivb[5];
-        *c += ivb[6];
-        *c += ivb[7];
-    }
     #endif
-    
-    
 }
+
 
 void add_extra_feautres(NnueData *data, Board *board){
     if (board->side == white){
@@ -232,12 +224,16 @@ void add_extra_feautres(NnueData *data, Board *board){
     }
 }
 
-void propogate_l1(NnueData *data, Board *board) {
+void propogate_l2(NnueData *data, Board *board) {
     int16_t *tmpAccum = data->tmpAccumulation;
 
     memcpy(tmpAccum, data->accumulation, sizeof data->tmpAccumulation);
     add_extra_feautres(data, board);
     clamp_accumulator(tmpAccum);
+
+    for (int32_t i = 0; i < NNUE_L1SIZE; i++) {
+        data->small_l1[i] = (uint8_t)tmpAccum[i];
+    }
 
     memcpy(data->l2, nnue_l1_biases, sizeof nnue_l1_biases);
 
@@ -246,30 +242,30 @@ void propogate_l1(NnueData *data, Board *board) {
         //     data->l1[i] += tmpAccum[j] * nnue_l1_weights[(i*NNUE_L1SIZE) + j];
         // }
 
-        propogate_to_neuron(&tmpAccum[0], &nnue_l1_weights[i*NNUE_L1SIZE], &data->l2[i]);
-        propogate_to_neuron(&tmpAccum[32], &nnue_l1_weights[i*NNUE_L1SIZE+32], &data->l2[i]);
-        propogate_to_neuron(&tmpAccum[64], &nnue_l1_weights[i*NNUE_L1SIZE+64], &data->l2[i]);
-        propogate_to_neuron(&tmpAccum[96], &nnue_l1_weights[i*NNUE_L1SIZE+96], &data->l2[i]);
+        propogate_neuron(&data->small_l1[0], &nnue_l1_weights[i*NNUE_L1SIZE], &data->l2[i]);
+        propogate_neuron(&data->small_l1[32], &nnue_l1_weights[i*NNUE_L1SIZE+32], &data->l2[i]);
+        propogate_neuron(&data->small_l1[64], &nnue_l1_weights[i*NNUE_L1SIZE+64], &data->l2[i]);
+        propogate_neuron(&data->small_l1[96], &nnue_l1_weights[i*NNUE_L1SIZE+96], &data->l2[i]);
     }
 
     clamp_layer(data->l2);
     for (int32_t i = 0; i < NNUE_L2SIZE; i++) {
-        data->small_l2[i] = (int16_t)data->l2[i];
+        data->small_l2[i] = (uint8_t)data->l2[i];
     }
     
 }
 
-void propogate_l2(NnueData *data){
+void propogate_l3(NnueData *data){
     memcpy(data->l3, nnue_l2_biases, sizeof nnue_l2_biases);
 
     for (int32_t i = 0; i < NNUE_L3SIZE; ++i) {
-        propogate_to_neuron(&data->small_l2[0], &nnue_l2_weights[i*NNUE_L2SIZE], &data->l3[i]);
+        propogate_neuron(&data->small_l2[0], &nnue_l2_weights[i*NNUE_L2SIZE], &data->l3[i]);
     }
 
     clamp_layer(data->l3);
 }
 
-void propogate_l3(NnueData *data){
+void propogate_l4(NnueData *data){
     memcpy(data->l4, nnue_l3_biases, sizeof nnue_l3_biases);
     for (int32_t i = 0; i < 32; ++i) {
         data->l4[0] += data->l3[i] * nnue_l3_weights[i];
@@ -303,9 +299,9 @@ int32_t nnue_evaluate(Board *board) {
     if (evalHashTable[hashIndex].key == board->current_zobrist_key){
         data->eval = hashptr->eval;
     } else {
-        propogate_l1(data, board);
-        propogate_l2(data);
+        propogate_l2(data, board);
         propogate_l3(data);
+        propogate_l4(data);
 
         int eval = (int)(((((float)data->l4[0] / 127) / 127) * 410) * 64);
 
