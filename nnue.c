@@ -239,40 +239,40 @@ void propogate_l1(NnueData *data, Board *board) {
     add_extra_feautres(data, board);
     clamp_accumulator(tmpAccum);
 
-    memcpy(data->l1, nnue_l1_biases, sizeof nnue_l1_biases);
+    memcpy(data->l2, nnue_l1_biases, sizeof nnue_l1_biases);
 
     for (int32_t i = 0; i < NNUE_L2SIZE; ++i) {
         // for (int j = 0; j < NNUE_L1SIZE; j++){
         //     data->l1[i] += tmpAccum[j] * nnue_l1_weights[(i*NNUE_L1SIZE) + j];
         // }
 
-        propogate_to_neuron(&tmpAccum[0], &nnue_l1_weights[i*NNUE_L1SIZE], &data->l1[i]);
-        propogate_to_neuron(&tmpAccum[32], &nnue_l1_weights[i*NNUE_L1SIZE+32], &data->l1[i]);
-        propogate_to_neuron(&tmpAccum[64], &nnue_l1_weights[i*NNUE_L1SIZE+64], &data->l1[i]);
-        propogate_to_neuron(&tmpAccum[96], &nnue_l1_weights[i*NNUE_L1SIZE+96], &data->l1[i]);
+        propogate_to_neuron(&tmpAccum[0], &nnue_l1_weights[i*NNUE_L1SIZE], &data->l2[i]);
+        propogate_to_neuron(&tmpAccum[32], &nnue_l1_weights[i*NNUE_L1SIZE+32], &data->l2[i]);
+        propogate_to_neuron(&tmpAccum[64], &nnue_l1_weights[i*NNUE_L1SIZE+64], &data->l2[i]);
+        propogate_to_neuron(&tmpAccum[96], &nnue_l1_weights[i*NNUE_L1SIZE+96], &data->l2[i]);
     }
 
-    clamp_layer(data->l1);
+    clamp_layer(data->l2);
     for (int32_t i = 0; i < NNUE_L2SIZE; i++) {
-        data->small_l1[i] = (int16_t)data->l1[i];
+        data->small_l2[i] = (int16_t)data->l2[i];
     }
     
 }
 
 void propogate_l2(NnueData *data){
-    memcpy(data->l2, nnue_l2_biases, sizeof nnue_l2_biases);
+    memcpy(data->l3, nnue_l2_biases, sizeof nnue_l2_biases);
 
     for (int32_t i = 0; i < NNUE_L3SIZE; ++i) {
-        propogate_to_neuron(&data->small_l1[0], &nnue_l2_weights[i*NNUE_L2SIZE], &data->l2[i]);
+        propogate_to_neuron(&data->small_l2[0], &nnue_l2_weights[i*NNUE_L2SIZE], &data->l3[i]);
     }
 
-    clamp_layer(data->l2);
+    clamp_layer(data->l3);
 }
 
 void propogate_l3(NnueData *data){
-    memcpy(data->l3, nnue_l3_biases, sizeof nnue_l3_biases);
+    memcpy(data->l4, nnue_l3_biases, sizeof nnue_l3_biases);
     for (int32_t i = 0; i < 32; ++i) {
-        data->l3[0] += data->l2[i] * nnue_l3_weights[i];
+        data->l4[0] += data->l3[i] * nnue_l3_weights[i];
     }
 }
 
@@ -307,7 +307,7 @@ int32_t nnue_evaluate(Board *board) {
         propogate_l2(data);
         propogate_l3(data);
 
-        int eval = (int)(((((float)data->l3[0] / 127) / 127) * 410) * 64);
+        int eval = (int)(((((float)data->l4[0] / 127) / 127) * 410) * 64);
 
         data->eval = (board->side == white) ? eval : -eval;
 
