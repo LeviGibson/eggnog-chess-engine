@@ -199,9 +199,44 @@ void clamp_accumulator(int16_t *acc){
 #endif
 }
 
-//info score cp 24 depth 10 seldepth 21 nodes 400914 nps 717198 qnodes 222014 tbhits 0 time 559 pv e2e4 d7d5 e4d5 g8f6 d2d4 f6d5 h2h4 e7e5 c1g5 f8e7
-//info score cp 48 depth 10 seldepth 19 nodes 162967 nps 993701 qnodes 77801 tbhits 0 time 164 pv e2e4 d7d5 e4d5 g8f6 d2d4 a7a6 d1f3 c7c6 d5c6
+void print_epi16(__m256i x){
+    int16_t* ip = (int16_t*)&x;
+    for (size_t i = 0; i < 16; i++)
+    {
+        printf("%d\t", ip[i]);
+    }
 
+    printf("\n");
+    
+}
+
+void print_128_epi16(__m256i x){
+    int16_t* ip = (int16_t*)&x;
+    for (size_t i = 0; i < 16; i++)
+    {
+        printf("%d\t", ip[i]);
+    }
+
+    printf("\n");
+    
+}
+
+int32_t nnue_hadd_epi16(__m256i x){
+#ifdef AVX2
+    __m128i h1 = (__m128i)_mm256_castps256_ps128((__m256)x);
+    __m128i h2 = _mm256_extracti128_si256(x, 1);
+    __m128i prod = _mm_add_epi16(h1, h2);
+
+    int out = 0;
+    int16_t* ip = (int16_t*)&prod;
+    for (int8_t i = 0; i < 8; i++) {
+        out += ip[i];
+    }
+
+    return out;
+
+#endif
+}
 
 static inline void propogate_neuron(const uint8_t* source, const int8_t* weights, int32_t *out){
     #ifdef AVX2
@@ -209,14 +244,31 @@ static inline void propogate_neuron(const uint8_t* source, const int8_t* weights
         __m256i vb = _mm256_loadu_si256((__m256i*)weights);
         __m256i prod = _mm256_maddubs_epi16(va, vb);
 
-        int16_t* iprod = (int16_t*)&prod;
-        for (int8_t i = 0; i < 16; i++) {
-            *out += iprod[i];
-        }
+        *out += nnue_hadd_epi16(prod);
         
     #endif
 }
 
+static inline void propogate_l2_neuron(const uint8_t* source, const int8_t* weights, int32_t *out){
+    #ifdef AVX2
+        __m256i sum = _mm256_setzero_si256();
+        for (int8_t i = 0; i < 4; i++) {
+            __m256i va = _mm256_loadu_si256((__m256i*)&source[32*i]);
+            __m256i vb = _mm256_loadu_si256((__m256i*)&weights[32*i]);
+            __m256i prod = _mm256_maddubs_epi16(va, vb);
+            sum = _mm256_add_epi16(prod, sum);
+        }
+        
+        *out += nnue_hadd_epi16(sum);
+        
+    #endif
+}
+
+void squish_accumulator(int16_t* x, uint8_t* y){
+    for (int32_t i = 0; i < NNUE_L1SIZE; i++) {
+        y[i] = (uint8_t)x[i];
+    }
+}
 
 void add_extra_feautres(NnueData *data, Board *board){
     if (board->side == white){
@@ -231,21 +283,12 @@ void propogate_l2(NnueData *data, Board *board) {
     add_extra_feautres(data, board);
     clamp_accumulator(tmpAccum);
 
-    for (int32_t i = 0; i < NNUE_L1SIZE; i++) {
-        data->small_l1[i] = (uint8_t)tmpAccum[i];
-    }
+    squish_accumulator(tmpAccum, &data->small_l1[0]);
 
     memcpy(data->l2, nnue_l1_biases, sizeof nnue_l1_biases);
 
     for (int32_t i = 0; i < NNUE_L2SIZE; ++i) {
-        // for (int j = 0; j < NNUE_L1SIZE; j++){
-        //     data->l1[i] += tmpAccum[j] * nnue_l1_weights[(i*NNUE_L1SIZE) + j];
-        // }
-
-        propogate_neuron(&data->small_l1[0], &nnue_l1_weights[i*NNUE_L1SIZE], &data->l2[i]);
-        propogate_neuron(&data->small_l1[32], &nnue_l1_weights[i*NNUE_L1SIZE+32], &data->l2[i]);
-        propogate_neuron(&data->small_l1[64], &nnue_l1_weights[i*NNUE_L1SIZE+64], &data->l2[i]);
-        propogate_neuron(&data->small_l1[96], &nnue_l1_weights[i*NNUE_L1SIZE+96], &data->l2[i]);
+        propogate_l2_neuron(&data->small_l1[0], &nnue_l1_weights[i*NNUE_L1SIZE], &data->l2[i]);
     }
 
     clamp_layer(data->l2);
@@ -255,6 +298,7 @@ void propogate_l2(NnueData *data, Board *board) {
     
 }
 
+__attribute_noinline__
 void propogate_l3(NnueData *data){
     memcpy(data->l3, nnue_l2_biases, sizeof nnue_l2_biases);
 
@@ -265,6 +309,7 @@ void propogate_l3(NnueData *data){
     clamp_layer(data->l3);
 }
 
+__attribute_noinline__
 void propogate_l4(NnueData *data){
     memcpy(data->l4, nnue_l3_biases, sizeof nnue_l3_biases);
     for (int32_t i = 0; i < 32; ++i) {
