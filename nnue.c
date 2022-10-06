@@ -24,7 +24,7 @@ EvalHashEntry evalHashTable[NnueHashSize];
 alignas(64) int16_t nnue_in_weights[NNUE_INSIZE * NNUE_KPSIZE ];
 alignas(64) int8_t nnue_l1_weights[NNUE_L1SIZE * NNUE_L2SIZE ];
 alignas(64) int8_t nnue_l2_weights[NNUE_L2SIZE * NNUE_L3SIZE ];
-alignas(64) int16_t nnue_l3_weights[NNUE_L3SIZE * NNUE_OUTSIZE];
+alignas(64) int16_t nnue_l3_weights[NNUE_L3SIZE * NNUE_OUTSIZE + NNUE_INSIZE];
 
 alignas(64) int16_t nnue_in_biases[NNUE_KPSIZE ];
 alignas(64) int32_t nnue_l1_biases[NNUE_L2SIZE ];
@@ -54,7 +54,9 @@ int32_t load_nnue(const char *path){
     tmp = fread(nnue_in_weights, sizeof(int16_t), NNUE_INSIZE * NNUE_KPSIZE, fin);
     tmp = fread(nnue_l1_weights, sizeof (nnue_l1_weights[0]), NNUE_L1SIZE * NNUE_L2SIZE, fin);
     tmp = fread(nnue_l2_weights, sizeof (nnue_l2_weights[0]), NNUE_L2SIZE * NNUE_L3SIZE, fin);
-    tmp = fread(nnue_l3_weights, sizeof (nnue_l3_weights[0]), NNUE_L2SIZE * NNUE_OUTSIZE, fin);
+    //NNUE_INSIZE is added because it is a shallow-deep network where the input neurons are connected directly to the output neuron.
+    //This allowes it to understand very basic chess concepts like material as well as deep ones.
+    tmp = fread(nnue_l3_weights, sizeof (nnue_l3_weights[0]), NNUE_L2SIZE * NNUE_OUTSIZE + NNUE_INSIZE, fin);
 
     tmp = fread(nnue_in_biases, sizeof(int16_t), NNUE_KPSIZE, fin);
     tmp = fread(nnue_l1_biases, sizeof (nnue_l1_biases[0]), NNUE_L2SIZE, fin);
@@ -136,6 +138,7 @@ void subtract_index(int16_t *restrict acc, uint32_t index) {
 
 void refresh_accumulator(NnueData *data, Board *board) {
     append_active_indicies(data, board);
+    memset(data->inputlayer, 0, sizeof(data->inputlayer));
 
 //    for (uint32_t c = 0; c < 2; c++) {
     memcpy(data->accumulation, nnue_in_biases, NNUE_KPSIZE * sizeof(int16_t));
@@ -143,6 +146,7 @@ void refresh_accumulator(NnueData *data, Board *board) {
     for (size_t k = 0; k < data->activeIndexCount; k++) {
         uint32_t index = data->activeIndicies[k];
         add_index(data->accumulation, index);
+        data->inputlayer[index] = 1;
 
     }
 //    }
@@ -265,6 +269,9 @@ void propogate_l3(NnueData *data){
     for (int32_t i = 0; i < 32; ++i) {
         data->l3[0] += data->l2[i] * nnue_l3_weights[i];
     }
+    for (int32_t i = 0; i < NNUE_INSIZE; ++i) {
+        data->l3[0] += data->inputlayer[i] * nnue_l3_weights[i];
+    }
 }
 
 int32_t materialScore(Board *board){
@@ -333,6 +340,9 @@ void nnue_pop_bit(int32_t ptype, int32_t bit, Board *board){
 
     int32_t wi = (64*pc) + sq;
 
+    assert(board->currentNnue.inputlayer[wi]);
+    board->currentNnue.inputlayer[wi] = 0;
+
     subtract_index(board->currentNnue.accumulation, wi);
 }
 
@@ -348,6 +358,9 @@ void nnue_set_bit(int32_t ptype, int32_t bit, Board *board){
     int32_t pc = ptype;
 
     int32_t wi = (64*pc) + sq;
+
+    assert(!board->currentNnue.inputlayer[wi]);
+    board->currentNnue.inputlayer[wi] = 1;
 
     add_index(board->currentNnue.accumulation, wi);
 }

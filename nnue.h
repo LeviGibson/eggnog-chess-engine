@@ -21,6 +21,8 @@ int32_t load_nnue(const char *path);
 typedef struct NnueData NnueData;
 
 struct NnueData{
+    int32_t inputlayer[NNUE_INSIZE];
+
     int32_t l1[NNUE_L2SIZE ];
     int32_t l2[NNUE_L3SIZE ];
     int32_t l3[NNUE_OUTSIZE];
