@@ -70,12 +70,17 @@ int32_t load_nnue(const char *path){
     return 0;
 }
 
-static inline void append_index(int32_t index, NnueData *data) {
-    data->activeIndicies[data->activeIndexCount++] = index;
+int flipPiece[12] = {p_p, p_n, p_b, p_r, p_q, p_k, p_P, p_N, p_B, p_R, p_Q, p_K};
+
+static inline void append_index(int32_t index, NnueData *data, int c) {
+    data->activeIndicies[c][data->activeIndexCount[c]++] = index;
 }
 
 void append_active_indicies(NnueData *data, Board *board) {
-    data->activeIndexCount = 0;
+    data->activeIndexCount[0] = 0;
+    data->activeIndexCount[1] = 0;
+
+    memset(data->activeIndicies, 0, sizeof(data->activeIndicies));
 
     for (uint32_t ptype = p_P; ptype <= p_k; ++ptype) {
 
@@ -83,19 +88,21 @@ void append_active_indicies(NnueData *data, Board *board) {
         while (bitboard) {
             int32_t bit = bsf(bitboard);
             int32_t sq = bit;
-            int32_t pc = ptype;
 
-            append_index((64*ptype) + sq, data);
+            append_index((64*ptype) + sq, data, white);
+            append_index((64*flipPiece[ptype]) + w_orient[sq], data, black);
 
             pop_bit(bitboard, bit);
         }
     }
+
 }
 
 //vectorised by the compiler
-void add_index(int16_t *restrict acc, uint32_t index) {
+void add_index(int16_t *restrict acc, uint32_t index, uint32_t c) {
     uint32_t offset = NNUE_KPSIZE * index;
     int16_t *restrict w = nnue_in_weights + offset;
+    acc += NNUE_KPSIZE*c;
 
 #ifdef AVX2
 
@@ -114,9 +121,10 @@ void add_index(int16_t *restrict acc, uint32_t index) {
 }
 
 //vectorised by the compiler
-void subtract_index(int16_t *restrict acc, uint32_t index) {
+void subtract_index(int16_t *restrict acc, uint32_t index, uint32_t c) {
     uint32_t offset = NNUE_KPSIZE * index;
     int16_t *restrict w = nnue_in_weights + offset;
+    acc += NNUE_KPSIZE*c;
 
 #ifdef AVX2
 
@@ -134,18 +142,22 @@ void subtract_index(int16_t *restrict acc, uint32_t index) {
 #endif
 }
 
+
 void refresh_accumulator(NnueData *data, Board *board) {
     append_active_indicies(data, board);
 
-//    for (uint32_t c = 0; c < 2; c++) {
-    memcpy(data->accumulation, nnue_in_biases, NNUE_KPSIZE * sizeof(int16_t));
+    memcpy(data->accumulation[0], nnue_in_biases, NNUE_KPSIZE * sizeof(int16_t));
+    memcpy(data->accumulation[1], nnue_in_biases, NNUE_KPSIZE * sizeof(int16_t));
 
-    for (size_t k = 0; k < data->activeIndexCount; k++) {
-        uint32_t index = data->activeIndicies[k];
-        add_index(data->accumulation, index);
-
+    for (size_t k = 0; k < data->activeIndexCount[white]; k++) {
+        uint32_t index = data->activeIndicies[white][k];
+        add_index(data->accumulation, index, white);
     }
-//    }
+
+    for (size_t k = 0; k < data->activeIndexCount[black]; k++) {
+        uint32_t index = data->activeIndicies[black][k];
+        add_index(data->accumulation, index, black);
+    }
 }
 
 
@@ -221,17 +233,11 @@ static inline void propogate_neuron(const int16_t a, const int8_t *b, int32_t *r
 
 }
 
-void add_extra_feautres(NnueData *data, Board *board){
-    if (board->side == white){
-        add_index(data->tmpAccumulation, 768);
-    }
-}
 
 void propogate_l1(NnueData *data, Board *board) {
     int16_t *tmpAccum = data->tmpAccumulation;
 
     memcpy(tmpAccum, data->accumulation, sizeof data->tmpAccumulation);
-    add_extra_feautres(data, board);
     clamp_accumulator(tmpAccum);
 
     memcpy(data->l1, nnue_l1_biases, sizeof nnue_l1_biases);
@@ -332,8 +338,10 @@ void nnue_pop_bit(int32_t ptype, int32_t bit, Board *board){
     int32_t pc = ptype;
 
     int32_t wi = (64*pc) + sq;
+    int32_t bi = (64*flipPiece[pc]) + w_orient[sq];
 
-    subtract_index(board->currentNnue.accumulation, wi);
+    subtract_index(board->currentNnue.accumulation, wi, white);
+    subtract_index(board->currentNnue.accumulation, bi, black);
 }
 
 void nnue_set_bit(int32_t ptype, int32_t bit, Board *board){
@@ -348,6 +356,8 @@ void nnue_set_bit(int32_t ptype, int32_t bit, Board *board){
     int32_t pc = ptype;
 
     int32_t wi = (64*pc) + sq;
+    int32_t bi = (64*flipPiece[pc]) + w_orient[sq];
 
-    add_index(board->currentNnue.accumulation, wi);
+    add_index(board->currentNnue.accumulation, wi, white);
+    add_index(board->currentNnue.accumulation, bi, black);
 }
