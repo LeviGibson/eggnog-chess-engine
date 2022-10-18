@@ -125,8 +125,8 @@ release:
 	mkdir ./bin/eggnog-linux
 	cp ./bin/network.nnom ./bin/eggnog-windows/
 	cp ./bin/network.nnom ./bin/eggnog-linux/
-	cp ./bin/nn-eba324f53044.nnue ./bin/eggnog-linux/
-	cp ./bin/nn-eba324f53044.nnue ./bin/eggnog-windows/
+	cp ./bin/network.nnue ./bin/eggnog-linux/
+	cp ./bin/network.nnue ./bin/eggnog-windows/
 
 	make all
 	mv ./bin/eggnog-chess-engine* ./bin/eggnog-linux/
