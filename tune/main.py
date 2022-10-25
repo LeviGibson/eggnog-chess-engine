@@ -35,3 +35,4 @@ for i in range((p1-testingvalue)//p2):
 
     plt.plot(scores)
     plt.savefig("plot.png")
+    plt.clf()
