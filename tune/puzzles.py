@@ -30,7 +30,7 @@ def run(value : int):
             moves : list = sample[1]
             evals = sample[2]
 
-            result = engine.play(board, chess.engine.Limit(time=.35))
+            result = engine.play(board, chess.engine.Limit(time=.05))
             move = result.move
             index = moves.index(move)
             score += evals[index]

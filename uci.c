@@ -241,7 +241,7 @@ void uci_loop() {
             printf("option name SyzygyPath type string default <empty>\n");
             printf("option name Threads type spin default 1 min 1 max 512\n");
             printf("option name Move Overhead type spin default 0 min 0 max 5000\n");
-            printf("option name Tune type spin default 0 min 0 max 10000\n");
+            printf("option name Tune type spin default 0 min 0 max 1000000\n");
             printf("option name Hash type spin default 100 min 0 max 1024\n");
             printf("uciok\n");
         }

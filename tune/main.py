@@ -3,8 +3,8 @@ import threading
 import numpy as np
 import matplotlib.pyplot as plt
 
-p1 = 8
-p2 = 1
+p1 = 30000
+p2 = 2000
 
 threadCount = 8
 threadsFinished = 0
@@ -33,5 +33,5 @@ for i in range((p1-testingvalue)//p2):
             threadsFinished += 1
         threads.clear()
 
-plt.plot(scores)
-plt.savefig("plot.png")
+    plt.plot(scores)
+    plt.savefig("plot.png")

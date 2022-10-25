@@ -335,7 +335,7 @@ static inline int32_t search(int32_t depth, int32_t alpha, int32_t beta, Line *p
 
         //TODO tune this
 #ifndef NO_LMR
-        if (legalMoveCount && depth <= 2 && (!getcapture(move)) && (!in_check) && !board->pvnode && ((staticeval - 10000 + (legalMoves.scores[moveId] / 2)) < alpha) && !is_move_direct_check(move, board))
+        if (legalMoveCount && depth <= 2 && (!getcapture(move)) && (!in_check) && !board->pvnode && ((staticeval - 13000 + (legalMoves.scores[moveId] / 2)) < alpha) && !is_move_direct_check(move, board))
             continue;
 
 #endif
