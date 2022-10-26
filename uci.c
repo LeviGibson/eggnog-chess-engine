@@ -139,6 +139,7 @@ int32_t btime = 0;
 
 void parse_go(char *command) {
     char *current_depth = NULL;
+    char *current_nodes = NULL;
     char *perft = NULL;
     char *current_timelimit = NULL;
     char *current_wtime = NULL;
@@ -153,6 +154,13 @@ void parse_go(char *command) {
     } else {
         moveTime = 1000;
         depth = MAX_PLY;
+    }
+
+    current_nodes = strstr(command, "nodes");
+    if (current_nodes) {
+        useNodes = 1;
+        //variable movetime signifies the nodes limit when useNodes is true.
+        moveTime = atoi(current_nodes + 6);
     }
 
     perft = strstr(command, "perft");

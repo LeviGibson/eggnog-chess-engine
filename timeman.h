@@ -21,13 +21,14 @@ static inline int32_t get_time_ms() {
 #endif
 }
 
+int32_t useNodes;
 int32_t moveTime;
 
 int32_t startingTime;
 
 void start_time();
 
-void communicate();
+void communicate(int64_t nodes);
 
 int32_t choose_movetime(int32_t wtime, int32_t btime, int32_t side);
 

@@ -3,10 +3,10 @@ import threading
 import numpy as np
 import matplotlib.pyplot as plt
 
-p1 = 30000
-p2 = 2000
+p1 = 65
+p2 = 5
 
-threadCount = 8
+threadCount = 7
 threadsFinished = 0
 
 testingvalue = 1

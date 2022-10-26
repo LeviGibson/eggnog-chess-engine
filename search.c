@@ -70,8 +70,8 @@ static inline int32_t quiesce(int32_t alpha, int32_t beta, Thread *thread) {
         selDepth = board->ply;
     }
 
-    if (nodes % 2048 == 0)
-        communicate();
+    if (nodes % 512 == 0)
+        communicate(nodes);
 
     if (stop){
         return 0;
@@ -159,8 +159,8 @@ static inline int32_t search(int32_t depth, int32_t alpha, int32_t beta, Line *p
     //general maintenence
     nodes++;
 
-    if (nodes % 2048 == 0)
-        communicate();
+    if (nodes % 512 == 0)
+        communicate(nodes);
 
     if (stop) {
         return 0;
