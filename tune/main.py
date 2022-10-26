@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 p1 = 65
 p2 = 5
 
-threadCount = 7
+threadCount = 6
 threadsFinished = 0
 
 testingvalue = 1
