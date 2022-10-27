@@ -279,7 +279,7 @@ static inline int32_t search(int32_t depth, int32_t alpha, int32_t beta, Line *p
 
     //Null Move Pruning
     int32_t eval;
-    if (depth >= 3 && !in_check && board->ply
+    if (depth >= 4 && !in_check && board->ply
         && (WQ | WR) && (BQ | BR)){
         copy_board();
 
@@ -288,7 +288,7 @@ static inline int32_t search(int32_t depth, int32_t alpha, int32_t beta, Line *p
 
         Line nmline;
         nmline.length = 0;
-        eval = -search(depth-3, -beta, 1-beta, &nmline, thread);
+        eval = -search(depth-4, -beta, 1-beta, &nmline, thread);
 
         take_back();
         if (eval >= beta) {
