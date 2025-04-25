@@ -298,6 +298,7 @@ static inline int32_t search(int32_t depth, int32_t alpha, int32_t beta, Line *p
 
 
     //Static Null Move Pruning / Evaluation pruning
+    //TODO Tune
     if (!board->pvnode && !in_check && depth < 3) {
         if ((staticeval - (23 * 64 * depth)) > beta) {
             return beta;
@@ -356,7 +357,20 @@ static inline int32_t search(int32_t depth, int32_t alpha, int32_t beta, Line *p
                 if ((depth >= 3) && (legalMoves.scores[moveId] < 700000) && (in_check == 0) && (getcapture(move) == 0) && (!isPastPawnPush)) {
 #ifndef NO_LMR
 //                    board->depthAdjuster += (float )legalMoves.scores[moveId] / 4000;
-                    eval = -search(depth - 2, -alpha - 1, -alpha, &line, thread, 0);
+                    int depthSubtractor = 0.7844 + log(depth) * log(moveId) / 2.4696;
+                    if (!thread->found_pv)
+                        depthSubtractor += 1;
+                    if (legalMoves.scores[moveId] >= 700000)
+                        depthSubtractor -= 1;
+                    
+                    depthSubtractor = max(depthSubtractor, 1);
+                    // depthSubtractor = min(depthSubtractor, depth-1);
+
+                    if (depthSubtractor == 1){
+                        eval = alpha + 1;
+                    } else {
+                        eval = -search(depth - (depthSubtractor), -alpha - 1, -alpha, &line, thread, 0);
+                    }
 #else
                     eval = alpha + 1;
 #endif
