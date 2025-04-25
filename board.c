@@ -76,6 +76,7 @@ U64 get_move_key(int32_t move){
 }
 
 void make_null_move(Board *board) {
+    board->timeSinceNullMove = 0;
     board->ply++;
     board->side ^= 1;
     board->zobrist_key_parts[12] = side_keys[board->side];
@@ -550,6 +551,8 @@ void network_set_bit(int32_t ptype, int32_t bit, Board *board){
 
 int32_t make_move(int32_t move, int32_t flag, int32_t notquinode, Board *board){
 
+    board->timeSinceNullMove++;
+
     if (flag == all_moves){
         copy_board();
 
@@ -669,6 +672,7 @@ int32_t make_move(int32_t move, int32_t flag, int32_t notquinode, Board *board){
         board->zobrist_history_length++;
     } else {
         if (getcapture(move) || is_move_direct_check(move, board) || getpromoted(move)){
+            board->timeSinceNullMove--;
             return make_move(move, all_moves, notquinode, board);
         } else {
             return 0;
@@ -913,6 +917,7 @@ void parse_fen(char *fen, Board *board)
     board->side = 0;
     board->enpessant = no_sq;
     board->castle = 0;
+    board->timeSinceNullMove = 10;
 
     for (int32_t rank = 0; rank < 8; rank++)
     {

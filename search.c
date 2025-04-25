@@ -155,7 +155,7 @@ void shift_moveeval(MoveEval *ptr){
 
 //the main search function
 //don't call this directly. Call search_position().
-static inline int32_t search(int32_t depth, int32_t alpha, int32_t beta, Line *pline, Thread *thread) {
+static inline int32_t search(int32_t depth, int32_t alpha, int32_t beta, Line *pline, Thread *thread, int nullMoveRoot) {
     //general maintenence
     nodes++;
 
@@ -279,8 +279,8 @@ static inline int32_t search(int32_t depth, int32_t alpha, int32_t beta, Line *p
 
     //Null Move Pruning
     int32_t eval;
-    if (depth >= 4 && !in_check && board->ply
-        && (WQ | WR) && (BQ | BR)){
+    if (depth >= 2 && !in_check && board->ply &&
+        (WQ | WR | WB) && (BQ | BR | BB) && staticeval >= beta && board->timeSinceNullMove > 2){
         copy_board();
 
         make_null_move(board);
@@ -288,7 +288,7 @@ static inline int32_t search(int32_t depth, int32_t alpha, int32_t beta, Line *p
 
         Line nmline;
         nmline.length = 0;
-        eval = -search(depth-4, -beta, 1-beta, &nmline, thread);
+        eval = -search(depth-4, -beta, 1-beta, &nmline, thread, 1);
 
         take_back();
         if (eval >= beta) {
@@ -350,13 +350,13 @@ static inline int32_t search(int32_t depth, int32_t alpha, int32_t beta, Line *p
 
             if (legalMoveCount == 0) {
                 //Pv Search
-                eval = -search(depth - 1, -beta, -alpha, &line, thread);
+                eval = -search(depth - 1, -beta, -alpha, &line, thread, 0);
             } else {
                 //Late Move Reduction
                 if ((depth >= 3) && (legalMoves.scores[moveId] < 700000) && (in_check == 0) && (getcapture(move) == 0) && (!isPastPawnPush)) {
 #ifndef NO_LMR
 //                    board->depthAdjuster += (float )legalMoves.scores[moveId] / 4000;
-                    eval = -search(depth - 2, -alpha - 1, -alpha, &line, thread);
+                    eval = -search(depth - 2, -alpha - 1, -alpha, &line, thread, 0);
 #else
                     eval = alpha + 1;
 #endif
@@ -366,9 +366,9 @@ static inline int32_t search(int32_t depth, int32_t alpha, int32_t beta, Line *p
 
                 //If the reduced search produced good results (greater than alpha), research with regular depth, than with full window.
                 if (eval > alpha) {
-                    eval = -search(depth - 1, -alpha - 1, -alpha, &line, thread);
+                    eval = -search(depth - 1, -alpha - 1, -alpha, &line, thread, 0);
                     if ((eval > alpha) && (eval < beta)) {
-                        eval = -search(depth - 1, -beta, -alpha, &line, thread);
+                        eval = -search(depth - 1, -beta, -alpha, &line, thread, 0);
                     }
                 }
             }
@@ -451,7 +451,7 @@ void negamax_thread(void *args){
     for (int32_t i = 0; i < MAX_PLY; ++i) {
         memset(nargs->pline, 0, sizeof (Line));
 
-        int32_t eval = search(i, DEF_ALPHA, DEF_BETA, nargs->pline, &nargs->thread);
+        int32_t eval = search(i, DEF_ALPHA, DEF_BETA, nargs->pline, &nargs->thread, 0);
 
         memcpy(&nargs->thread.board.prevPv, nargs->pline, sizeof(Line));
 
@@ -590,7 +590,7 @@ void *search_position(void *arg){
 
         depthTime[currentDepth] = (float )get_time_ms();
 
-        int32_t nmRes = search(currentDepth, alpha, beta, &negamax_line, &thread);
+        int32_t nmRes = search(currentDepth, alpha, beta, &negamax_line, &thread, 0);
 
         if (stop) {
             break;
@@ -615,7 +615,7 @@ void *search_position(void *arg){
 
             memset(&negamax_line, 0, sizeof negamax_line);
 
-            nmRes = search(currentDepth, alpha, beta, &negamax_line, &thread);
+            nmRes = search(currentDepth, alpha, beta, &negamax_line, &thread, 0);
 
         } else {
             aspwindow -= (aspwindow/4);

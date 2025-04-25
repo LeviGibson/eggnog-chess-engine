@@ -132,6 +132,5 @@ void sort_moves(MoveList *move_list, int32_t *hashmove, Thread *thread){
 //         print_move(move_list->moves[i]);
 //         printf(" : %d\n", move_list->scores[i]);
 //     }
-//
 //     printf("\n");
 }

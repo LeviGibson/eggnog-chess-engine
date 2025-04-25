@@ -67,6 +67,7 @@ struct Board{
     NnomData nnom;
 
     uint8_t ply;
+    int32_t timeSinceNullMove;
 
     uint8_t enpessant;
     uint8_t side;
