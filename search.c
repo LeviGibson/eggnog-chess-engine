@@ -301,7 +301,7 @@ static inline int32_t search(int32_t depth, int32_t alpha, int32_t beta, Line *p
     //TODO Tune
     if (!board->pvnode && !in_check && depth < 3) {
         if ((staticeval - (23 * 64 * depth)) > beta) {
-            return beta;
+            return staticeval;
         }
     }
 
