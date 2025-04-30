@@ -349,7 +349,7 @@ static inline int32_t search(int32_t depth, int32_t alpha, int32_t beta, Line *p
 
             legalMoveCount++;
 
-            if (legalMoveCount == 0) {
+            if (legalMoveCount == 1) {
                 //Pv Search
                 eval = -search(depth - 1, -beta, -alpha, &line, thread, 0);
             } else {
