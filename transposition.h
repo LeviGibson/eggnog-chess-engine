@@ -20,7 +20,7 @@ typedef struct tagHASHE {
     unsigned char depth;
     unsigned char flags;
     int32_t value;
-    int32_t best[6];
+    int32_t best[4];
     int32_t *line;
 }   HASHE;
 

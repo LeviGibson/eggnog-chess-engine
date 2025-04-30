@@ -146,8 +146,6 @@ void find_pv(MoveList *moves, Thread *thread){
 }
 
 void shift_moveeval(MoveEval *ptr){
-    ptr->move[5] = ptr->move[4];
-    ptr->move[4] = ptr->move[3];
     ptr->move[3] = ptr->move[2];
     ptr->move[2] = ptr->move[1];
     ptr->move[1] = ptr->move[0];
@@ -319,7 +317,7 @@ static inline int32_t search(int32_t depth, int32_t alpha, int32_t beta, Line *p
 
     int32_t legalMoveCount = 0;
     int32_t move;
-    MoveEval best = {.move = {NO_MOVE, NO_MOVE, NO_MOVE, NO_MOVE, NO_MOVE, NO_MOVE}, .eval = -100000000};
+    MoveEval best = {.move = {NO_MOVE, NO_MOVE, NO_MOVE, NO_MOVE}, .eval = -100000000};
 
     //Looping over all the legal moves
     for (uint8_t moveId = 0; moveId < legalMoves.count; moveId++) {
