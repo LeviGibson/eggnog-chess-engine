@@ -356,7 +356,7 @@ static inline int32_t search(int32_t depth, int32_t alpha, int32_t beta, Line *p
 #ifndef NO_LMR
 //                    board->depthAdjuster += (float )legalMoves.scores[moveId] / 4000;
                     int depthSubtractor = 0.7844 + log(depth) * log(moveId) / 2.4696;
-                    if (!thread->found_pv)
+                    if (!board->pvnode)
                         depthSubtractor += 1;
                     if (legalMoves.scores[moveId] >= 700000)
                         depthSubtractor -= 1;
