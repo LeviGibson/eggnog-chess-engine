@@ -194,7 +194,7 @@ static inline int32_t search(int32_t depth, int32_t alpha, int32_t beta, Line *p
         if (getpiece(board->prevmove) == p_P) {
             if (!(pastPawnMasks[white][gettarget(board->prevmove)] & board->bitboards[p_p]))
                 isPastPawnPush = 1;
-        } else if (getpiece(board->prevmove) == p_P) {
+        } else if (getpiece(board->prevmove) == p_p) {
             if (!(pastPawnMasks[black][gettarget(board->prevmove)] & board->bitboards[p_P]))
                 isPastPawnPush = 1;
         }
