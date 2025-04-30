@@ -169,11 +169,11 @@ static inline int32_t search(int32_t depth, int32_t alpha, int32_t beta, Line *p
     Board *board = &thread->board;
 
     //extend depth when entering king+pawn endgames
-    if (!board->kpExtended && board->occupancies[both] == (WK | BK | WP | BP)){
-        if (board->ply)
-            depth += (depth/2);
-        board->kpExtended = 1;
-    }
+    // if (!board->kpExtended && board->occupancies[both] == (WK | BK | WP | BP)){
+    //     if (board->ply)
+    //         depth += (depth/2);
+    //     board->kpExtended = 1;
+    // }
 
     //do check extensions before probing hash table
     int32_t in_check = is_square_attacked(bsf((board->side == white) ? board->bitboards[p_K] : board->bitboards[p_k]), (board->side ^ 1), board);
