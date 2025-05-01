@@ -338,6 +338,12 @@ static inline int32_t search(int32_t depth, int32_t alpha, int32_t beta, Line *p
         if (legalMoveCount && depth == 1 && !board->pvnode && !in_check && legalMoves.scores[moveId] < -25360 && (getpiece(move) == p_K || getpiece(move) == p_k))
             continue;
 
+        // int lmpLimit = (int)(4.0f + (4.0f * (float)depth * (float)depth)/4.5f);
+
+        // if (best.eval > -100000000 && depth <= 3 && getpromoted(move) == 0 && getcapture(move) == 0 && !is_move_direct_check(move, board) && legalMoveCount >= lmpLimit){
+        //     continue;
+        // }
+
         //The illigal moves (moving pinned pieces mostly) are not removed during the move generation, they are removed here.
         if (make_move(move, all_moves, 1, board)) {
 
@@ -411,7 +417,7 @@ static inline int32_t search(int32_t depth, int32_t alpha, int32_t beta, Line *p
                         }
 
                         //history move heuristic
-                        history_moves[getpiece(move)][getsource(move)][gettarget(move)] += (float) (depth * depth * legalMoveCount);
+                        history_moves[getpiece(move)][getsource(move)][gettarget(move)] += (float) (depth * depth);
                         historyCount += depth * depth * legalMoveCount;
                     }
 

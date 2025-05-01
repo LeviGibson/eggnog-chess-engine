@@ -107,7 +107,7 @@ int32_t score_move(int32_t move, const int32_t *hashmove, Thread *thread){
 
         if (historyCount > 0) {
             float historyscore = (history_moves[getpiece(move)][getsource(move)][gettarget(move)] / (float) historyCount) * 1400.f;
-            score += ((int32_t )historyscore) * 10;
+            score += ((int32_t )historyscore) * 40;
         }
 
         return (int)score;
