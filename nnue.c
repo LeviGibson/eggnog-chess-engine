@@ -16,6 +16,8 @@ struct EvalHashEntry{
     int32_t eval;
 };
 
+int32_t MIRROR_ACCUMULATOR[NNUE_L1SIZE];
+
 #define NnueHashSize 1000000
 EvalHashEntry evalHashTable[NnueHashSize];
 
@@ -23,24 +25,13 @@ EvalHashEntry evalHashTable[NnueHashSize];
 
 alignas(64) int16_t nnue_in_weights[NNUE_INSIZE * NNUE_KPSIZE ];
 alignas(64) int8_t nnue_l1_weights[NNUE_L1SIZE * NNUE_L2SIZE ];
-alignas(64) int8_t nnue_l2_weights[NNUE_L2SIZE * NNUE_L3SIZE ];
-alignas(64) int16_t nnue_l3_weights[NNUE_L3SIZE * NNUE_OUTSIZE];
+// alignas(64) int8_t nnue_l2_weights[NNUE_L2SIZE * NNUE_L3SIZE ];
+alignas(64) int16_t nnue_l3_weights[NNUE_L2SIZE * NNUE_OUTSIZE];
 
 alignas(64) int16_t nnue_in_biases[NNUE_KPSIZE ];
 alignas(64) int32_t nnue_l1_biases[NNUE_L2SIZE ];
-alignas(64) int32_t nnue_l2_biases[NNUE_L3SIZE ];
+// alignas(64) int32_t nnue_l2_biases[NNUE_L3SIZE ];
 alignas(64) int32_t nnue_l3_biases[NNUE_OUTSIZE];
-
-void transform_weight_indicies(int8_t arr[], uint32_t dims){
-    int8_t tmpArr[dims*32];
-    memcpy(tmpArr, arr, sizeof tmpArr);
-
-    for (int32_t r = 0; r < 32; ++r) {
-        for (int32_t c = 0; c < dims; ++c) {
-            arr[(c * 32) + r] = tmpArr[(dims*r) + c];
-        }
-    }
-}
 
 int32_t load_nnue(const char *path){
     //avoid compiler warnings
@@ -53,18 +44,23 @@ int32_t load_nnue(const char *path){
 
     tmp = fread(nnue_in_weights, sizeof(int16_t), NNUE_INSIZE * NNUE_KPSIZE, fin);
     tmp = fread(nnue_l1_weights, sizeof (nnue_l1_weights[0]), NNUE_L1SIZE * NNUE_L2SIZE, fin);
-    tmp = fread(nnue_l2_weights, sizeof (nnue_l2_weights[0]), NNUE_L2SIZE * NNUE_L3SIZE, fin);
+    // tmp = fread(nnue_l2_weights, sizeof (nnue_l2_weights[0]), NNUE_L2SIZE * NNUE_L3SIZE, fin);
     tmp = fread(nnue_l3_weights, sizeof (nnue_l3_weights[0]), NNUE_L2SIZE * NNUE_OUTSIZE, fin);
 
     tmp = fread(nnue_in_biases, sizeof(int16_t), NNUE_KPSIZE, fin);
     tmp = fread(nnue_l1_biases, sizeof (nnue_l1_biases[0]), NNUE_L2SIZE, fin);
-    tmp = fread(nnue_l2_biases, sizeof (nnue_l2_biases[0]), NNUE_L3SIZE, fin);
+    // tmp = fread(nnue_l2_biases, sizeof (nnue_l2_biases[0]), NNUE_L3SIZE, fin);
     tmp = fread(nnue_l3_biases, sizeof (nnue_l3_biases[0]), NNUE_OUTSIZE, fin);
 
     fclose(fin);
 
     for (int32_t i = 0; i < NnueHashSize; ++i) {
         evalHashTable[i].eval = NO_EVAL;
+    }
+
+    for (int32_t i = 0; i < NNUE_L1SIZE/2; i++){
+       MIRROR_ACCUMULATOR[i] = i+(NNUE_L1SIZE/2);
+       MIRROR_ACCUMULATOR[i+(NNUE_L1SIZE/2)] = i;
     }
 
     return 0;
@@ -167,7 +163,7 @@ void clamp_layer(int32_t *layer){
     __m256i _8128 = _mm256_set1_epi32(8128*2);
     __m256i _0 = _mm256_set1_epi32(0);
 
-    for (int32_t i = 0; i < 32; i += 8) {
+    for (int32_t i = 0; i < NNUE_L2SIZE; i += 8) {
         __m256i _x = _mm256_load_si256((void*)&layer[i]);
         _x = _mm256_min_epi32(_x, _8128);
         _x = _mm256_max_epi32(_x, _0);
@@ -178,7 +174,7 @@ void clamp_layer(int32_t *layer){
 
 #else
 
-    for (int32_t i = 0; i < 32; ++i) {
+    for (int32_t i = 0; i < NNUE_L2SIZE; ++i) {
         layer[i] = clamp(layer[i], 0, 8128);
         layer[i] /= 64;
     }
@@ -192,7 +188,7 @@ void clamp_accumulator(int16_t *acc){
     __m256i _127 = _mm256_set1_epi16(127);
     __m256i _0 = _mm256_set1_epi16(0);
 
-    for (int32_t i = 0; i < L1_SIZE; i += 16) {
+    for (int32_t i = 0; i < NNUE_L1SIZE; i += 16) {
         __m256i _x = _mm256_load_si256((void*)&acc[i]);
         _x = _mm256_min_epi16(_x, _127);
         _x = _mm256_max_epi16(_x, _0);
@@ -201,7 +197,7 @@ void clamp_accumulator(int16_t *acc){
 
 #else
 
-    for (int32_t i = 0; i < L1_SIZE; ++i) {
+    for (int32_t i = 0; i < NNUE_L1SIZE; ++i) {
         acc[i] = clamp(acc[i], 0, 127);
     }
 
@@ -213,7 +209,7 @@ static inline void propogate_neuron(const int16_t a, const int8_t *b, int32_t *r
 #ifdef AVX2
     __m256i va = _mm256_set1_epi16(a);
 
-    for (int32_t i = 0 ; i < 32 ; i += 16) {
+    for (int32_t i = 0 ; i < NNUE_L2SIZE ; i += 16) {
         __m256i vb = _mm256_cvtepi8_epi16( _mm_load_si128((__m128i*)&b[i]) );
         __m256i prod = _mm256_mullo_epi16(va, vb);
 
@@ -227,7 +223,7 @@ static inline void propogate_neuron(const int16_t a, const int8_t *b, int32_t *r
         _mm256_storeu_si256((__m256i*)&c[i+8], sum2);
     }
 #else
-    for (int32_t i = 0; i < 32; ++i)
+    for (int32_t i = 0; i < NNUE_L2SIZE; ++i)
         c[i] += a * b[i];
 #endif
 
@@ -244,32 +240,39 @@ void propogate_l1(NnueData *data, Board *board) {
 
     for (int32_t i = 0; i < NNUE_L1SIZE; ++i) {
         if (tmpAccum[i]) {
-            int32_t offset = 32 * i;
-            propogate_neuron(tmpAccum[i], &nnue_l1_weights[offset], data->l1);
+            if (board->side == white){
+                int32_t offset = NNUE_L2SIZE * i;
+                propogate_neuron(tmpAccum[i], &nnue_l1_weights[offset], data->l1);
+            }
+            else {
+                int32_t offset = NNUE_L2SIZE * MIRROR_ACCUMULATOR[i];
+                propogate_neuron(tmpAccum[i], &nnue_l1_weights[offset], data->l1);
+            }
+
         }
     }
 
     clamp_layer(data->l1);
 }
 
-void propogate_l2(NnueData *data){
-    memcpy(data->l2, nnue_l2_biases, sizeof nnue_l2_biases);
+// void propogate_l2(NnueData *data){
+//     memcpy(data->l2, nnue_l2_biases, sizeof nnue_l2_biases);
 
-    for (int32_t o = 0; o < 32; ++o) {
-        if (!data->l1[o])
-            continue;
+//     for (int32_t o = 0; o < 32; ++o) {
+//         if (!data->l1[o])
+//             continue;
 
-        int32_t offset = 32 * o;
-        propogate_neuron((short )data->l1[o], &nnue_l2_weights[offset], data->l2);
-    }
+//         int32_t offset = 32 * o;
+//         propogate_neuron((short )data->l1[o], &nnue_l2_weights[offset], data->l2);
+//     }
 
-    clamp_layer(data->l2);
-}
+//     clamp_layer(data->l2);
+// }
 
 void propogate_l3(NnueData *data){
     memcpy(data->l3, nnue_l3_biases, sizeof nnue_l3_biases);
-    for (int32_t i = 0; i < 32; ++i) {
-        data->l3[0] += data->l2[i] * nnue_l3_weights[i];
+    for (int32_t i = 0; i < NNUE_L2SIZE; ++i) {
+        data->l3[0] += data->l1[i] * nnue_l3_weights[i];
     }
 }
 
@@ -301,12 +304,12 @@ int32_t nnue_evaluate(Board *board) {
         data->eval = hashptr->eval;
     } else {
         propogate_l1(data, board);
-        propogate_l2(data);
+        // propogate_l2(data);
         propogate_l3(data);
 
         int eval = (int)(((((float)data->l3[0] / 127) / 127) * 410) * 64);
 
-        data->eval = (board->side == white) ? eval : -eval;
+        data->eval = eval;
 
         hashptr->eval = data->eval;
         hashptr->key = board->current_zobrist_key;

@@ -7,10 +7,10 @@
 
 
 #define NNUE_INSIZE  (768)
-#define NNUE_L1SIZE  128
-#define NNUE_KPSIZE  64
-#define NNUE_L2SIZE  32
-#define NNUE_L3SIZE  32
+#define NNUE_L1SIZE  256
+#define NNUE_KPSIZE  128
+#define NNUE_L2SIZE  16
+// #define NNUE_L3SIZE  32
 #define NNUE_OUTSIZE 1
 
 #include "bitboard.h"
@@ -22,7 +22,7 @@ typedef struct NnueData NnueData;
 
 struct NnueData{
     int32_t l1[NNUE_L2SIZE ];
-    int32_t l2[NNUE_L3SIZE ];
+    // int32_t l2[NNUE_L3SIZE ];
     int32_t l3[NNUE_OUTSIZE];
 
     int32_t eval;
