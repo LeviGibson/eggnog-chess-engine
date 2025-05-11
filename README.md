@@ -38,7 +38,7 @@ If you move the executable (bin/eggnog-chess-engine-xxx) to a different folder, 
 
 ## NNUE
 eggnog-chess-engine uses a strage but functional type of NNUE.
-As of October 12, 2022, eggnog-chess-engine is using a small network with a split accumulator. Instead of using HalfKp, the network feeds the positions of the pieces into the network as a sparse array with a size of 784 (12*64). This is then duplicated for the black perspective and fed through the accumulator (128 neurons per side). The two accumulators are then combined into 1 layer with the size of 256, and then it's a simple 32x32x1 to finish. In short, it's a more basic and dumb-downed version of HalfKp. I have an old laptop generating training data around the clock though so hopefully I should have enough for a proper large network soon! The training data is generated with Stockfish which is kind of cheating but whose counting?
+As of May 11, 2025, eggnog-chess-engine is using a small network with a split accumulator. Instead of using HalfKp, the network feeds the positions of the pieces into the network as a sparse array with a size of 784 (12*64). This is then duplicated for the black perspective and fed through the accumulator (128 neurons per side). The two accumulators are then combined into 1 layer with the size of 256, and then it's a simple 16x1 to finish. The training data is generated with Stockfish which is kind of cheating but whose counting?
 
 ## NNOM
 eggnog-chess-engine uses NNOM, or Move Ordering Neural Network. It functions very simialrly to NNUE, but only has one hidden layer. 
