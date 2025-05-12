@@ -326,8 +326,8 @@ static inline int32_t search(int32_t depth, int32_t alpha, int32_t beta, Line *p
        if (legalMoveCount && !board->pvnode && !getpromoted(move) && !is_move_direct_check(move, board)) {
            if (depth == 1 && legalMoves.scores[moveId] < -21000)
                break;
-            // if (depth == 1 && legalMoves.scores[moveId] < -25000)
-            //    break;
+            if (depth == 2 && legalMoves.scores[moveId] < -28000)
+               break;
        }
 
         //TODO tune this
