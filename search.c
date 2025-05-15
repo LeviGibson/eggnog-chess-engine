@@ -109,6 +109,11 @@ static inline int32_t quiesce(int32_t alpha, int32_t beta, Thread *thread) {
 
     int32_t hash_move[4] = {NO_MOVE, NO_MOVE, NO_MOVE, NO_MOVE};
     int32_t hash_lookup = ProbeHash(-1, alpha, beta, hash_move, NULL, board);
+
+    if (hash_lookup != valUNKNOWN && board->ply != 0) {
+        return hash_lookup;
+    }
+
     int hashf = hashfALPHA;
 
     MoveEval best = {.move = {NO_MOVE, NO_MOVE, NO_MOVE, NO_MOVE}, .eval = -100000000};
