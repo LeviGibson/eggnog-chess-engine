@@ -107,13 +107,14 @@ static inline int32_t quiesce(int32_t alpha, int32_t beta, Thread *thread) {
     board->quinode = 1;
     copy_board();
 
-    int32_t tmp[4] = {0,0,0,0};
+    int32_t hash_move[4] = {NO_MOVE, NO_MOVE, NO_MOVE, NO_MOVE};
+    int32_t hash_lookup = ProbeHash(-1, alpha, beta, hash_move, NULL, board);
     int hashf = hashfALPHA;
 
     MoveEval best = {.move = {NO_MOVE, NO_MOVE, NO_MOVE, NO_MOVE}, .eval = -100000000};
 
     generate_moves(&legalMoves, board);
-    sort_moves(&legalMoves, tmp, thread);
+    sort_moves(&legalMoves, hash_move, thread);
 
     for (int32_t moveId = 0; moveId < legalMoves.count; moveId++){
         int32_t move = legalMoves.moves[moveId];
