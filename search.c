@@ -229,6 +229,11 @@ static inline int32_t search(int32_t depth, int32_t alpha, int32_t beta, Line *p
     int32_t hash_move[4] = {NO_MOVE, NO_MOVE, NO_MOVE, NO_MOVE};
     int32_t hash_lookup = ProbeHash(depth, alpha, beta, hash_move, pline, board);
 
+    //Internal Iterative Deepening
+    if (hash_move[0] == NO_MOVE && depth > 3){
+        depth--;
+    }
+
     //return hash lookup if it meets the parameters (in function ProbeHash)
     if (hash_lookup != valUNKNOWN && board->ply != 0) {
         if (abs(hash_lookup) > (CHECKMATE_SCORE - MAX_PLY))
