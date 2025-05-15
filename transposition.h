@@ -14,10 +14,9 @@
 #define hashfBETA    2
 #define valUNKNOWN -1
 
-
 typedef struct tagHASHE {
     U64 key;
-    unsigned char depth;
+    int8_t depth;
     unsigned char flags;
     int32_t value;
     int32_t best[4];

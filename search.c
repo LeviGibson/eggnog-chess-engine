@@ -61,7 +61,11 @@ U64 pastPawnMasks[2][64] = {
          0x0ULL, 0x0ULL, 0x0ULL, 0x0ULL,}
 };
 
-
+void shift_moveeval(MoveEval *ptr){
+    ptr->move[3] = ptr->move[2];
+    ptr->move[2] = ptr->move[1];
+    ptr->move[1] = ptr->move[0];
+}
 
 static inline int32_t quiesce(int32_t alpha, int32_t beta, Thread *thread) {
     Board *board = &thread->board;
@@ -104,6 +108,9 @@ static inline int32_t quiesce(int32_t alpha, int32_t beta, Thread *thread) {
     copy_board();
 
     int32_t tmp[4] = {0,0,0,0};
+    int hashf = hashfALPHA;
+
+    MoveEval best = {.move = {NO_MOVE, NO_MOVE, NO_MOVE, NO_MOVE}, .eval = -100000000};
 
     generate_moves(&legalMoves, board);
     sort_moves(&legalMoves, tmp, thread);
@@ -120,16 +127,26 @@ static inline int32_t quiesce(int32_t alpha, int32_t beta, Thread *thread) {
 
             take_back();
 
-            if (score > alpha)
-                alpha = score;
+            if (score > best.eval){
 
-            if (score >= beta){
-                return beta;
+                shift_moveeval(&best);
+                best.move[0] = move;
+                best.eval = score;
+
+                if (score > alpha){
+                    alpha = score;
+                    hashf = hashfEXACT;
+                }
+
+                if (score >= beta){
+                    RecordHash(-1, beta, &best, hashfBETA, NULL, board);
+                    return beta;
+                }
             }
         }
     }
 
-
+    RecordHash(-1, alpha, &best, hashf, NULL, board);
     return alpha;
 }
 
@@ -143,12 +160,6 @@ void find_pv(MoveList *moves, Thread *thread){
             thread->follow_pv = 1;
         }
     }
-}
-
-void shift_moveeval(MoveEval *ptr){
-    ptr->move[3] = ptr->move[2];
-    ptr->move[2] = ptr->move[1];
-    ptr->move[1] = ptr->move[0];
 }
 
 //the main search function
