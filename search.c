@@ -384,22 +384,22 @@ static inline int32_t search(int32_t depth, int32_t alpha, int32_t beta, Line *p
                 0.03518064* rookCount_scaled;
 
 
-            //Cuts at depth = 1
-            if (depth == 1 && y < 0.635402){
-                break;
-            }
+            // //Cuts at depth = 1
+            // if (depth == 1 && y < 0.635402){
+            //     break;
+            // }
 
-            //Less agressive cuts at depth = 2
-            if (depth == 2 && y < 0.339372){
-                break;
-            }
+            // //Less agressive cuts at depth = 2
+            // if (depth == 2 && y < 0.339372){
+            //     break;
+            // }
        }
 
         //TODO tune this
         
         //since king moves are super expensive (for the neural networks) many of them are discarded at depth 1.
-        if (legalMoveCount && depth == 1 && !board->pvnode && !in_check && legalMoves.scores[moveId] < -25360 && (getpiece(move) == p_K || getpiece(move) == p_k))
-            continue;
+        // if (legalMoveCount && depth == 1 && !board->pvnode && !in_check && legalMoves.scores[moveId] < -25360 && (getpiece(move) == p_K || getpiece(move) == p_k))
+        //     continue;
 
         // int lmpLimit = (int)(4.0f + (4.0f * (float)depth * (float)depth)/4.5f);
 
