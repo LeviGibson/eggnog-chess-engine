@@ -27,7 +27,7 @@ void unlock(pthread_mutex_t *lock){
 
 void reset_hash_table(){
     memset(hash_table, 0, sizeof(HASHE)*tt_size);
-    memset(lines, 0, sizeof(int32_t)*tt_size*6);
+    memset(lines, 0, sizeof(int32_t)*tt_size*12);
     lineMoveCount = 0;
 }
 
@@ -42,7 +42,7 @@ void reinit_transposition(){
     }
 
     hash_table = malloc(sizeof(HASHE)*tt_size);
-    lines = malloc(sizeof(int32_t)*tt_size*6);
+    lines = malloc(sizeof(int32_t)*tt_size*12);
     ttLocks = malloc(sizeof (pthread_mutex_t)*tt_size);
 
     pthread_mutex_init(&lmcLock, NULL);
