@@ -257,7 +257,7 @@ void uci_loop() {
         if (strncmp(input, "setoption name Threads value", 28) == 0) {
             threadCount = atoi(input + 29);
             if (threadCount > 1){
-                tt_linesize = tt_size * 6;
+                tt_linesize = tt_size * 12;
                 reinit_transposition();
             }
         }
@@ -266,7 +266,7 @@ void uci_loop() {
             tt_size = atoi(input + 26);
             tt_size = (tt_size*1048576) / (int32_t)sizeof(HASHE);
             if (threadCount > 1)
-                tt_linesize = tt_size * 6;
+                tt_linesize = tt_size * 12;
             reinit_transposition();
         }
 
