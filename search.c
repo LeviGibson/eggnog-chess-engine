@@ -94,8 +94,11 @@ static inline int32_t quiesce(int32_t alpha, int32_t beta, Thread *thread) {
         return alpha;
     }
 
+    int hashf = hashfALPHA;
+
     if (alpha <= stand_pat){
         alpha = stand_pat;
+        hashf = hashfEXACT;
     }
 
     MoveList legalMoves;
@@ -113,8 +116,6 @@ static inline int32_t quiesce(int32_t alpha, int32_t beta, Thread *thread) {
     if (hash_lookup != valUNKNOWN && board->ply != 0) {
         return hash_lookup;
     }
-
-    int hashf = hashfALPHA;
 
     MoveEval best = {.move = {NO_MOVE, NO_MOVE, NO_MOVE, NO_MOVE}, .eval = -100000000};
 
