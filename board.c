@@ -564,16 +564,16 @@ int32_t make_move(int32_t move, int32_t flag, int32_t notquinode, Board *board){
         int32_t capture = getcapture(move);
 
         //if move is a king move, refresh the accumulator;
-        if (ptype == p_K || ptype == p_k){
-            pop_bit(board->bitboards[ptype], source);
-            set_bit(board->bitboards[ptype], target);
+        // if (ptype == p_K || ptype == p_k){
+        //     pop_bit(board->bitboards[ptype], source);
+        //     set_bit(board->bitboards[ptype], target);
 
-            nnue_pop_bit(ptype, source, board);
-            nnue_set_bit(ptype, target, board);
-        } else {
+        //     nnue_pop_bit(ptype, source, board);
+        //     nnue_set_bit(ptype, target, board);
+        // } else {
             network_pop_bit(ptype, source, board);
             network_set_bit(ptype, target, board);
-        }
+        // }
 
         if (capture){
             if (getenpessant(move)){
@@ -631,10 +631,10 @@ int32_t make_move(int32_t move, int32_t flag, int32_t notquinode, Board *board){
             }
         }
 
-        if (ptype == p_K || ptype == p_k){
-            if (!board->quinode && board->networkUpdate)
-                nnom_refresh_l1(board);
-        }
+        // if (ptype == p_K || ptype == p_k){
+        //     if (!board->quinode && board->networkUpdate)
+        //         nnom_refresh_l1(board);
+        // }
 
         int32_t promoted = getpromoted(move);
         if (promoted){
