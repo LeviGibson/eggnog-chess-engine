@@ -346,43 +346,8 @@ static inline int32_t search(int32_t depth, int32_t alpha, int32_t beta, Line *p
     for (uint8_t moveId = 0; moveId < legalMoves.count; moveId++) {
         move = legalMoves.moves[moveId];
 
-    //Futility Pruning-ish powered by some linear regression on frontier nodes which raise alpha
-    //Step 1: For all frontier nodes, gather all the features below
-    //Step 2: Write all the features for each move which isn't special, as in killers, captures, pv, hash, etc (basically when score < 0)
-    //Step 3: Only write 1% of the moves which don't raise alpha. This keeps the dataset a bit more balenced and makes the numbers easier to work with
-    //Step 4: Train linear regression model on the data
-    //Step 5: Find a good threshold to cut on frontier and pre-fronteir nodes with self-play and tuning.
-       if (legalMoveCount && !board->pvnode && legalMoves.scores[moveId] < 0) {
-           //Scale features
-            // float alpha_scaled = ( (float)alpha - -356161.632513) / 1839488.347304;
-            // float score_scaled = ( (float)legalMoves.scores[moveId] - -12596.126988) / 6713.694674;
-            // float legalMoveCount_scaled = ( (float)(legalMoveCount+1) - 7.870005) / 8.543767;
-            // float staticeval_scaled = ( (float)staticeval - -12766.088609) / 58918.051659;
-            // float ischeck_scaled = ( (float)is_move_direct_check(move, board) - 0.082373) / 0.274932;
-            // float ispromoted_scaled = ( (float)getpromoted(move) - 0.027467) / 0.428681;
-            // float historyScore_scaled = ( history_moves[getpiece(move)][getsource(move)][gettarget(move)] - 2832.018104) / 7364.655827;
-            // float isPastPawnPush_scaled = ((float)isPastPawnPush - 0.000399) / 0.019983;
-            // float pawnCount_scaled = ( (float)count_bits(WP|BP) - 5.896369) / 3.470901;
-            // float queenCount_scaled = ( (float)count_bits(WQ|BQ) - 0.599545) / 0.719954;
-            // float bishopCount_scaled = ( (float)count_bits(WB|BB) - 1.084175) / 1.030372;
-            // float knightCount_scaled = ( (float)count_bits(WN|BN) - 1.270600) / 0.908277;
-            // float rookCount_scaled = ( (float)count_bits(WR|BR) - 1.828314) / 1.031698;
-
-            // //Calculate scaled probabilty that move will raise alpha (so the average move is around 0.5)
-            // float y = 0.75921275 + 
-            //     -0.09086831* alpha_scaled + 
-            //     0.03415969* score_scaled + 
-            //     -0.17977101* legalMoveCount_scaled + 
-            //     0.04044842* staticeval_scaled + 
-            //     0.05483134* ischeck_scaled + 
-            //     0.00563399* ispromoted_scaled + 
-            //     0.01491019* historyScore_scaled + 
-            //     -0.00100619*isPastPawnPush_scaled + 
-            //     -0.02232808* pawnCount_scaled + 
-            //     0.01285574* queenCount_scaled + 
-            //     0.01819625* bishopCount_scaled + 
-            //     0.00174402* knightCount_scaled + 
-            //     0.03518064* rookCount_scaled;
+    //Late Move Pruning
+       if (legalMoveCount && !board->pvnode && legalMoves.scores[moveId] < 700000) {
 
             //Cuts at depth = 1
             if (depth == 1 && legalMoveCount >= 14){
