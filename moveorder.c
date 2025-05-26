@@ -103,7 +103,20 @@ int32_t score_move(int32_t move, const int32_t *hashmove, Thread *thread){
 
         if (board->quinode){ return 0; }
 
-        int32_t score = get_nnom_score(move, board);
+        int32_t score = 0;
+
+        if (thread->board.pvnode){
+            int boardScore = nnue_evaluate(board);
+            copy_board();
+            if (make_move(move, all_moves, 1, board)){
+                score = (-nnue_evaluate(board)) - boardScore;
+                take_back();
+            } else {
+                score = -100000;
+            }
+        } else {
+            score = get_nnom_score(move, board);
+        }
 
         if (historyCount > 0) {
             float historyscore = (history_moves[getpiece(move)][getsource(move)][gettarget(move)] / (float) historyCount) * 1400.f;
@@ -126,6 +139,7 @@ void sort_moves(MoveList *move_list, int32_t *hashmove, Thread *thread){
     insertion_sort(move_list);
 
 //    if (thread->board.quinode) return;
+//    if (!thread->board.pvnode) return;
 //    print_fen(&thread->board);
 //    printf("\n");
 //     for (int32_t i = 0; i < move_list->count; i++) {
