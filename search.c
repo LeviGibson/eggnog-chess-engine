@@ -660,7 +660,7 @@ void *search_position(void *arg){
             nmRes = search(currentDepth, alpha, beta, &negamax_line, &thread, 0);
 
         } else {
-            aspwindow -= (aspwindow/4);
+            aspwindow -= (aspwindow/6);
         }
 
         //if time ran out during aspiration research, break.
